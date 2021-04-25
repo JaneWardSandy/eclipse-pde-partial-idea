@@ -1,0 +1,20 @@
+<idea-plugin>
+    <id>cn.varsa.idea.eclipse.pde.partial</id>
+    <name>Eclipse PDE Partial</name>
+    <category>JVM Frameworks</category>
+    <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
+    <description><![CDATA[
+    Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and its application
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService"/>
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.TargetDefinitionService"/>
+
+        <projectConfigurable id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable" parentId="language"
+                             instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
+    </extensions>
+</idea-plugin>

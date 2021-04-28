@@ -7,7 +7,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
-import com.intellij.ui.components.panels.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
@@ -15,7 +14,7 @@ import javax.swing.*
 class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETargetRunConfiguration>(), PanelWithAnchor {
     private var myAnchor: JComponent? = null
 
-    private val panel = VerticalBox()
+    private val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false))
 
     // TODO: 2021/3/14 Combo select existed product & application
     private val productField = JBTextField()
@@ -28,7 +27,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
     )
 
     private val jrePath = JrePathEditor(DefaultJreSelector.projectSdk(project))
-    private val javaParameters = CommonJavaParametersPanel()
+    private val javaParameters = CommonJavaParametersPanel().apply { preferredSize = null }
 
     init {
         panel.add(productComponent)
@@ -36,6 +35,8 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         panel.add(JSeparator())
         panel.add(jrePath)
         panel.add(javaParameters)
+
+        panel.updateUI()
 
         myAnchor = UIUtil.mergeComponentsWithAnchor(productComponent, applicationComponent, jrePath, javaParameters)
     }

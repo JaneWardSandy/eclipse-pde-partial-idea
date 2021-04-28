@@ -53,6 +53,11 @@ class PDETargetRemoteRunConfiguration(
     val envVariables = mutableMapOf<String, String>()
     var passParentEnvs = true
 
+    init {
+        // TODO: 2021/4/28 check pattern
+        addLogFile("out/log/*.log", "Partial log", true)
+    }
+
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
         SettingsEditorGroup<PDETargetRemoteRunConfiguration>().apply {
             addEditor(message("run.remote.config.tab.wishes.title"), PDETargetRemoteRunConfigurationEditor())

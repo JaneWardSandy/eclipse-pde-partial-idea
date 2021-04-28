@@ -9,13 +9,14 @@ import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
 import com.intellij.util.ui.*
+import com.intellij.util.ui.components.*
 import java.awt.*
 import javax.swing.*
 
 class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunConfiguration>(), PanelWithAnchor {
     private var myAnchor: JComponent? = null
 
-    private val panel = VerticalBox()
+    private val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false))
 
     private val productTextField = JBTextField()
     private val applicationTextField = JBTextField()
@@ -23,6 +24,7 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
     private val rmiPortSpinner = JBIntSpinner(7995, 1, Int.MAX_VALUE)
     private val rmiNameTextField = JBTextField()
     private val remotePortSpinner = JBIntSpinner(5005, 1, Int.MAX_VALUE)
+    private val jdkVersion = ComboBox(JDKVersionItem.values())
     private val vmParametersEditor = RawCommandLineEditor()
     private val programParametersEditor = RawCommandLineEditor()
     private val listeningTearDown = JBCheckBox(message("run.remote.config.tab.wishes.listenTearDown"))
@@ -45,7 +47,8 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         LabeledComponent.create(rmiNameTextField, message("run.remote.config.tab.wishes.rmiName"), BorderLayout.WEST)
     private val rmiPortComponent =
         LabeledComponent.create(rmiPortSpinner, message("run.remote.config.tab.wishes.rmiPort"), BorderLayout.WEST)
-    private val jdkVersion = ComboBox(JDKVersionItem.values())
+    private val jdkVersionComponent =
+        LabeledComponent.create(jdkVersion, message("run.remote.config.tab.wishes.javaVersion"), BorderLayout.WEST)
 
     private val vmParametersComponent = LabeledComponent.create(
         vmParametersEditor, message("run.remote.config.tab.wishes.vmOptions"), BorderLayout.WEST
@@ -60,13 +63,14 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         panel.add(productComponent)
         panel.add(applicationComponent)
         panel.add(JSeparator())
-        panel.add(remoteHostComponent)
-        panel.add(HorizontalBox().apply {
+        panel.add(BorderLayoutPanel().addToCenter(VerticalBox().apply {
+            add(remoteHostComponent)
+            add(rmiNameComponent)
+        }).addToRight(VerticalBox().apply {
             add(remotePortComponent)
-            add(jdkVersion)
-        })
-        panel.add(rmiNameComponent)
-        panel.add(rmiPortComponent)
+            add(rmiPortComponent)
+        }))
+        panel.add(jdkVersionComponent)
         panel.add(JSeparator())
         panel.add(vmParametersComponent)
         panel.add(programParametersComponent)
@@ -75,13 +79,15 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         panel.add(listeningTearDown)
         panel.add(cleanRuntimeDir)
 
+        panel.updateUI()
+
+        UIUtil.mergeComponentsWithAnchor(remotePortComponent, rmiPortComponent)
         myAnchor = UIUtil.mergeComponentsWithAnchor(
             productComponent,
             applicationComponent,
             remoteHostComponent,
-            rmiPortComponent,
             rmiNameComponent,
-            remotePortComponent,
+            jdkVersionComponent,
             vmParametersComponent,
             programParametersComponent,
             envVariablesComponent
@@ -136,9 +142,8 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         productComponent.anchor = anchor
         applicationComponent.anchor = anchor
         remoteHostComponent.anchor = anchor
-        rmiPortComponent.anchor = anchor
         rmiNameComponent.anchor = anchor
-        remotePortComponent.anchor = anchor
+        jdkVersionComponent.anchor = anchor
         vmParametersComponent.anchor = anchor
         programParametersComponent.anchor = anchor
         envVariablesComponent.anchor = anchor

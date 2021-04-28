@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
+import cn.varsa.idea.pde.partial.plugin.listener.*
 import com.intellij.icons.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.*
@@ -166,8 +167,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             it += startupModel.elements().toList()
         }
 
-        // FIXME: 2021/4/25
-        //TargetDefinitionChangeListener.notifyLocationsChanged(project, locationModified)
+        TargetDefinitionChangeListener.notifyLocationsChanged(project, locationModified.toSet())
         locationModified.clear()
     }
 

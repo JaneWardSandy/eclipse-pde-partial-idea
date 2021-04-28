@@ -11,6 +11,7 @@ dependencies {
 }
 
 intellij {
+    version = "2021.1"
     setPlugins("java", "org.jetbrains.kotlin:211-1.4.32-release-IJ6693.72")
 }
 
@@ -22,7 +23,7 @@ tasks {
         """.trimIndent()
         )
 
-        sinceBuild("203")
+        sinceBuild("211")
         untilBuild("")
     }
 

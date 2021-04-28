@@ -8,6 +8,7 @@
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.kotlin</depends>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -16,5 +17,67 @@
 
         <projectConfigurable id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable" parentId="language"
                              instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
+
+        <postStartupActivity implementation="cn.varsa.idea.pde.partial.plugin.startup.PostStartupActivity"/>
+
+        <facetType implementation="cn.varsa.idea.pde.partial.plugin.facet.PDEFacetType"/>
+        <frameworkSupport implementation="cn.varsa.idea.pde.partial.plugin.framework.TcRacFrameworkSupportProvider"/>
+        <framework.detector implementation="cn.varsa.idea.pde.partial.plugin.framework.TcRacFrameworkDetector"/>
+
+        <configurationType implementation="cn.varsa.idea.pde.partial.plugin.run.PDETargetRunConfigurationType"/>
+        <configurationType implementation="cn.varsa.idea.pde.partial.plugin.run.PDETargetRemoteRunConfigurationType"/>
+
+        <manifest.parser.provider
+                implementation="cn.varsa.idea.pde.partial.plugin.manifest.lang.ManifestHeaderParserProvider"/>
+        <completion.contributor language="Manifest"
+                                implementationClass="cn.varsa.idea.pde.partial.plugin.manifest.completion.OsgiManifestCompletionContributor"/>
+
+        <localInspection enabledByDefault="true" level="ERROR"
+                         bundle="messages.EclipsePDEPartialBundles_locale"
+                         key="inspection.unregisteredActivator"
+                         groupBundle="messages.EclipsePDEPartialBundles_locale"
+                         groupKey="inspection.group"
+                         implementationClass="cn.varsa.idea.pde.partial.plugin.inspection.UnregisteredActivatorInspection"/>
+        <localInspection enabledByDefault="true" level="ERROR"
+                         bundle="messages.EclipsePDEPartialBundles_locale"
+                         key="inspection.classInDefaultPackage"
+                         groupBundle="messages.EclipsePDEPartialBundles_locale"
+                         groupKey="inspection.group"
+                         implementationClass="cn.varsa.idea.pde.partial.plugin.inspection.ClassInDefaultPackageInspection"/>
+        <localInspection enabledByDefault="true" level="ERROR"
+                         bundle="messages.EclipsePDEPartialBundles_locale"
+                         key="inspection.packageAccessibility"
+                         groupBundle="messages.EclipsePDEPartialBundles_locale"
+                         groupKey="inspection.group"
+                         implementationClass="cn.varsa.idea.pde.partial.plugin.inspection.PackageAccessibilityInspection"/>
+        <localInspection enabledByDefault="true" level="ERROR"
+                         bundle="messages.EclipsePDEPartialBundles_locale"
+                         key="inspection.wrongImportPackage"
+                         groupBundle="messages.EclipsePDEPartialBundles_locale"
+                         groupKey="inspection.group"
+                         implementationClass="cn.varsa.idea.pde.partial.plugin.inspection.WrongImportPackageInspection"/>
+        <localInspection enabledByDefault="true" level="ERROR"
+                         bundle="messages.EclipsePDEPartialBundles_locale"
+                         key="inspection.kotlinImport"
+                         groupBundle="messages.EclipsePDEPartialBundles_locale"
+                         groupKey="inspection.group"
+                         implementationClass="cn.varsa.idea.pde.partial.plugin.inspection.KotlinImportInspection"/>
+
+        <implicitUsageProvider
+                implementation="cn.varsa.idea.pde.partial.plugin.inspection.PluginsImplicitUsageProvider"/>
     </extensions>
+
+    <projectListeners>
+        <listener class="cn.varsa.idea.pde.partial.plugin.listener.ModuleSetupOperation"
+                  topic="cn.varsa.idea.pde.partial.plugin.listener.FacetChangeListener"/>
+
+        <listener class="cn.varsa.idea.pde.partial.plugin.listener.ProjectLibraryResetOperation"
+                  topic="cn.varsa.idea.pde.partial.plugin.listener.TargetDefinitionChangeListener"/>
+    </projectListeners>
+
+    <actions>
+        <action class="cn.varsa.idea.pde.partial.plugin.action.ResolveWorkspaceAction" icon="AllIcons.Actions.Refresh">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>

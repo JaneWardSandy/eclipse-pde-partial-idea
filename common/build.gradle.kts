@@ -4,5 +4,5 @@ plugins {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    api("org.osgi:org.osgi.framework:1.10.0")
+    implementation(kotlin("reflect"))
 }

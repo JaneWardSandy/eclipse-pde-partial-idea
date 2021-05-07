@@ -38,7 +38,7 @@ import java.util.StringTokenizer;
  * @since 1.3
  * @author $Id: 2a5e4b8c63928ffda304dfe523fc06df49c68eae $
  */
-
+@SuppressWarnings("all")
 public class Version implements Comparable<Version> {
     private final int			major;
     private final int			minor;

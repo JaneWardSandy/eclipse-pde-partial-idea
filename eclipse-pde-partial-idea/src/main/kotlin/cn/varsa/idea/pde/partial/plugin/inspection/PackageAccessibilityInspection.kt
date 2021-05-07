@@ -58,7 +58,7 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
             if (targetFile !is KtFile) return null
 
             val packageName = targetFile.packageFqName.asString()
-            if (packageName.isBlank() || packageName.startsWith("kotlin")) return null
+            if (packageName.isBlank() || packageName.startsWith(Kotlin)) return null
 
             val qualifiedName = targetFunction.fqName?.asString() ?: return null
 
@@ -77,7 +77,7 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
             if (targetFile !is PsiClassOwner) return null
 
             val packageName = targetFile.packageName
-            if (packageName.isBlank() || packageName.startsWith("java")) return null
+            if (packageName.isBlank() || packageName.startsWith(Java)) return null
 
             val qualifiedName = targetClass.qualifiedName ?: return null
 
@@ -89,43 +89,45 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
         private fun checkAccessibility(
             item: PsiFileSystemItem, packageName: String, qualifiedName: String, requesterModule: Module
         ): Problem? {
+            // In bundleClassPath
             val library = requesterModule.findLibrary { it.name == ModuleLibraryName }
             if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return null
 
             val cacheService = BundleManifestCacheService.getInstance(requesterModule.project)
 
-            val importer = cacheService.getManifest(requesterModule)
-            if (importer?.getExportedPackage(packageName) != null) return null
-
             val exporter = cacheService.getManifest(item)
-            val exporterSymbolicName = exporter?.bundleSymbolicName
-            if (exporter == null || exporterSymbolicName == null) {
-                return Problem.weak("The package '$packageName' is inside a non-bundle dependency")
+            val exporterSymbolic = exporter?.bundleSymbolicName
+            if (exporter == null || exporterSymbolic == null) {
+                return Problem.weak(message("inspection.hint.nonBundle", packageName))
             }
-            val exporterBundleSymbolicName = exporter.fragmentHost?.key ?: exporterSymbolicName.key
 
-            // FIXME: 2021/4/27
-            val exporterExportedPackage = "" //exporter.getExportedPackage(packageName)
-//                ?: cacheService.libSymbol2Manifest[exporterBundleSymbolicName]?.getExportedPackage(packageName)
-//                ?: return Problem.error("The package '$packageName' is not exported by the bundle dependencies")
+            val exporterSymbolicName = exporter.fragmentHost?.key ?: exporterSymbolic.key
 
+            val exporterExportedPackage =
+                exporter.getExportedPackage(packageName) ?: cacheService.getManifestByBundleSymbolName(
+                    exporterSymbolicName
+                )?.getExportedPackage(packageName) ?: return Problem.error(
+                    message("inspection.hint.packageNoExport", packageName)
+                )
+
+            val importer = cacheService.getManifest(requesterModule)
             if (importer != null) {
                 if (importer.isPackageImported(packageName)) return null
-                if (importer.isBundleRequired(exporterBundleSymbolicName)) return null
+                if (importer.isBundleRequired(exporterSymbolicName)) return null
+                if (requesterModule.isBundleRequiredOrFromReExport(exporterSymbolicName)) return null
 
-//                if (requesterModule.isBundleRequiredFromReExport(exporterBundleSymbolicName)) return null
-//                if (requesterModule.isExportedPackageFromRequiredBundle(packageName)) return null
+                // FIXME: 2021/5/7 Class in bundle-classpath and it was exported
+                // like /Eclipse.app/Contents/Eclipse/plugins/org.apache.ant_1.10.9.v20201106-1946/lib/ant-antlr.jar
+                // ant bundle can resolve, but class inside lib cannot be read
             }
 
-            val requiredFixes =
-            //cacheService.libSymbol2Versions[exporterBundleSymbolicName]?.takeIf { it.isNotEmpty() }
-                /*?.map { RequireBundleFix(exporterBundleSymbolicName, it) }?.toTypedArray() ?: */
-                arrayOf(RequireBundleFix(exporterBundleSymbolicName))
+            val requiredFixes = cacheService.getVersionByBundleSymbolName(exporterSymbolicName)
+                ?.let { arrayOf(RequireBundleFix(exporterSymbolicName, it.toString())) } ?: emptyArray()
 
             return Problem.error(
-                message("inspection.hint.packageAccessibility", packageName, exporterBundleSymbolicName),
+                message("inspection.hint.packageAccessibility", packageName, exporterSymbolicName),
                 ImportPackageFix(exporterExportedPackage),
-                *requiredFixes
+                *requiredFixes + RequireBundleFix(exporterSymbolicName)
             )
         }
     }

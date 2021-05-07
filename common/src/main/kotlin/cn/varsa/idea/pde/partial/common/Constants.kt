@@ -16,3 +16,6 @@ const val KotlinBundleSymbolName = "org.jetbrains.kotlin.osgi-bundle"
 
 const val KILOBYTE = 1024
 const val MEGABYTE = KILOBYTE * KILOBYTE
+
+const val Java = "java"
+const val Kotlin = "kotlin"

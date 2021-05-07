@@ -14,6 +14,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.*
+import org.jetbrains.kotlin.idea.util.*
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
@@ -40,7 +41,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 value: TargetLocationDefinition?,
                 index: Int,
                 selected: Boolean,
-                hasFocus: Boolean,
+                hasFocus: Boolean
             ) {
                 value?.also {
                     append(it.location)
@@ -69,7 +70,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 value: Pair<String, Int>?,
                 index: Int,
                 selected: Boolean,
-                hasFocus: Boolean,
+                hasFocus: Boolean
             ) {
                 value?.also {
                     append(it.first)
@@ -138,17 +139,17 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     }
 
     override fun isModified(): Boolean {
-        if (locationModified.isNotEmpty()) return true
+        locationModified.isNotEmpty().ifTrue { return true }
         if (launcherJarCombo.item != service.launcherJar || launcherCombo.item != service.launcher) return true
 
         val locations = locationModel.elements().toList()
         if (locations.size != service.locations.size) return true
-        if (locations.run { mapIndexed { index, def -> def != service.locations[index] }.any { it } }) return true
+        locations.run { mapIndexed { index, def -> def != service.locations[index] }.any { it } }.ifTrue { return true }
 
         val startups = startupModel.elements().toList()
         if (startups.size != service.startupLevels.size) return true
-        if (service.startupLevels.entries.run { mapIndexed { index, entry -> startups[index].run { first != entry.key || second != entry.value } } }
-                .any { it }) return true
+        service.startupLevels.entries.run { mapIndexed { index, entry -> startups[index].run { first != entry.key || second != entry.value } } }
+            .any { it }.ifTrue { return true }
 
         return false
     }
@@ -353,6 +354,9 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         override fun getAnchor(): JComponent? = myAnchor
         override fun setAnchor(anchor: JComponent?) {
             myAnchor = anchor
+
+            nameComponent.anchor = anchor
+            levelComponent.anchor = anchor
         }
 
         fun getNewLevel(): Pair<String, Int> = Pair(nameTextField.text, levelSpinner.number)

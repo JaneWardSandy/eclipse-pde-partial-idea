@@ -18,7 +18,7 @@ class TcRacFrameworkDetector : FacetBasedFrameworkDetector<PDEFacet, PDEFacetCon
 
     override fun createSuitableFilePattern(): ElementPattern<FileContent> =
         FileContentPattern.fileContent().inDirectory(MetaInf).withName(ManifestMf)
-            .with(object : PatternCondition<FileContent>("Eclipse manifest file") {
+            .with(object : PatternCondition<FileContent>("OSGI manifest file") {
                 override fun accepts(
                     t: FileContent,
                     context: ProcessingContext?,

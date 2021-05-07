@@ -135,7 +135,6 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         override val installArea: File get() = target.launcher!!.toFile().parentFile
         override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 
-        // TODO: 2021/4/27 Helper?
         override val libraries: List<File>
             get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project).run {
                 DependencyScope.values().map { it.displayName }.map { getLibraryByName("$ProjectLibraryNamePrefix$it") }

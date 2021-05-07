@@ -12,8 +12,8 @@ class ClassInDefaultPackageInspection : AbstractOsgiVisitor() {
                 (file as? PsiClassOwner)?.takeIf { it.packageName.isBlank() }?.classes?.takeIf { it.isNotEmpty() }
                     ?.firstOrNull()?.also {
                         val identifier = unwrap(it.nameIdentifier)
-                        if (isValidElement(identifier)) {
-                            holder.registerProblem(identifier!!, message("inspection.hint.classInDefaultPackage"))
+                        if (identifier != null && isValidElement(identifier)) {
+                            holder.registerProblem(identifier, message("inspection.hint.classInDefaultPackage"))
                         }
                     }
             }

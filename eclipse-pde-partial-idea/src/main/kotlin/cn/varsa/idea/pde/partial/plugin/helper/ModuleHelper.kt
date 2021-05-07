@@ -264,9 +264,19 @@ object ModuleHelper {
         val cacheService = BundleManifestCacheService.getInstance(model.project)
         cacheService.getManifest(model.module)?.also { manifest ->
             model.project.allModules().filter { it.isLoaded }.filter { it != model.module }.filter {
-                val symbolicName = cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name
-                manifest.isBundleRequired(symbolicName)// fixme || it.isBundleRequiredFromReExport(name)
+                it.isBundleRequiredOrFromReExport(cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name)
             }.forEach { model.addModuleOrderEntry(it) }
+        }
+
+        LibraryTablesRegistrar.getInstance().getLibraryTable(model.project).run {
+            DependencyScope.values().forEach { dependencyScope ->
+                getLibraryByName("$ProjectLibraryNamePrefix${dependencyScope.displayName}")?.let {
+                    (model.findLibraryOrderEntry(it) ?: model.addLibraryEntry(it)).apply {
+                        scope = dependencyScope
+                        isExported = false
+                    }
+                }
+            }
         }
     }
 

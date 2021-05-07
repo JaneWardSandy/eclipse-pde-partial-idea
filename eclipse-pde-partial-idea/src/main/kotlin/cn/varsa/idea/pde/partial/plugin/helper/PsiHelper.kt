@@ -15,7 +15,7 @@ object PsiHelper {
     fun getActivatorClass(project: Project): PsiClass? =
         CachedValuesManager.getManager(project).getCachedValue(project) {
             val psiClass = JavaPsiFacade.getInstance(project)
-                .findClass(BundleActivator::javaClass.name, ProjectScope.getLibrariesScope(project))
+                .findClass("org.osgi.framework.BundleActivator", ProjectScope.getLibrariesScope(project))
             CachedValueProvider.Result.create(psiClass, PsiModificationTracker.MODIFICATION_COUNT)
         }
 

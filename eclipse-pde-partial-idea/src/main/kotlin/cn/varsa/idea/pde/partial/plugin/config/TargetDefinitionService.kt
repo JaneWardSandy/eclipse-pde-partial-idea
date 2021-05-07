@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
@@ -117,7 +118,7 @@ interface BackgroundResolvable {
         onThrowable: (Throwable) -> Unit = { _ -> },
         onFinished: () -> Unit = {},
     ) {
-        object : Task.Backgroundable(project, "Resolving target definition", true, DEAF) {
+        object : Task.Backgroundable(project, message("config.target.service.resolving"), true, DEAF) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.checkCanceled()
                 resolve(indicator)
@@ -142,6 +143,6 @@ interface BackgroundResolvable {
                 super.onFinished()
                 onFinished()
             }
-        }.setCancelText("Cancel Resolve").queue()
+        }.setCancelText(message("config.target.service.cancel")).queue()
     }
 }

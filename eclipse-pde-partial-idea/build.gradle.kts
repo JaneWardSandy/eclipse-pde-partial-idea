@@ -11,8 +11,10 @@ dependencies {
 }
 
 intellij {
-    version = "2021.1"
-    setPlugins("java", "org.jetbrains.kotlin:211-1.4.32-release-IJ6693.72")
+    version = "2020.3.4"
+    setPlugins("java", "org.jetbrains.kotlin:203-1.4.32-release-IJ7148.5")
+
+    downloadSources = true
 }
 
 tasks {
@@ -23,7 +25,7 @@ tasks {
         """.trimIndent()
         )
 
-        sinceBuild("211")
+        sinceBuild("203")
         untilBuild("")
     }
 

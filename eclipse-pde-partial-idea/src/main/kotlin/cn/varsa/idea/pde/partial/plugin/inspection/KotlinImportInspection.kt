@@ -27,21 +27,17 @@ class KotlinImportInspection : AbstractBaseJavaLocalInspectionTool() {
         val cacheService = BundleManifestCacheService.getInstance(project)
 
         val module = file.module ?: return null
-        val manifest = module.let { cacheService.getManifest(it) } ?: return null
-        if (manifest.isBundleRequired(KotlinBundleSymbolName)) return null
-//        if (module.isBundleRequiredFromReExport(KotlinBundleSymbolName)) return null
-// FIXME: 2021/4/27
-        val fixes =
-//            cacheService.libSymbol2Versions[KotlinBundleSymbolName]?.takeIf { it.isNotEmpty() }
-//                ?.map { KotlinRequireBundleFix(it) }
-            /*?.toTypedArray() ?:*/ arrayOf(KotlinRequireBundleFix())
+        module.isBundleRequiredOrFromReExport(KotlinBundleSymbolName).ifTrue { return null }
+
+        val fixes = cacheService.getVersionByBundleSymbolName(KotlinBundleSymbolName)
+            ?.let { arrayOf(KotlinRequireBundleFix(it.toString())) } ?: emptyArray()
 
         return arrayOf(
             manager.createProblemDescriptor(
                 file,
                 message("inspection.hint.bundleNotRequired", KotlinBundleSymbolName),
                 isOnTheFly,
-                fixes,
+                fixes + KotlinRequireBundleFix(),
                 ProblemHighlightType.ERROR
             )
         )
@@ -56,9 +52,7 @@ class KotlinRequireBundleFix(version: String? = null) : AbstractOsgiQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         getVerifiedManifestFile(descriptor.psiElement)?.also {
-            WriteAction.run<Exception> {
-                PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue)
-            }
+            WriteAction.run<Exception> { PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue) }
         }
     }
 }

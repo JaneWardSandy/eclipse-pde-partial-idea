@@ -21,6 +21,13 @@ dependencies {
     implementation(kotlin("stdlib"))
 }
 
+tasks.register("pack") {
+    group = "partial"
+
+    dependsOn(tasks.getByPath(":eclipse-pde-partial-idea:buildPlugin"))
+    dependsOn(tasks.getByPath(":wishes-launcher:jlinkZip"))
+}
+
 subprojects {
     group = rootProject.group
     version = rootProject.version

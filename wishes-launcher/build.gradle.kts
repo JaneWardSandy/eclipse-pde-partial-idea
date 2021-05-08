@@ -54,15 +54,14 @@ jlink {
         requires("org.slf4j")
     }
 
-    targetPlatform("macOS") {
-        setJdkHome("/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home")
-        addExtraModulePath("/Users/janewardsandy/Runtime/Java SDK/MacOS/javafx-jmods-11.0.2")
-    }
+    val targetPlatform: String by rootProject.extra
+    val jdkHome: String by rootProject.extra
+    val javaFxModulePath: String by rootProject.extra
 
-//    targetPlatform("windows") {
-//        setJdkHome("/Users/janewardsandy/Runtime/Java SDK/Windows/jdk-11.0.7+10")
-//        addExtraModulePath("/Users/janewardsandy/Runtime/Java SDK/Windows/javafx-jmods-11.0.2")
-//    }
+    targetPlatform(targetPlatform) {
+        setJdkHome(jdkHome)
+        addExtraModulePath(javaFxModulePath)
+    }
 }
 
 java {

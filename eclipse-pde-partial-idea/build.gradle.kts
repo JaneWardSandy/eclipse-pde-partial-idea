@@ -29,6 +29,14 @@ tasks {
         untilBuild("")
     }
 
+    withType<PublishTask> {
+        val publishUsername: String by rootProject.extra
+        val publishPassword: String by rootProject.extra
+
+        username(publishUsername)
+        password(publishPassword)
+    }
+
     compileJava {
         sourceCompatibility = "11"
         targetCompatibility = "11"

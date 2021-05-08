@@ -29,12 +29,9 @@ tasks {
         untilBuild("")
     }
 
-    withType<PublishTask> {
-        val publishUsername: String by rootProject.extra
-        val publishPassword: String by rootProject.extra
-
-        username(publishUsername)
-        password(publishPassword)
+    publishPlugin {
+        val ideaPluginToken: String by rootProject.extra
+        token(ideaPluginToken)
     }
 
     compileJava {

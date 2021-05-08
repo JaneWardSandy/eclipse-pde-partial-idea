@@ -50,3 +50,52 @@ private fun isBundleFromReExportOnly(
     return modulesManifest.filter { allReExport.contains(it.bundleSymbolicName?.key) }.also { modulesManifest -= it }
         .any { isBundleFromReExportOnly(it, symbolName, cacheService, modulesManifest) }
 }
+
+fun Module.isExportedPackageFromRequiredBundle(packageName: String): Boolean {
+    val cacheService = BundleManifestCacheService.getInstance(project)
+
+    val manifest = cacheService.getManifest(this) ?: return false
+    val requiredBundle = manifest.requireBundle?.keys ?: return false
+
+    // Bundle required directly
+    requiredBundle.mapNotNull(cacheService::getManifestByBundleSymbolName)
+        .any { it.getExportedPackage(packageName) != null }.ifTrue { return true }
+
+    val allRequiredFromReExport = requiredBundle.flatMap(cacheService::getReExportRequiredBundleBySymbolName).toSet()
+
+    // Re-export dependency tree can resolve bundle
+    allRequiredFromReExport.mapNotNull(cacheService::getManifestByBundleSymbolName)
+        .any { it.getExportedPackage(packageName) != null }.ifTrue { return true }
+
+    // Re-export bundle contain module, it need calc again
+    val modulesManifest = project.allModules().asSequence().filter { it.isLoaded }.filterNot { it == this }
+        .mapNotNull(cacheService::getManifest).toHashSet()
+
+    modulesManifest.filter { allRequiredFromReExport.contains(it.bundleSymbolicName?.key) }
+        .any { isPackageFromReExportOnly(it, packageName, cacheService, modulesManifest) }.ifTrue { return true }
+
+    return false
+}
+
+private fun isPackageFromReExportOnly(
+    manifest: BundleManifest,
+    packageName: String,
+    cacheService: BundleManifestCacheService,
+    modulesManifest: HashSet<BundleManifest>
+): Boolean {
+    // Re-export directly
+    manifest.reExportRequiredBundleSymbolNames.mapNotNull(cacheService::getManifestByBundleSymbolName)
+        .any { it.getExportedPackage(packageName) != null }.ifTrue { return true }
+
+    val allReExport =
+        manifest.reExportRequiredBundleSymbolNames.flatMap { cacheService.getReExportRequiredBundleBySymbolName(it) }
+            .toSet()
+
+    // Re-export dependency tree can resolve bundle
+    allReExport.mapNotNull(cacheService::getManifestByBundleSymbolName)
+        .any { it.getExportedPackage(packageName) != null }.ifTrue { return true }
+
+    // Dependency tree contains module, it need calc again, and remove it from module set to not calc again and again and again
+    return modulesManifest.filter { allReExport.contains(it.bundleSymbolicName?.key) }.also { modulesManifest -= it }
+        .any { isPackageFromReExportOnly(it, packageName, cacheService, modulesManifest) }
+}

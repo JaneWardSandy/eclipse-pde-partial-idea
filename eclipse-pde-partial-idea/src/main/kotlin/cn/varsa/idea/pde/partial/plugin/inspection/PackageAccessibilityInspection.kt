@@ -119,6 +119,7 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
                 // FIXME: 2021/5/7 Class in bundle-classpath and it was exported
                 // like /Eclipse.app/Contents/Eclipse/plugins/org.apache.ant_1.10.9.v20201106-1946/lib/ant-antlr.jar
                 // ant bundle can resolve, but class inside lib cannot be read
+                if (requesterModule.isExportedPackageFromRequiredBundle(packageName)) return null
             }
 
             val requiredFixes = cacheService.getVersionByBundleSymbolName(exporterSymbolicName)

@@ -4,8 +4,26 @@
     <category>JVM Frameworks</category>
     <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
     <description><![CDATA[
-    Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and its application
-    ]]></description>
+        <p>Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and its application.</p>
+
+        <ol>
+            <li>Open <b>Preferences... | Languages & Frameworks | Eclipse Target</b>.</li>
+            <li>Add the OSGI bundles that you want to work with (Eclipse root, Teamcenter root, plugins directory,
+                etc.).
+            </li>
+            <li>Add the Eclipse PDE Partial facet (or by add framework) to any module that should be an Eclipse
+                Plugins.
+            </li>
+        </ol>
+
+        <p>To run eclipse application on local machine, create a new Eclipse Application Partial run configuration.</p>
+        <p>To run eclipse application on remote machine, create a new Eclipse Application Remote Partial run
+            configuration, and set up wishes-launcher application information. It will connect Wishes service by RMI
+            naming, and remote debug by JDWP.</p>
+
+        <p>Wishes-launcher application is available in the
+            <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea" target="_blank">Github</a></p>
+        ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>

@@ -24,8 +24,11 @@ fun Module.isBundleRequiredOrFromReExport(symbolName: String): Boolean {
     val modulesManifest = project.allModules().asSequence().filter { it.isLoaded }.filterNot { it == this }
         .mapNotNull(cacheService::getManifest).toHashSet()
 
-    modulesManifest.filter { allRequiredFromReExport.contains(it.bundleSymbolicName?.key) }
-        .any { isBundleFromReExportOnly(it, symbolName, cacheService, modulesManifest) }.ifTrue { return true }
+    modulesManifest.filter {
+        it.bundleSymbolicName?.key?.run {
+            requiredBundle.contains(this) || allRequiredFromReExport.contains(this)
+        } == true
+    }.any { isBundleFromReExportOnly(it, symbolName, cacheService, modulesManifest) }.ifTrue { return true }
 
     return false
 }
@@ -71,8 +74,11 @@ fun Module.isExportedPackageFromRequiredBundle(packageName: String): Boolean {
     val modulesManifest = project.allModules().asSequence().filter { it.isLoaded }.filterNot { it == this }
         .mapNotNull(cacheService::getManifest).toHashSet()
 
-    modulesManifest.filter { allRequiredFromReExport.contains(it.bundleSymbolicName?.key) }
-        .any { isPackageFromReExportOnly(it, packageName, cacheService, modulesManifest) }.ifTrue { return true }
+    modulesManifest.filter {
+        it.bundleSymbolicName?.key?.run {
+            requiredBundle.contains(this) || allRequiredFromReExport.contains(this)
+        } == true
+    }.any { isPackageFromReExportOnly(it, packageName, cacheService, modulesManifest) }.ifTrue { return true }
 
     return false
 }

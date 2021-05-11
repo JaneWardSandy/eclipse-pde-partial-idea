@@ -262,9 +262,9 @@ object ModuleHelper {
         ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { libraryModel.commit() } }
 
         val cacheService = BundleManifestCacheService.getInstance(model.project)
-        cacheService.getManifest(model.module)?.also { manifest ->
+        model.module.also { module ->
             model.project.allModules().filter { it.isLoaded }.filter { it != model.module }.filter {
-                it.isBundleRequiredOrFromReExport(cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name)
+                module.isBundleRequiredOrFromReExport(cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name)
             }.forEach { model.addModuleOrderEntry(it) }
         }
 

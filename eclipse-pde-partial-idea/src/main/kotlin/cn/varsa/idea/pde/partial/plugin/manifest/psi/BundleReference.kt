@@ -5,6 +5,7 @@ import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import com.intellij.codeInsight.daemon.*
 import com.intellij.openapi.module.*
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.psi.*
@@ -34,8 +35,9 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
                     ModuleRootManager.getInstance(module).run {
                         orderEntries().forEachModule { orderModule ->
                             cacheService.getManifest(orderModule)?.bundleSymbolicName?.key?.takeIf { it == refText }
-                                ?.run { contentRoots }?.mapNotNull { root -> root.findFileByRelativePath(ManifestPath) }
-                                ?.firstOrNull()?.let { PsiManager.getInstance(orderModule.project).findFile(it) }
+                                ?.let { orderModule.rootManager.contentRoots }
+                                ?.mapNotNull { root -> root.findFileByRelativePath(ManifestPath) }?.firstOrNull()
+                                ?.let { PsiManager.getInstance(orderModule.project).findFile(it) }
                                 ?.let { (it as? ManifestFile)?.getHeader(BUNDLE_SYMBOLICNAME) ?: it }
                                 ?.also(result::set) == null
                         }

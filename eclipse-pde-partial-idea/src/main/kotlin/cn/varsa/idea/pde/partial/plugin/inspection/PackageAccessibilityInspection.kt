@@ -43,7 +43,7 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
                     ?.also {
                         list.add(manager.createProblemDescriptor(place, it.message, isOnTheFly, it.fixes, it.type))
                     }
-                is KtNamedFunction -> checkAccessibility(dependency, facet)?.also {
+                is KtNamedDeclaration -> checkAccessibility(dependency, facet)?.also {
                     list.add(manager.createProblemDescriptor(place, it.message, isOnTheFly, it.fixes, it.type))
                 }
             }
@@ -53,16 +53,16 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
     }
 
     companion object {
-        fun checkAccessibility(targetFunction: KtNamedFunction, facet: PDEFacet): Problem? {
-            val targetFile = targetFunction.containingFile
+        fun checkAccessibility(namedDeclaration: KtNamedDeclaration, facet: PDEFacet): Problem? {
+            val targetFile = namedDeclaration.containingFile
             if (targetFile !is KtFile) return null
 
             val packageName = targetFile.packageFqName.asString()
             if (packageName.isBlank() || packageName.startsWith(Kotlin)) return null
 
-            val qualifiedName = targetFunction.fqName?.asString() ?: return null
+            val qualifiedName = namedDeclaration.fqName?.asString() ?: return null
 
-            if (facet.module == ModuleUtilCore.findModuleForPsiElement(targetFunction)) return null
+            if (facet.module == ModuleUtilCore.findModuleForPsiElement(namedDeclaration)) return null
 
             return checkAccessibility(targetFile, packageName, qualifiedName, facet.module)
         }

@@ -27,8 +27,16 @@ class RunConfigView : View("Basic Configuration") {
                     else -> null
                 }
             }
-            field("IDEA Charset") {
+        }
+
+        fieldset("Charset") {
+            field("IDEA") {
                 combobox(configControl.ideaCharsetProperty, Charset.availableCharsets().values.toList()) {
+                    cellFormat { text = it.name() }
+                }
+            }
+            field("System") {
+                combobox(configControl.osCharsetProperty, Charset.availableCharsets().values.toList()) {
                     cellFormat { text = it.name() }
                 }
             }
@@ -50,6 +58,14 @@ class RunConfigView : View("Basic Configuration") {
                 null
             }
         } ?: Charset.defaultCharset()
+
+        configControl.osCharset = config.string("osCharset")?.let {
+            try {
+                Charset.forName(it)
+            } catch (e: UnsupportedCharsetException) {
+                null
+            }
+        } ?: Charset.defaultCharset()
     }
 
     override fun onSave() {
@@ -58,6 +74,7 @@ class RunConfigView : View("Basic Configuration") {
         config["runtimeDirectory"] = configControl.runtimeDirectory
         config["projectRoot"] = configControl.projectRoot
         config["charset"] = configControl.ideaCharset.name()
+        config["osCharset"] = configControl.osCharset.name()
         config.save()
     }
 }

@@ -54,8 +54,7 @@ class PDETargetRemoteRunConfiguration(
     var passParentEnvs = true
 
     init {
-        // TODO: 2021/4/28 check pattern
-        addLogFile("out/log/*.log", "Partial log", true)
+        addLogFile("${project.presentableUrl}/out/log/partial.log", "Partial log", true)
     }
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
@@ -73,6 +72,7 @@ class PDETargetRemoteRunConfiguration(
     }
 
     override fun writeExternal(element: Element) {
+        logFiles.firstOrNull { it.name == "Partial log" }?.pathPattern = "${project.presentableUrl}/out/log/partial.log"
         super<LocatableConfigurationBase>.writeExternal(element)
 
         element.getOrCreate("portal").apply {
@@ -138,6 +138,8 @@ class PDETargetRemoteRunConfiguration(
                 it.getAttributeValue("name") to it.getAttributeValue("value")
             }?.filter { !it.first.isNullOrBlank() && it.second != null }?.also { envVariables += it }
         }
+
+        logFiles.firstOrNull { it.name == "Partial log" }?.pathPattern = "${project.presentableUrl}/out/log/partial.log"
     }
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState {

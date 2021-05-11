@@ -19,6 +19,9 @@ class ConfigControl : Controller(), ConfigService {
     val ideaCharsetProperty = SimpleObjectProperty(Charset.defaultCharset())
     var ideaCharset: Charset by ideaCharsetProperty
 
+    val osCharsetProperty = SimpleObjectProperty(Charset.defaultCharset())
+    var osCharset: Charset by osCharsetProperty
+
     val rmiRunningProperty = SimpleBooleanProperty(false)
     var rmiRunning by rmiRunningProperty
 

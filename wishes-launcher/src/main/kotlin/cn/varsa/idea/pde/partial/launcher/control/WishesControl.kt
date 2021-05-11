@@ -20,6 +20,7 @@ class WishesControl : Controller() {
     fun generateData(parameters: JavaCommandParameters) {
         parameters.mainClass = "org.eclipse.equinox.launcher.Main"
         parameters.workingDirectory = configControl.runtimeDirectory
+        parameters.charset = configControl.osCharset.name()
 
         parameters.classPath.add(configControl.launcherJar)
         parameters.programParameters.addAll("-launcher", configControl.launcher)

@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.psi.search.*
 import com.intellij.util.*
 import org.jdom.*
-import org.jetbrains.kotlin.idea.util.projectStructure.*
 import java.io.*
 import java.util.*
 
@@ -143,8 +142,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
             }
 
         override val devModules: List<DevModule>
-            get() = project.allModules().filter { it.isLoaded }.mapNotNull { PDEFacet.getInstance(it) }
-                .map(PDEFacet::toDevModule)
+            get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
 
         override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
             LocalFileSystem.getInstance().findFileByIoFile(jarFileOrDirectory)?.let { cache.getManifest(it) }

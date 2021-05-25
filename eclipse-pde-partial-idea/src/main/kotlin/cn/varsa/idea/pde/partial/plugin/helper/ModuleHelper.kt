@@ -17,9 +17,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.*
 import com.intellij.packaging.impl.artifacts.*
-import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.util.projectStructure.*
-import org.osgi.framework.*
 import org.osgi.framework.Constants.*
 import java.io.*
 
@@ -133,43 +130,28 @@ object ModuleHelper {
 
     // Global library
     fun resetLibrary(project: Project) {
-        if (project.allModules().filter { it.isLoaded }.none { PDEFacet.getInstance(it) != null }) return
+        if (project.allPDEModules().isEmpty()) return
         val cacheService = BundleManifestCacheService.getInstance(project)
 
-        val dependencyToUrls = DependencyScope.values().associateWith { Pair(HashSet<String>(), HashSet<String>()) }
-        val addedBundleToVersion =
-            project.allModules().asSequence().filter { it.isLoaded }.mapNotNull { cacheService.getManifest(it) }
-                .associateBy({ it.bundleSymbolicName?.key }) { it.bundleVersion?.toString() }
-                .filter { it.key != null && it.value != null }.map { it.key!! to it.value!! }
-                .let { hashMapOf(*it.toTypedArray()) }
-
-        // TODO: 2021/5/25 new bundle management
-        TargetDefinitionService.getInstance(project).locations.forEach { location ->
-            dependencyToUrls.filterKeys { it.displayName == location.dependency }.firstOrNull()?.value?.run {
-                location.bundles.filter { it.exists() }
-                    .mapNotNull { LocalFileSystem.getInstance().findFileByIoFile(it) }.forEach { file ->
-                        cacheService.getManifest(file)?.also {
-                            val symbolicName = it.bundleSymbolicName?.key ?: ""
-                            val version = (it.bundleVersion ?: Version.emptyVersion).toString()
-
-                            val sourceBundle = it.eclipseSourceBundle
-                            if (sourceBundle != null) {
-                                if (addedBundleToVersion[sourceBundle.key] == it.bundleVersion?.toString()) {
-                                    second += file.protocolUrl
-                                }
-                            } else {
-                                addedBundleToVersion.computeIfAbsent(symbolicName) {
-                                    first += file.protocolUrl
-                                    version
-                                }
-                            }
-                        }
-                    }
+        LibraryTablesRegistrar.getInstance().getLibraryTable(project).also { libraryTable ->
+            WriteAction.runAndWait<Exception> {
+                libraryTable.libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }.forEach {
+                    libraryTable.removeLibrary(it)
+                }
             }
         }
 
-        dependencyToUrls.forEach { (scope, urls) ->
-            setLibrary(project, "$ProjectLibraryNamePrefix${scope.displayName}", scope, urls.first, urls.second)
+        val moduleNames = project.allPDEModules().mapNotNull { cacheService.getManifest(it) }
+            .mapNotNull { it.bundleSymbolicName?.key }.toSet()
+
+        BundleManagementService.getInstance(project).bundles.filterKeys { !moduleNames.contains(it) }.values.forEach { bundle ->
+            setLibrary(
+                project,
+                "$ProjectLibraryNamePrefix${bundle.bundleSymbolicName}",
+                bundle.dependencyScope,
+                bundle.classPaths.map { it.protocolUrl }.toSet(),
+                bundle.sourceBundle?.classPaths?.map { it.protocolUrl }?.toSet() ?: emptySet()
+            )
         }
     }
 
@@ -180,23 +162,19 @@ object ModuleHelper {
         classesRootUrls: Set<String> = emptySet(),
         sourceRootUrls: Set<String> = emptySet()
     ) {
-        if (project.allModules().filter { it.isLoaded }.none { PDEFacet.getInstance(it) != null }) return
+        if (project.allPDEModules().isEmpty()) return
 
         val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).let {
-            it.getLibraryByName(libraryName)
-                ?: WriteAction.compute<Library, Exception> { it.createLibrary(libraryName) }
+            WriteAction.compute<Library, Exception> { it.createLibrary(libraryName) }
         }
         val libraryModel = library.modifiableModel
-
-        OrderRootType.getAllTypes()
-            .forEach { type -> libraryModel.getUrls(type).forEach { libraryModel.removeRoot(it, type) } }
 
         classesRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
         sourceRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
 
         ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { libraryModel.commit() } }
 
-        project.allModules().filter { it.isLoaded }.filter { PDEFacet.getInstance(it) != null }.forEach { module ->
+        project.allPDEModules().forEach { module ->
             ModuleRootModificationUtil.updateModel(module) { model ->
                 (model.findLibraryOrderEntry(library) ?: model.addLibraryEntry(library)).apply {
                     scope = dependencyScope
@@ -268,18 +246,21 @@ object ModuleHelper {
 
         val cacheService = BundleManifestCacheService.getInstance(model.project)
         model.module.also { module ->
-            model.project.allModules().filter { it.isLoaded }.filter { it != model.module }.filter {
-                module.isBundleRequiredOrFromReExport(cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name)
+            model.project.allPDEModules().filter { it != module }.filter {
+                module.isBundleRequiredOrFromReExport(
+                    cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name
+                )
             }.forEach { model.addModuleOrderEntry(it) }
         }
 
-        LibraryTablesRegistrar.getInstance().getLibraryTable(model.project).run {
-            DependencyScope.values().forEach { dependencyScope ->
-                getLibraryByName("$ProjectLibraryNamePrefix${dependencyScope.displayName}")?.let {
-                    (model.findLibraryOrderEntry(it) ?: model.addLibraryEntry(it)).apply {
-                        scope = dependencyScope
-                        isExported = false
-                    }
+        val managementService = BundleManagementService.getInstance(model.project)
+        LibraryTablesRegistrar.getInstance().getLibraryTable(model.project).libraries.filter {
+            it.name?.startsWith(ProjectLibraryNamePrefix) == true
+        }.forEach { dependencyLib ->
+            managementService.bundles[dependencyLib.name]?.dependencyScope?.also {
+                model.addLibraryEntry(dependencyLib).apply {
+                    scope = it
+                    isExported = true
                 }
             }
         }

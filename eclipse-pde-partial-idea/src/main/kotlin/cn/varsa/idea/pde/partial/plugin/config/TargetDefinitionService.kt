@@ -3,7 +3,7 @@ package cn.varsa.idea.pde.partial.plugin.config
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
-import cn.varsa.idea.pde.partial.plugin.helper.*
+import cn.varsa.idea.pde.partial.plugin.listener.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
@@ -54,11 +54,7 @@ class TargetDefinitionService(private val project: Project) : PersistentStateCom
     }
 
     override fun onFinished() {
-        val cacheService = BundleManifestCacheService.getInstance(project)
-
-        cacheService.clearCache()
-        ModuleHelper.resetLibrary(project)
-        cacheService.buildCache()
+        TargetDefinitionChangeListener.notifyLocationsChanged(project, locations)
     }
 
     override fun getState(): TargetDefinitionService = this
@@ -135,4 +131,6 @@ data class BundleDefinition(
     val classPaths: Set<VirtualFile>
         get() = setOf(root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
             ?.mapNotNull { root.findFileByRelativePath(it) }?.toSet() ?: emptySet())
+
+    var sourceBundle: BundleDefinition? = null
 }

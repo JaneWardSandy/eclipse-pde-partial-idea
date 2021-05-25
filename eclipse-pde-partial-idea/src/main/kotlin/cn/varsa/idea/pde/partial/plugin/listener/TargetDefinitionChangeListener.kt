@@ -6,14 +6,12 @@ import com.intellij.openapi.project.*
 import com.intellij.util.messages.*
 
 interface TargetDefinitionChangeListener {
-    fun locationsChanged(project: Project, changes: Set<Pair<TargetLocationDefinition?, TargetLocationDefinition?>>) {}
+    fun locationsChanged(project: Project, locations: List<TargetLocationDefinition>)
 
     companion object {
         private val topic = Topic("Eclipse Target Definition Changes", TargetDefinitionChangeListener::class.java)
 
-        fun notifyLocationsChanged(
-            project: Project,
-            changes: Set<Pair<TargetLocationDefinition?, TargetLocationDefinition?>>,
-        ) = ApplicationManager.getApplication().messageBus.syncPublisher(topic).locationsChanged(project, changes)
+        fun notifyLocationsChanged(project: Project, locations: List<TargetLocationDefinition>) =
+            ApplicationManager.getApplication().messageBus.syncPublisher(topic).locationsChanged(project, locations)
     }
 }

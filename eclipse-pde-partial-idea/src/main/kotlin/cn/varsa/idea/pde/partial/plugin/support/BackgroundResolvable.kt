@@ -17,7 +17,7 @@ interface BackgroundResolvable {
         onSuccess: () -> Unit = {},
         onCancel: () -> Unit = {},
         onThrowable: (Throwable) -> Unit = { e -> thisLogger().error(e.message, e) },
-        onFinished: () -> Unit = {},
+        onFinished: () -> Unit = {}
     ) {
         object : Task.Backgroundable(
             project, EclipsePDEPartialBundles.message("config.target.service.resolving"), true, DEAF

@@ -4,7 +4,6 @@ import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import com.intellij.openapi.module.*
 import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.util.projectStructure.*
 
 fun Module.isBundleRequiredOrFromReExport(symbolName: String): Boolean {
     val cacheService = BundleManifestCacheService.getInstance(project)
@@ -21,8 +20,8 @@ fun Module.isBundleRequiredOrFromReExport(symbolName: String): Boolean {
     allRequiredFromReExport.contains(symbolName).ifTrue { return true }
 
     // Re-export bundle contain module, it need calc again
-    val modulesManifest = project.allModules().asSequence().filter { it.isLoaded }.filterNot { it == this }
-        .mapNotNull(cacheService::getManifest).toHashSet()
+    val modulesManifest =
+        project.allPDEModules().filterNot { it == this }.mapNotNull(cacheService::getManifest).toHashSet()
 
     modulesManifest.filter {
         it.bundleSymbolicName?.key?.run {
@@ -71,8 +70,8 @@ fun Module.isExportedPackageFromRequiredBundle(packageName: String): Boolean {
         .any { it.getExportedPackage(packageName) != null }.ifTrue { return true }
 
     // Re-export bundle contain module, it need calc again
-    val modulesManifest = project.allModules().asSequence().filter { it.isLoaded }.filterNot { it == this }
-        .mapNotNull(cacheService::getManifest).toHashSet()
+    val modulesManifest =
+        project.allPDEModules().filterNot { it == this }.mapNotNull(cacheService::getManifest).toHashSet()
 
     modulesManifest.filter {
         it.bundleSymbolicName?.key?.run {

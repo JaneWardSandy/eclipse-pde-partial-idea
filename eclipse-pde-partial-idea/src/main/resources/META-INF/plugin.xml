@@ -32,6 +32,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService"/>
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.TargetDefinitionService"/>
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"/>
 
         <projectConfigurable id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable" parentId="language"
                              instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
@@ -89,7 +90,7 @@
         <listener class="cn.varsa.idea.pde.partial.plugin.listener.ModuleSetupOperation"
                   topic="cn.varsa.idea.pde.partial.plugin.listener.FacetChangeListener"/>
 
-        <listener class="cn.varsa.idea.pde.partial.plugin.listener.ProjectLibraryResetOperation"
+        <listener class="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"
                   topic="cn.varsa.idea.pde.partial.plugin.listener.TargetDefinitionChangeListener"/>
     </projectListeners>
 

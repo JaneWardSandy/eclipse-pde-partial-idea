@@ -8,9 +8,10 @@ const val PluginsXml = "plugin.xml"
 const val Plugins = "plugins"
 const val Artifacts = "artifacts"
 
-const val ArtifactPrefix = "Partial: "
+const val PartialPrefix = "Partial: "
+const val ArtifactPrefix = PartialPrefix
 const val ModuleLibraryName = "Partial-Runtime"
-const val ProjectLibraryNamePrefix = "Partial-Platform-"
+const val ProjectLibraryNamePrefix = PartialPrefix
 
 const val KotlinBundleSymbolName = "org.jetbrains.kotlin.osgi-bundle"
 

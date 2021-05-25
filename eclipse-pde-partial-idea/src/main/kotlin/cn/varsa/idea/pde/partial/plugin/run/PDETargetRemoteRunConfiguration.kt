@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.*
 import com.intellij.util.*
 import com.intellij.util.execution.*
 import org.jdom.*
-import org.jetbrains.kotlin.idea.util.projectStructure.*
 import java.rmi.registry.*
 import java.util.concurrent.*
 
@@ -199,8 +198,7 @@ class PDETargetRemoteRunConfiguration(
         }
 
         private fun makeWishesReady(wishesService: WishesService) {
-            val devModels = project.allModules().filter { it.isLoaded }.mapNotNull { PDEFacet.getInstance(it) }
-                .map(PDEFacet::toDevModule)
+            val devModels = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
 
             wishesService.setupTargetProgram(product, application)
             wishesService.setupStartupLevels(target.startupLevels)

@@ -47,6 +47,7 @@ jlink {
 
     launcher {
         noConsole = false
+        imageName.set("wishes-launcher")
     }
 
     mergedModule {

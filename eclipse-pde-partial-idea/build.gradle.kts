@@ -11,8 +11,8 @@ dependencies {
 }
 
 intellij {
-    version = "2020.3.4"
-    setPlugins("java", "org.jetbrains.kotlin:203-1.4.32-release-IJ7148.5")
+    version = "2021.1.1"
+    setPlugins("java", "org.jetbrains.kotlin")
 
     downloadSources = true
 }

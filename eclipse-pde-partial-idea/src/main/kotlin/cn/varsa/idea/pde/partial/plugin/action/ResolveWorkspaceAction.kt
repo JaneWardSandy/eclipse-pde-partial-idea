@@ -19,6 +19,7 @@ class ResolveWorkspaceAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+        // TODO: 2021/5/25 update resolve
         e.project?.also {
             val cacheService = BundleManifestCacheService.getInstance(it)
 

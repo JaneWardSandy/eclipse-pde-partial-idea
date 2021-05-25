@@ -26,6 +26,7 @@ import java.io.*
 object ModuleHelper {
     private val logger = thisLogger()
 
+    // Compile output path
     fun resetCompileOutputPath(module: Module) {
         val facet = PDEFacet.getInstance(module) ?: return
         setCompileOutputPath(module, "${module.getModuleDir()}/${facet.configuration.compilerOutputDirectory}")
@@ -57,6 +58,7 @@ object ModuleHelper {
         return true
     }
 
+    // Artifact
     fun resetCompileArtifact(module: Module) {
         val facet = PDEFacet.getInstance(module) ?: return
         setCompileArtifact(module, addBinary = facet.configuration.binaryOutput)
@@ -129,6 +131,7 @@ object ModuleHelper {
         return true
     }
 
+    // Global library
     fun resetLibrary(project: Project) {
         if (project.allModules().filter { it.isLoaded }.none { PDEFacet.getInstance(it) != null }) return
         val cacheService = BundleManifestCacheService.getInstance(project)
@@ -140,6 +143,7 @@ object ModuleHelper {
                 .filter { it.key != null && it.value != null }.map { it.key!! to it.value!! }
                 .let { hashMapOf(*it.toTypedArray()) }
 
+        // TODO: 2021/5/25 new bundle management
         TargetDefinitionService.getInstance(project).locations.forEach { location ->
             dependencyToUrls.filterKeys { it.displayName == location.dependency }.firstOrNull()?.value?.run {
                 location.bundles.filter { it.exists() }
@@ -202,6 +206,7 @@ object ModuleHelper {
         }
     }
 
+    // Module library
     fun resetLibrary(module: Module) {
         PDEFacet.getInstance(module) ?: return
 

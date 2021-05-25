@@ -1,19 +1,23 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
+import cn.varsa.idea.pde.partial.common.domain.*
+import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
+import com.intellij.openapi.vfs.*
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
 import java.io.*
 
 @State(name = "TcRacTargetDefinitions", storages = [Storage("eclipse-partial.xml")])
-class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService>, BackgroundResolvable {
+class TargetDefinitionService(private val project: Project) : PersistentStateComponent<TargetDefinitionService>,
+                                                              BackgroundResolvable {
     @XCollection(elementName = "locations", style = XCollection.Style.v2) val locations =
         mutableListOf<TargetLocationDefinition>()
 
@@ -42,11 +46,19 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
             project.getService(TargetDefinitionService::class.java)
     }
 
-    override fun resolve(indicator: ProgressIndicator) {
+    override fun resolve(project: Project, indicator: ProgressIndicator) {
         locations.forEach {
             indicator.checkCanceled()
-            it.resolve(indicator)
+            it.resolve(project, indicator)
         }
+    }
+
+    override fun onFinished() {
+        val cacheService = BundleManifestCacheService.getInstance(project)
+
+        cacheService.clearCache()
+        ModuleHelper.resetLibrary(project)
+        cacheService.buildCache()
     }
 
     override fun getState(): TargetDefinitionService = this
@@ -64,16 +76,18 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
     @Attribute var launcher: String? = null
     @Attribute var dependency = DependencyScope.COMPILE.displayName
 
-    val bundles = mutableListOf<File>()
+    private val _bundles = mutableListOf<BundleDefinition>()
+    val bundles: List<BundleDefinition> = _bundles
 
     init {
         _location.takeIf(String::isNotBlank)?.also { location = it }
     }
 
-    override fun resolve(indicator: ProgressIndicator) {
-        bundles.clear()
+    override fun resolve(project: Project, indicator: ProgressIndicator) {
+        val scope = DependencyScope.values().firstOrNull { it.displayName == dependency } ?: DependencyScope.COMPILE
+        _bundles.clear()
 
-        indicator.text2 = "Resolving location $location"
+        indicator.text = "Resolving location $location"
         indicator.checkCanceled()
 
         val directory = File(location)
@@ -93,13 +107,17 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
         pluginsDirectory.listFiles()?.filterNot { it.isHidden }?.forEach { file ->
             indicator.checkCanceled()
 
+            val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file) ?: return@forEach
             if (file.isFile && file.extension.equalAny("jar", "aar", "war", ignoreCase = true)) {
-                bundles += file.canonicalFile
                 if (file.name.startsWith("org.eclipse.equinox.launcher_")) {
                     launcherJar = file.canonicalPath
                 }
+
+                JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)?.also { jarFile ->
+                    _bundles += BundleDefinition(jarFile, file, project, scope)
+                }
             } else if (file.isDirectory && File(file, ManifestPath).exists()) {
-                bundles += file.canonicalFile
+                _bundles += BundleDefinition(virtualFile, file, project, scope)
             }
         }
     }
@@ -108,41 +126,13 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
         "$location [${bundles.size} bundles available, launcher: $launcher, launcher jar: $launcherJar]"
 }
 
-interface BackgroundResolvable {
-    fun resolve(indicator: ProgressIndicator)
+data class BundleDefinition(
+    val root: VirtualFile, val file: File, val project: Project, val dependencyScope: DependencyScope
+) {
+    val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
 
-    fun backgroundResolve(
-        project: Project,
-        onSuccess: () -> Unit = {},
-        onCancel: () -> Unit = {},
-        onThrowable: (Throwable) -> Unit = { _ -> },
-        onFinished: () -> Unit = {},
-    ) {
-        object : Task.Backgroundable(project, message("config.target.service.resolving"), true, DEAF) {
-            override fun run(indicator: ProgressIndicator) {
-                indicator.checkCanceled()
-                resolve(indicator)
-            }
-
-            override fun onSuccess() {
-                super.onSuccess()
-                onSuccess()
-            }
-
-            override fun onCancel() {
-                super.onCancel()
-                onCancel()
-            }
-
-            override fun onThrowable(error: Throwable) {
-                super.onThrowable(error)
-                onThrowable(error)
-            }
-
-            override fun onFinished() {
-                super.onFinished()
-                onFinished()
-            }
-        }.setCancelText(message("config.target.service.cancel")).queue()
-    }
+    val bundleSymbolicName: String get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension
+    val classPaths: Set<VirtualFile>
+        get() = setOf(root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
+            ?.mapNotNull { root.findFileByRelativePath(it) }?.toSet() ?: emptySet())
 }

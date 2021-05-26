@@ -2,13 +2,12 @@ package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
-import cn.varsa.idea.pde.partial.plugin.listener.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 
-class BundleManagementService(private val project: Project) : TargetDefinitionChangeListener {
+class BundleManagementService : BackgroundResolvable {
     companion object {
         fun getInstance(project: Project): BundleManagementService =
             ServiceManager.getService(project, BundleManagementService::class.java)
@@ -20,37 +19,33 @@ class BundleManagementService(private val project: Project) : TargetDefinitionCh
         bundles.clear()
     }
 
-    override fun locationsChanged(project: Project, locations: List<TargetLocationDefinition>) {
+    override fun resolve(project: Project, indicator: ProgressIndicator) {
         clear()
 
-        object : BackgroundResolvable {
-            override fun resolve(project: Project, indicator: ProgressIndicator) {
-                locations.flatMap { it.bundles }.forEach { bundle ->
-                    bundle.manifest?.also { manifest ->
-                        val eclipseSourceBundle = manifest.eclipseSourceBundle
-                        if (eclipseSourceBundle != null) {
-                            bundles[eclipseSourceBundle.key]?.takeIf { it.manifest?.bundleVersion == manifest.bundleVersion }
-                                ?.takeIf { it.sourceBundle == null }?.apply { sourceBundle = bundle }
-                        } else {
-                            bundles.computeIfAbsent(bundle.bundleSymbolicName) { bundle }
-                        }
-                    }
+        TargetDefinitionService.getInstance(project).locations.flatMap { it.bundles }.forEach { bundle ->
+            bundle.manifest?.also { manifest ->
+                val eclipseSourceBundle = manifest.eclipseSourceBundle
+                if (eclipseSourceBundle != null) {
+                    bundles[eclipseSourceBundle.key]?.takeIf { it.manifest?.bundleVersion == manifest.bundleVersion }
+                        ?.takeIf { it.sourceBundle == null }?.apply { sourceBundle = bundle }
+                } else {
+                    bundles.computeIfAbsent(bundle.bundleSymbolicName) { bundle }
                 }
             }
+        }
+    }
 
-            override fun onFinished() {
-                val cacheService = BundleManifestCacheService.getInstance(project)
+    override fun onFinished(project: Project) {
+        val cacheService = BundleManifestCacheService.getInstance(project)
 
-                cacheService.clearCache()
-                ModuleHelper.resetLibrary(project)
-                cacheService.buildCache()
+        cacheService.clearCache()
+        ModuleHelper.resetLibrary(project)
+        cacheService.buildCache()
 
-                project.allPDEModules().forEach {
-                    ModuleHelper.resetCompileOutputPath(it)
-                    ModuleHelper.resetCompileArtifact(it)
-                    ModuleHelper.resetLibrary(it)
-                }
-            }
-        }.backgroundResolve(project)
+        project.allPDEModules().forEach {
+            ModuleHelper.resetCompileOutputPath(it)
+            ModuleHelper.resetCompileArtifact(it)
+            ModuleHelper.resetLibrary(it)
+        }
     }
 }

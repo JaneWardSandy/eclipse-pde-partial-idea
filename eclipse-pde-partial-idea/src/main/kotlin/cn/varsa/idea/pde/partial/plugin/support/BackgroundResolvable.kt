@@ -7,10 +7,10 @@ import com.intellij.openapi.project.*
 
 interface BackgroundResolvable {
     fun resolve(project: Project, indicator: ProgressIndicator)
-    fun onSuccess() {}
-    fun onCancel() {}
-    fun onThrowable(throwable: Throwable) {}
-    fun onFinished() {}
+    fun onSuccess(project: Project) {}
+    fun onCancel(project: Project) {}
+    fun onThrowable(project: Project, throwable: Throwable) {}
+    fun onFinished(project: Project) {}
 
     fun backgroundResolve(
         project: Project,
@@ -30,25 +30,25 @@ interface BackgroundResolvable {
             override fun onSuccess() {
                 super.onSuccess()
                 onSuccess()
-                this@BackgroundResolvable.onSuccess()
+                this@BackgroundResolvable.onSuccess(project)
             }
 
             override fun onCancel() {
                 super.onCancel()
                 onCancel()
-                this@BackgroundResolvable.onCancel()
+                this@BackgroundResolvable.onCancel(project)
             }
 
             override fun onThrowable(error: Throwable) {
                 super.onThrowable(error)
                 onThrowable(error)
-                this@BackgroundResolvable.onThrowable(error)
+                this@BackgroundResolvable.onThrowable(project, error)
             }
 
             override fun onFinished() {
                 super.onFinished()
                 onFinished()
-                this@BackgroundResolvable.onFinished()
+                this@BackgroundResolvable.onFinished(project)
             }
         }.setCancelText(EclipsePDEPartialBundles.message("config.target.service.cancel")).queue()
     }

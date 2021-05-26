@@ -90,7 +90,7 @@
         <listener class="cn.varsa.idea.pde.partial.plugin.listener.ModuleSetupOperation"
                   topic="cn.varsa.idea.pde.partial.plugin.listener.FacetChangeListener"/>
 
-        <listener class="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"
+        <listener class="cn.varsa.idea.pde.partial.plugin.listener.ProjectLibraryResetOperation"
                   topic="cn.varsa.idea.pde.partial.plugin.listener.TargetDefinitionChangeListener"/>
     </projectListeners>
 

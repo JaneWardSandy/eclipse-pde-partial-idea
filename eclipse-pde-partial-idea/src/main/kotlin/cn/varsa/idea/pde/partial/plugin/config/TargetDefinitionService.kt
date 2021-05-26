@@ -16,8 +16,7 @@ import com.intellij.util.xmlb.annotations.*
 import java.io.*
 
 @State(name = "TcRacTargetDefinitions", storages = [Storage("eclipse-partial.xml")])
-class TargetDefinitionService(private val project: Project) : PersistentStateComponent<TargetDefinitionService>,
-                                                              BackgroundResolvable {
+class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService>, BackgroundResolvable {
     @XCollection(elementName = "locations", style = XCollection.Style.v2) val locations =
         mutableListOf<TargetLocationDefinition>()
 
@@ -53,8 +52,8 @@ class TargetDefinitionService(private val project: Project) : PersistentStateCom
         }
     }
 
-    override fun onFinished() {
-        TargetDefinitionChangeListener.notifyLocationsChanged(project, locations)
+    override fun onFinished(project: Project) {
+        TargetDefinitionChangeListener.notifyLocationsChanged(project)
     }
 
     override fun getState(): TargetDefinitionService = this

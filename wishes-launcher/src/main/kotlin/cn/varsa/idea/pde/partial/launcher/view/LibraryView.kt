@@ -63,7 +63,7 @@ class LibraryView : View("Libraries") {
                     .map(File::getCanonicalPath).distinct()
 
                 launcherJarProperty += mapNotNull(File::listFiles).flatMap { it.toList() }
-                    .filter { it.extension.toLowerCase() == "jar" && it.name.startsWith("org.eclipse.equinox.launcher_") }
+                    .filter { it.extension.lowercase() == "jar" && it.name.startsWith("org.eclipse.equinox.launcher_") }
                     .map(File::getCanonicalPath).distinct()
             }
 
@@ -93,7 +93,7 @@ class LibraryView : View("Libraries") {
         launcherProperty += directory.parentFile.let { listOf(File(it, "Teamcenter.exe"), File(it, "eclipse.exe")) }
             .filter(File::exists).map(File::getCanonicalPath).distinct().filterNot(launcherProperty::contains)
         directory.listFiles()
-            ?.filter { it.extension.toLowerCase() == "jar" && it.name.startsWith("org.eclipse.equinox.launcher_") }
+            ?.filter { it.extension.lowercase() == "jar" && it.name.startsWith("org.eclipse.equinox.launcher_") }
             ?.map(File::getCanonicalPath)?.distinct()?.filterNot(launcherJarProperty::contains)
             ?.also { launcherJarProperty += it }
     }

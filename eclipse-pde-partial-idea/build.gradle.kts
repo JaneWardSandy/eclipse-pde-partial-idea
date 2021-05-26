@@ -49,6 +49,8 @@ tasks {
     compileKotlin {
         kotlinOptions {
             jvmTarget = "11"
+            apiVersion = "1.5"
+            languageVersion = "1.5"
         }
     }
 }

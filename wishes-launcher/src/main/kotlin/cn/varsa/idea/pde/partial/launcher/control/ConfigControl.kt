@@ -79,7 +79,7 @@ class ConfigControl : Controller(), ConfigService {
     override val devModules: MutableList<DevModule> = mutableListOf()
 
     override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
-        if (jarFileOrDirectory.isFile && jarFileOrDirectory.extension.toLowerCase() == "jar") {
+        if (jarFileOrDirectory.isFile && jarFileOrDirectory.extension.lowercase() == "jar") {
             JarFile(jarFileOrDirectory).use { it.manifest?.let(BundleManifest::parse) }
         } else {
             File(jarFileOrDirectory, ManifestPath).takeIf(File::exists)?.inputStream()?.use(::Manifest)

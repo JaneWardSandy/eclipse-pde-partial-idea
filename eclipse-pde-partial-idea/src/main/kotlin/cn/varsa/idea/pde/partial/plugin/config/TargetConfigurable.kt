@@ -168,7 +168,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             it += startupModel.elements().toList()
         }
 
-        TargetDefinitionChangeListener.notifyLocationsChanged(project, service.locations)
+        TargetDefinitionChangeListener.notifyLocationsChanged(project)
         locationModified.clear()
     }
 

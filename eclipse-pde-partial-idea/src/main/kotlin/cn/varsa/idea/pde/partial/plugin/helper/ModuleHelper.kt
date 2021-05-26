@@ -257,10 +257,10 @@ object ModuleHelper {
         LibraryTablesRegistrar.getInstance().getLibraryTable(model.project).libraries.filter {
             it.name?.startsWith(ProjectLibraryNamePrefix) == true
         }.forEach { dependencyLib ->
-            managementService.bundles[dependencyLib.name]?.dependencyScope?.also {
+            managementService.bundles[dependencyLib.name?.substringAfter(ProjectLibraryNamePrefix)]?.dependencyScope?.also {
                 model.addLibraryEntry(dependencyLib).apply {
                     scope = it
-                    isExported = true
+                    isExported = false
                 }
             }
         }

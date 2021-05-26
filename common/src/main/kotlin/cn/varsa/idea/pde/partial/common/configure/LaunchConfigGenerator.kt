@@ -117,7 +117,7 @@ object LaunchConfigGenerator {
             var id: String? = null
 
             if (file.isAbsolute) id = try {
-                if (file.isDirectory || (file.isFile && file.extension.toLowerCase() == "jar")) {
+                if (file.isDirectory || (file.isFile && file.extension.lowercase() == "jar")) {
                     configService.getManifest(file)?.bundleSymbolicName?.key
                 } else {
                     null

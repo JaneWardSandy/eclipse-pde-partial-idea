@@ -66,7 +66,9 @@ object ModuleHelper {
     ) {
         PDEFacet.getInstance(module) ?: return
         if (addBinary.isEmpty() && removeBinary.isEmpty()) return
-        BundleManifestCacheService.getInstance(module.project).getManifest(module) ?: return
+
+        val cacheService = BundleManifestCacheService.getInstance(module.project)
+        ReadAction.compute<BundleManifest?, Exception> { cacheService.getManifest(module) } ?: return
 
         val model = ReadAction.compute<ModifiableArtifactModel, Exception> {
             ArtifactManager.getInstance(module.project).createModifiableModel()
@@ -88,7 +90,10 @@ object ModuleHelper {
         addBinary: Set<String> = emptySet(),
         removeBinary: Set<String> = emptySet()
     ): Boolean {
-        val manifest = BundleManifestCacheService.getInstance(module.project).getManifest(module) ?: return false
+        val cacheService = BundleManifestCacheService.getInstance(module.project)
+        val manifest =
+            ReadAction.compute<BundleManifest?, Exception> { cacheService.getManifest(module) } ?: return false
+
         val factory = PackagingElementFactory.getInstance()
 
         val artifactName = "$ArtifactPrefix${module.name}"
@@ -134,52 +139,57 @@ object ModuleHelper {
         val cacheService = BundleManifestCacheService.getInstance(project)
 
         LibraryTablesRegistrar.getInstance().getLibraryTable(project).also { libraryTable ->
-            WriteAction.runAndWait<Exception> {
-                libraryTable.libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }.forEach {
-                    libraryTable.removeLibrary(it)
+            ApplicationManager.getApplication().invokeAndWait {
+                WriteAction.runAndWait<Exception> {
+                    libraryTable.libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }.forEach {
+                        libraryTable.removeLibrary(it)
+                    }
                 }
             }
         }
 
-        val moduleNames = project.allPDEModules().mapNotNull { cacheService.getManifest(it) }
+
+        val moduleNames = project.allPDEModules()
+            .mapNotNull { ReadAction.compute<BundleManifest, Exception> { cacheService.getManifest(it) } }
             .mapNotNull { it.bundleSymbolicName?.key }.toSet()
 
-        BundleManagementService.getInstance(project).bundles.filterKeys { !moduleNames.contains(it) }.values.forEach { bundle ->
-            setLibrary(
-                project,
-                "$ProjectLibraryNamePrefix${bundle.bundleSymbolicName}",
-                bundle.dependencyScope,
-                bundle.classPaths.map { it.protocolUrl }.toSet(),
-                bundle.sourceBundle?.classPaths?.map { it.protocolUrl }?.toSet() ?: emptySet()
-            )
-        }
-    }
+        BundleManagementService.getInstance(project).bundles.filterKeys { !moduleNames.contains(it) }.values.let { bundles ->
+            val map = hashMapOf<Library, BundleDefinition>()
 
-    private fun setLibrary(
-        project: Project,
-        libraryName: String,
-        dependencyScope: DependencyScope,
-        classesRootUrls: Set<String> = emptySet(),
-        sourceRootUrls: Set<String> = emptySet()
-    ) {
-        if (project.allPDEModules().isEmpty()) return
+            ApplicationManager.getApplication().invokeAndWait {
+                bundles.forEach { bundle ->
+                    val libraryName = "$ProjectLibraryNamePrefix${bundle.bundleSymbolicName}"
 
-        val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).let {
-            WriteAction.compute<Library, Exception> { it.createLibrary(libraryName) }
-        }
-        val libraryModel = library.modifiableModel
+                    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).let { libraryTable ->
+                        libraryTable.getLibraryByName(libraryName)?.also { libraryTable.removeLibrary(it) }
+                        WriteAction.compute<Library, Exception> { libraryTable.createLibrary(libraryName) }
+                    }
 
-        classesRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
-        sourceRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
-
-        ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { libraryModel.commit() } }
-
-        project.allPDEModules().forEach { module ->
-            ModuleRootModificationUtil.updateModel(module) { model ->
-                (model.findLibraryOrderEntry(library) ?: model.addLibraryEntry(library)).apply {
-                    scope = dependencyScope
-                    isExported = false
+                    map[library] = bundle
                 }
+            }
+
+            map
+        }.map { (library, bundle) ->
+            val libraryModel = library.modifiableModel
+
+            bundle.classPaths.map { it.protocolUrl }.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+            bundle.sourceBundle?.classPaths?.map { it.protocolUrl }
+                ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
+
+            project.allPDEModules().forEach { module ->
+                ModuleRootModificationUtil.updateModel(module) { model ->
+                    (model.findLibraryOrderEntry(library) ?: model.addLibraryEntry(library)).apply {
+                        scope = bundle.dependencyScope
+                        isExported = false
+                    }
+                }
+            }
+
+            libraryModel
+        }.also { list ->
+            ApplicationManager.getApplication().invokeAndWait {
+                WriteAction.run<Exception> { list.forEach { it.commit() } }
             }
         }
     }
@@ -188,13 +198,14 @@ object ModuleHelper {
     fun resetLibrary(module: Module) {
         PDEFacet.getInstance(module) ?: return
 
-        BundleManifestCacheService.getInstance(module.project).getManifest(module)?.also { manifest ->
-            manifest.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
-                ModuleRootManager.getInstance(module).contentRoots.mapNotNull { it.findFileByRelativePath(binaryName) }
-            }?.map { it.protocolUrl }?.distinct()?.toSet()?.also {
-                setLibrary(module, DependencyScope.COMPILE, false, it)
+        BundleManifestCacheService.getInstance(module.project)
+            .let { ReadAction.compute<BundleManifest?, Exception> { it.getManifest(module) } }?.also { manifest ->
+                manifest.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
+                    ModuleRootManager.getInstance(module).contentRoots.mapNotNull { it.findFileByRelativePath(binaryName) }
+                }?.map { it.protocolUrl }?.distinct()?.toSet()?.also {
+                    setLibrary(module, DependencyScope.COMPILE, false, it)
+                }
             }
-        }
     }
 
     private fun setLibrary(
@@ -224,25 +235,27 @@ object ModuleHelper {
             it is ModuleSourceOrderEntry || it is JdkOrderEntry || it.presentableName.startsWith("KotlinJavaRuntime")
         }.forEach { model.removeOrderEntry(it) }
 
-        val library = model.moduleLibraryTable.let {
-            it.getLibraryByName(ModuleLibraryName) ?: WriteAction.compute<Library, Exception> {
-                it.createLibrary(ModuleLibraryName)
+        ApplicationManager.getApplication().invokeAndWait {
+            val library = model.moduleLibraryTable.let {
+                it.getLibraryByName(ModuleLibraryName) ?: WriteAction.compute<Library, Exception> {
+                    it.createLibrary(ModuleLibraryName)
+                }
             }
+            val libraryModel = library.modifiableModel
+
+            model.findLibraryOrderEntry(library)?.apply {
+                scope = dependencyScope
+                isExported = exported
+            }
+
+            OrderRootType.getAllTypes()
+                .forEach { type -> libraryModel.getUrls(type).forEach { libraryModel.removeRoot(it, type) } }
+
+            classesRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+            sourceRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
+
+            WriteAction.run<Exception> { libraryModel.commit() }
         }
-        val libraryModel = library.modifiableModel
-
-        model.findLibraryOrderEntry(library)?.apply {
-            scope = dependencyScope
-            isExported = exported
-        }
-
-        OrderRootType.getAllTypes()
-            .forEach { type -> libraryModel.getUrls(type).forEach { libraryModel.removeRoot(it, type) } }
-
-        classesRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
-        sourceRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
-
-        ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { libraryModel.commit() } }
 
         val cacheService = BundleManifestCacheService.getInstance(model.project)
         model.module.also { module ->

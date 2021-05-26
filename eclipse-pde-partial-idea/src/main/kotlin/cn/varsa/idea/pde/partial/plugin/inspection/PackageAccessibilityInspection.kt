@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
@@ -18,7 +19,7 @@ import com.intellij.openapi.roots.libraries.*
 import com.intellij.packageDependencies.*
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
+import org.jetbrains.kotlin.idea.util.projectStructure.*
 import org.jetbrains.kotlin.psi.*
 import org.osgi.framework.Constants.*
 import java.lang.annotation.*
@@ -94,6 +95,7 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
             if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return null
 
             val cacheService = BundleManifestCacheService.getInstance(requesterModule.project)
+            val managementService = BundleManagementService.getInstance(requesterModule.project)
 
             val exporter = cacheService.getManifest(item)
             val exporterSymbolic = exporter?.bundleSymbolicName
@@ -103,12 +105,9 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
 
             val exporterSymbolicName = exporter.fragmentHost?.key ?: exporterSymbolic.key
 
-            val exporterExportedPackage =
-                exporter.getExportedPackage(packageName) ?: cacheService.getManifestByBundleSymbolName(
-                    exporterSymbolicName
-                )?.getExportedPackage(packageName) ?: return Problem.error(
-                    message("inspection.hint.packageNoExport", packageName)
-                )
+            val exporterExportedPackage = exporter.getExportedPackage(packageName)
+                ?: managementService.bundles[exporterSymbolicName]?.manifest?.getExportedPackage(packageName)
+                ?: return Problem.error(message("inspection.hint.packageNoExport", packageName))
 
             val importer = cacheService.getManifest(requesterModule)
             if (importer != null) {
@@ -122,8 +121,8 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
                 if (requesterModule.isExportedPackageFromRequiredBundle(packageName)) return null
             }
 
-            val requiredFixes = cacheService.getVersionByBundleSymbolName(exporterSymbolicName)
-                ?.let { arrayOf(RequireBundleFix(exporterSymbolicName, it.toString())) } ?: emptyArray()
+            val requiredFixes = managementService.bundles[exporterSymbolicName]?.manifest?.bundleVersion?.toString()
+                ?.let { arrayOf(RequireBundleFix(exporterSymbolicName, it)) } ?: emptyArray()
 
             return Problem.error(
                 message("inspection.hint.packageAccessibility", packageName, exporterSymbolicName),

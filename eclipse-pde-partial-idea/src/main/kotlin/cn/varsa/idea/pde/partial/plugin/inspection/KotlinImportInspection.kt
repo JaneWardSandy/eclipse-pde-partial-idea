@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
@@ -25,14 +26,13 @@ class KotlinImportInspection : AbstractBaseJavaLocalInspectionTool() {
         val projectFileIndex = ProjectFileIndex.getInstance(project)
         if (file.virtualFile?.let(projectFileIndex::isInLibrary) == true) return null
 
-        val cacheService = BundleManifestCacheService.getInstance(project)
-
         val module = file.module ?: return null
         PDEFacet.getInstance(module) ?: return null
         module.isBundleRequiredOrFromReExport(KotlinBundleSymbolName).ifTrue { return null }
 
-        val fixes = cacheService.getVersionByBundleSymbolName(KotlinBundleSymbolName)
-            ?.let { arrayOf(KotlinRequireBundleFix(it.toString())) } ?: emptyArray()
+        val managementService = BundleManagementService.getInstance(project)
+        val fixes = managementService.bundles[KotlinBundleSymbolName]?.manifest?.bundleVersion?.toString()
+            ?.let { arrayOf(KotlinRequireBundleFix(it)) } ?: emptyArray()
 
         return arrayOf(
             manager.createProblemDescriptor(

@@ -101,6 +101,7 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
         val pluginsDirectory = File(directory, Plugins).takeIf(File::exists) ?: directory
         pluginsDirectory.listFiles()?.filterNot { it.isHidden }?.forEach { file ->
             indicator.checkCanceled()
+            indicator.text2 = "Resolving file $file"
 
             val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file) ?: return@forEach
             if (file.isFile && file.extension.equalAny("jar", "aar", "war", ignoreCase = true)) {

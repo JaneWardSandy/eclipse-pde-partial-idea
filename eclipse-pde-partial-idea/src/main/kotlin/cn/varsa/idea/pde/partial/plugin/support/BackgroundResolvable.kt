@@ -17,7 +17,8 @@ interface BackgroundResolvable {
         onSuccess: () -> Unit = {},
         onCancel: () -> Unit = {},
         onThrowable: (Throwable) -> Unit = { e -> thisLogger().error(e.message, e) },
-        onFinished: () -> Unit = {}
+        onFinished: () -> Unit = {},
+        taskOP: Task.() -> Unit = {}
     ) {
         object : Task.Backgroundable(
             project, EclipsePDEPartialBundles.message("config.target.service.resolving"), true, DEAF
@@ -50,6 +51,6 @@ interface BackgroundResolvable {
                 onFinished()
                 this@BackgroundResolvable.onFinished(project)
             }
-        }.setCancelText(EclipsePDEPartialBundles.message("config.target.service.cancel")).queue()
+        }.setCancelText(EclipsePDEPartialBundles.message("config.target.service.cancel")).apply(taskOP).queue()
     }
 }

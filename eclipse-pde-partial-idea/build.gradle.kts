@@ -41,6 +41,14 @@ tasks {
         token(ideaPluginToken)
     }
 
+    runIde {
+        jvmArgs("--add-exports", "java.base/jdk.internal.vm=ALL-UNNAMED")
+    }
+
+    buildSearchableOptions {
+        jvmArgs("--add-exports", "java.base/jdk.internal.vm=ALL-UNNAMED")
+    }
+
     compileJava {
         sourceCompatibility = "11"
         targetCompatibility = "11"

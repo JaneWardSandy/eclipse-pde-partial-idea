@@ -135,11 +135,10 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 
         override val libraries: List<File>
-            get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project).run {
-                DependencyScope.values().map { it.displayName }.map { getLibraryByName("$ProjectLibraryNamePrefix$it") }
-                    .mapNotNull { it?.getFiles(OrderRootType.CLASSES) }.flatMap { it.toList() }
-                    .map { it.presentableUrl.toFile() }
-            }
+            get() = LibraryTablesRegistrar.getInstance()
+                .getLibraryTable(project).libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }
+                .mapNotNull { it.getFiles(OrderRootType.CLASSES) }.flatMap { it.toList() }
+                .map { it.presentableUrl.toFile() }
 
         override val devModules: List<DevModule>
             get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)

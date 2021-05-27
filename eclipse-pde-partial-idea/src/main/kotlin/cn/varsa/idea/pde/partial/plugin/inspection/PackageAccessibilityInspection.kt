@@ -48,7 +48,7 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
                     list.add(manager.createProblemDescriptor(place, it.message, isOnTheFly, it.fixes, it.type))
                 }
             }
-        }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS)
+        }, DependencyVisitorFactory.VisitorOptions.INCLUDE_IMPORTS)
 
         return list.takeIf { it.isNotEmpty() }?.toTypedArray()
     }

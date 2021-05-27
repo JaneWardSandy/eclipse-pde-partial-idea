@@ -98,5 +98,8 @@
         <action class="cn.varsa.idea.pde.partial.plugin.action.ResolveWorkspaceAction" icon="AllIcons.Actions.Refresh">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
+        <action class="cn.varsa.idea.pde.partial.plugin.action.ResolveManifestAction" icon="AllIcons.Actions.Refresh">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>

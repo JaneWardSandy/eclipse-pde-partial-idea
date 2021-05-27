@@ -46,10 +46,18 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
     }
 
     override fun resolve(project: Project, indicator: ProgressIndicator) {
+        indicator.checkCanceled()
+        indicator.isIndeterminate = false
+        indicator.fraction = 0.0
+
+        val step = 1 / locations.size
         locations.forEach {
             indicator.checkCanceled()
             it.resolve(project, indicator)
+            indicator.fraction += step
         }
+
+        indicator.fraction = 1.0
     }
 
     override fun onFinished(project: Project) {

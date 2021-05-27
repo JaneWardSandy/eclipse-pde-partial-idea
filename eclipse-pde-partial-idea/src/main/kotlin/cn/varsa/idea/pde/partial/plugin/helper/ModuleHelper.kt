@@ -203,7 +203,7 @@ object ModuleHelper {
                 manifest.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
                     ModuleRootManager.getInstance(module).contentRoots.mapNotNull { it.findFileByRelativePath(binaryName) }
                 }?.map { it.protocolUrl }?.distinct()?.toSet()?.also {
-                    setLibrary(module, DependencyScope.COMPILE, false, it)
+                    setLibrary(module, DependencyScope.COMPILE, true, it)
                 }
             }
     }
@@ -231,39 +231,45 @@ object ModuleHelper {
     ) {
         PDEFacet.getInstance(model.module) ?: return
 
-        model.orderEntries.filterNot {
-            it is ModuleSourceOrderEntry || it is JdkOrderEntry || it.presentableName.startsWith("KotlinJavaRuntime")
+        model.orderEntries.filter {
+            it.presentableName == ModuleLibraryName || it.presentableName.startsWith(ProjectLibraryNamePrefix) || it is ModuleOrderEntry
         }.forEach { model.removeOrderEntry(it) }
 
         ApplicationManager.getApplication().invokeAndWait {
-            val library = model.moduleLibraryTable.let {
-                it.getLibraryByName(ModuleLibraryName) ?: WriteAction.compute<Library, Exception> {
-                    it.createLibrary(ModuleLibraryName)
+            val moduleLibraryTable = model.moduleLibraryTable.modifiableModel
+
+            val library =
+                moduleLibraryTable.getLibraryByName(ModuleLibraryName) ?: WriteAction.compute<Library, Exception> {
+                    moduleLibraryTable.createLibrary(ModuleLibraryName)
                 }
-            }
-            val libraryModel = library.modifiableModel
 
             model.findLibraryOrderEntry(library)?.apply {
                 scope = dependencyScope
                 isExported = exported
             }
 
+            val libraryModel = library.modifiableModel
             OrderRootType.getAllTypes()
                 .forEach { type -> libraryModel.getUrls(type).forEach { libraryModel.removeRoot(it, type) } }
 
             classesRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
             sourceRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
 
-            WriteAction.run<Exception> { libraryModel.commit() }
+            WriteAction.run<Exception> {
+                libraryModel.commit()
+                moduleLibraryTable.commit()
+            }
         }
 
         val cacheService = BundleManifestCacheService.getInstance(model.project)
         model.module.also { module ->
-            model.project.allPDEModules().filter { it != module }.filter {
-                module.isBundleRequiredOrFromReExport(
-                    cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name
-                )
-            }.forEach { model.addModuleOrderEntry(it) }
+            ApplicationManager.getApplication().invokeAndWait {
+                model.project.allPDEModules().filter { it != module }.filter {
+                    module.isBundleRequiredOrFromReExport(ReadAction.compute<String, Exception> {
+                        cacheService.getManifest(it)?.bundleSymbolicName?.key ?: it.name
+                    })
+                }.forEach { model.addModuleOrderEntry(it) }
+            }
         }
 
         val managementService = BundleManagementService.getInstance(model.project)

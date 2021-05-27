@@ -1,7 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.support
 
 import cn.varsa.idea.pde.partial.plugin.i18n.*
-import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 
@@ -16,7 +15,7 @@ interface BackgroundResolvable {
         project: Project,
         onSuccess: () -> Unit = {},
         onCancel: () -> Unit = {},
-        onThrowable: (Throwable) -> Unit = { e -> thisLogger().error(e.message, e) },
+        onThrowable: (Throwable) -> Unit = { _ -> },
         onFinished: () -> Unit = {},
         taskOP: Task.() -> Unit = {}
     ) {

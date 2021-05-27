@@ -9,14 +9,16 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
 import com.intellij.psi.util.*
+import com.jetbrains.rd.util.*
 import org.jetbrains.lang.manifest.psi.*
 import java.util.jar.*
+import kotlin.io.use
 
 class BundleManifestCacheService(private val project: Project) {
 
     // Key was manifest file path
     // will maintain key's relation to the same value on CacheValue update
-    private val caches = HashMap<String, CachedValue<BundleManifest>>()
+    private val caches = ConcurrentHashMap<String, CachedValue<BundleManifest>>()
 
     companion object {
         fun getInstance(project: Project): BundleManifestCacheService =

@@ -50,7 +50,7 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
                     list.add(manager.createProblemDescriptor(place, it.message, isOnTheFly, it.fixes, it.type))
                 }
             }
-        }, DependencyVisitorFactory.VisitorOptions.INCLUDE_IMPORTS)
+        }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS)
 
         return list.takeIf { it.isNotEmpty() }?.toTypedArray()
     }
@@ -132,12 +132,12 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
             }
 
             val requiredFixes = managementService.bundles[exporterSymbolicName]?.manifest?.bundleVersion?.toString()
-                ?.let { arrayOf(RequireBundleFix(exporterSymbolicName, it)) } ?: emptyArray()
+                ?.let { arrayOf(AccessibilityFix.requireBundleFix(exporterSymbolicName, it)) } ?: emptyArray()
 
             return Problem.error(
                 message("inspection.hint.packageAccessibility", packageName, exporterSymbolicName),
-                ImportPackageFix(exporterExportedPackage),
-                *requiredFixes + RequireBundleFix(exporterSymbolicName)
+                AccessibilityFix.importPackageFix(exporterExportedPackage),
+                *requiredFixes + AccessibilityFix.requireBundleFix(exporterSymbolicName)
             )
         }
     }
@@ -153,29 +153,29 @@ class Problem(val type: ProblemHighlightType, val message: @InspectionMessage St
     }
 }
 
-class ImportPackageFix(private val importPackage: String) : AbstractOsgiQuickFix() {
-    override fun getName(): String = message("inspection.fix.addPackageToImport", importPackage)
-
+class AccessibilityFix private constructor(
+    private val displayName: String, private val headerName: String, private val headerValue: String
+) : AbstractOsgiQuickFix() {
+    override fun getName(): String = displayName
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         getVerifiedManifestFile(descriptor.psiElement)?.also {
             WriteAction.run<Exception> {
-                PsiHelper.appendToHeader(it, IMPORT_PACKAGE, importPackage)
+                PsiHelper.appendToHeader(it, headerName, headerValue)
             }
         }
     }
-}
 
-class RequireBundleFix(requireBundle: String, version: String? = null) : AbstractOsgiQuickFix() {
-    private val headerValue =
-        "$requireBundle${if (version.isNullOrBlank()) "" else ";$BUNDLE_VERSION_ATTRIBUTE=\"$version\""}"
+    companion object Factory {
+        fun importPackageFix(importPackage: String): AccessibilityFix =
+            AccessibilityFix(message("inspection.fix.addPackageToImport", importPackage), IMPORT_PACKAGE, importPackage)
 
-    override fun getName(): String = message("inspection.fix.addBundleToRequired", headerValue)
+        fun requireBundleFix(requireBundle: String, version: String? = null): AccessibilityFix {
+            val headerValue =
+                "$requireBundle${if (version.isNullOrBlank()) "" else ";$BUNDLE_VERSION_ATTRIBUTE=\"$version\""}"
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        getVerifiedManifestFile(descriptor.psiElement)?.also {
-            WriteAction.run<Exception> {
-                PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue)
-            }
+            return AccessibilityFix(
+                message("inspection.fix.addBundleToRequired", headerValue), REQUIRE_BUNDLE, headerValue
+            )
         }
     }
 }

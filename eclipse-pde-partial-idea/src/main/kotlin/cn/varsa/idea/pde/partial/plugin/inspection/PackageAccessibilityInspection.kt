@@ -1,12 +1,14 @@
 package cn.varsa.idea.pde.partial.plugin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
+import cn.varsa.idea.pde.partial.plugin.support.getModuleDir
 import com.intellij.codeInsight.daemon.impl.analysis.*
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.*
@@ -94,10 +96,23 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
             val library = requesterModule.findLibrary { it.name == ModuleLibraryName }
             if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return null
 
-            val cacheService = BundleManifestCacheService.getInstance(requesterModule.project)
-            val managementService = BundleManagementService.getInstance(requesterModule.project)
+            val project = requesterModule.project
+            val cacheService = BundleManifestCacheService.getInstance(project)
+            val managementService = BundleManagementService.getInstance(project)
+            val index = ProjectFileIndex.getInstance(project)
 
-            val exporter = cacheService.getManifest(item)
+            // In bundle class path?
+            val jarFile = index.getClassRootForFile(item.virtualFile)
+            val containerBundle =
+                managementService.jarPathInnerBundle[jarFile?.presentableUrl]?.manifest ?: project.allPDEModules()
+                    .filterNot { requesterModule == it }.firstOrNull { module ->
+                        jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
+                            ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+                            ?.any { jarFile?.presentableUrl == it } == true
+                    }?.let { cacheService.getManifest(it) }
+
+
+            val exporter = containerBundle ?: cacheService.getManifest(item)
             val exporterSymbolic = exporter?.bundleSymbolicName
             if (exporter == null || exporterSymbolic == null) {
                 return Problem.weak(message("inspection.hint.nonBundle", packageName))
@@ -107,18 +122,13 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
 
             val exporterExportedPackage = exporter.getExportedPackage(packageName)
                 ?: managementService.bundles[exporterSymbolicName]?.manifest?.getExportedPackage(packageName)
-                ?: return Problem.error(message("inspection.hint.packageNoExport", packageName))
+                ?: return Problem.error(message("inspection.hint.packageNoExport", packageName, exporterSymbolicName))
 
             val importer = cacheService.getManifest(requesterModule)
             if (importer != null) {
                 if (importer.isPackageImported(packageName)) return null
                 if (importer.isBundleRequired(exporterSymbolicName)) return null
                 if (requesterModule.isBundleRequiredOrFromReExport(exporterSymbolicName)) return null
-
-                // FIXME: 2021/5/7 Class in bundle-classpath and it was exported
-                // like /Eclipse.app/Contents/Eclipse/plugins/org.apache.ant_1.10.9.v20201106-1946/lib/ant-antlr.jar
-                // ant bundle can resolve, but class inside lib cannot be read
-                if (requesterModule.isExportedPackageFromRequiredBundle(packageName)) return null
             }
 
             val requiredFixes = managementService.bundles[exporterSymbolicName]?.manifest?.bundleVersion?.toString()

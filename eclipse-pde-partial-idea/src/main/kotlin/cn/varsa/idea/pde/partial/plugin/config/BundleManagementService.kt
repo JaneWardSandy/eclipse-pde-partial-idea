@@ -15,10 +15,12 @@ class BundleManagementService : BackgroundResolvable {
 
     val bundles = hashMapOf<String, BundleDefinition>()
     val libReExportRequiredSymbolName = hashMapOf<String, HashSet<String>>()
+    val jarPathInnerBundle = hashMapOf<String, BundleDefinition>()
 
     private fun clear() {
         bundles.clear()
         libReExportRequiredSymbolName.clear()
+        jarPathInnerBundle.clear()
     }
 
     override fun resolve(project: Project, indicator: ProgressIndicator) {
@@ -41,7 +43,10 @@ class BundleManagementService : BackgroundResolvable {
                     this.bundles[eclipseSourceBundle.key]?.takeIf { it.manifest?.bundleVersion == manifest.bundleVersion }
                         ?.takeIf { it.sourceBundle == null }?.apply { sourceBundle = bundle }
                 } else {
-                    this.bundles.computeIfAbsent(bundle.bundleSymbolicName) { bundle }
+                    this.bundles.computeIfAbsent(bundle.bundleSymbolicName) {
+                        bundle.classPaths.map { it.presentableUrl }.forEach { jarPathInnerBundle[it] = bundle }
+                        bundle
+                    }
                 }
             }
             indicator.fraction += step
@@ -51,8 +56,9 @@ class BundleManagementService : BackgroundResolvable {
         indicator.text2 = "Resolving dependency tree"
         indicator.fraction = 0.9
 
-        this.bundles.map { it.key to (it.value.manifest?.reExportRequiredBundleSymbolNames?.toHashSet() ?: hashSetOf()) }
-            .toMap().also { libReExportRequiredSymbolName += it }.run {
+        this.bundles.map {
+            it.key to (it.value.manifest?.reExportRequiredBundleSymbolNames?.toHashSet() ?: hashSetOf())
+        }.toMap().also { libReExportRequiredSymbolName += it }.run {
                 forEach { (symbolName, reExport) -> fillDependencies(symbolName, reExport, reExport, this) }
             }
         indicator.fraction = 1.0

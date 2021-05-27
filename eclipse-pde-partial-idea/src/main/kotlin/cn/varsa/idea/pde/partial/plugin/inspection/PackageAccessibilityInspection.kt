@@ -1,11 +1,14 @@
 package cn.varsa.idea.pde.partial.plugin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
+import cn.varsa.idea.pde.partial.plugin.support.getModuleDir
 import com.intellij.codeInsight.daemon.impl.analysis.*
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.*
@@ -18,7 +21,7 @@ import com.intellij.openapi.roots.libraries.*
 import com.intellij.packageDependencies.*
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
+import org.jetbrains.kotlin.idea.util.projectStructure.*
 import org.jetbrains.kotlin.psi.*
 import org.osgi.framework.Constants.*
 import java.lang.annotation.*
@@ -93,9 +96,23 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
             val library = requesterModule.findLibrary { it.name == ModuleLibraryName }
             if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return null
 
-            val cacheService = BundleManifestCacheService.getInstance(requesterModule.project)
+            val project = requesterModule.project
+            val cacheService = BundleManifestCacheService.getInstance(project)
+            val managementService = BundleManagementService.getInstance(project)
+            val index = ProjectFileIndex.getInstance(project)
 
-            val exporter = cacheService.getManifest(item)
+            // In bundle class path?
+            val jarFile = index.getClassRootForFile(item.virtualFile)
+            val containerBundle =
+                managementService.jarPathInnerBundle[jarFile?.presentableUrl]?.manifest ?: project.allPDEModules()
+                    .filterNot { requesterModule == it }.firstOrNull { module ->
+                        jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
+                            ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+                            ?.any { jarFile?.presentableUrl == it } == true
+                    }?.let { cacheService.getManifest(it) }
+
+
+            val exporter = containerBundle ?: cacheService.getManifest(item)
             val exporterSymbolic = exporter?.bundleSymbolicName
             if (exporter == null || exporterSymbolic == null) {
                 return Problem.weak(message("inspection.hint.nonBundle", packageName))
@@ -103,32 +120,24 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
 
             val exporterSymbolicName = exporter.fragmentHost?.key ?: exporterSymbolic.key
 
-            val exporterExportedPackage =
-                exporter.getExportedPackage(packageName) ?: cacheService.getManifestByBundleSymbolName(
-                    exporterSymbolicName
-                )?.getExportedPackage(packageName) ?: return Problem.error(
-                    message("inspection.hint.packageNoExport", packageName)
-                )
+            val exporterExportedPackage = exporter.getExportedPackage(packageName)
+                ?: managementService.bundles[exporterSymbolicName]?.manifest?.getExportedPackage(packageName)
+                ?: return Problem.error(message("inspection.hint.packageNoExport", packageName, exporterSymbolicName))
 
             val importer = cacheService.getManifest(requesterModule)
             if (importer != null) {
                 if (importer.isPackageImported(packageName)) return null
                 if (importer.isBundleRequired(exporterSymbolicName)) return null
                 if (requesterModule.isBundleRequiredOrFromReExport(exporterSymbolicName)) return null
-
-                // FIXME: 2021/5/7 Class in bundle-classpath and it was exported
-                // like /Eclipse.app/Contents/Eclipse/plugins/org.apache.ant_1.10.9.v20201106-1946/lib/ant-antlr.jar
-                // ant bundle can resolve, but class inside lib cannot be read
-                if (requesterModule.isExportedPackageFromRequiredBundle(packageName)) return null
             }
 
-            val requiredFixes = cacheService.getVersionByBundleSymbolName(exporterSymbolicName)
-                ?.let { arrayOf(RequireBundleFix(exporterSymbolicName, it.toString())) } ?: emptyArray()
+            val requiredFixes = managementService.bundles[exporterSymbolicName]?.manifest?.bundleVersion?.toString()
+                ?.let { arrayOf(AccessibilityFix.requireBundleFix(exporterSymbolicName, it)) } ?: emptyArray()
 
             return Problem.error(
                 message("inspection.hint.packageAccessibility", packageName, exporterSymbolicName),
-                ImportPackageFix(exporterExportedPackage),
-                *requiredFixes + RequireBundleFix(exporterSymbolicName)
+                AccessibilityFix.importPackageFix(exporterExportedPackage),
+                *requiredFixes + AccessibilityFix.requireBundleFix(exporterSymbolicName)
             )
         }
     }
@@ -144,29 +153,29 @@ class Problem(val type: ProblemHighlightType, val message: @InspectionMessage St
     }
 }
 
-class ImportPackageFix(private val importPackage: String) : AbstractOsgiQuickFix() {
-    override fun getName(): String = message("inspection.fix.addPackageToImport", importPackage)
-
+class AccessibilityFix private constructor(
+    private val displayName: String, private val headerName: String, private val headerValue: String
+) : AbstractOsgiQuickFix() {
+    override fun getName(): String = displayName
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         getVerifiedManifestFile(descriptor.psiElement)?.also {
             WriteAction.run<Exception> {
-                PsiHelper.appendToHeader(it, IMPORT_PACKAGE, importPackage)
+                PsiHelper.appendToHeader(it, headerName, headerValue)
             }
         }
     }
-}
 
-class RequireBundleFix(requireBundle: String, version: String? = null) : AbstractOsgiQuickFix() {
-    private val headerValue =
-        "$requireBundle${if (version.isNullOrBlank()) "" else ";$BUNDLE_VERSION_ATTRIBUTE=\"$version\""}"
+    companion object Factory {
+        fun importPackageFix(importPackage: String): AccessibilityFix =
+            AccessibilityFix(message("inspection.fix.addPackageToImport", importPackage), IMPORT_PACKAGE, importPackage)
 
-    override fun getName(): String = message("inspection.fix.addBundleToRequired", headerValue)
+        fun requireBundleFix(requireBundle: String, version: String? = null): AccessibilityFix {
+            val headerValue =
+                "$requireBundle${if (version.isNullOrBlank()) "" else ";$BUNDLE_VERSION_ATTRIBUTE=\"$version\""}"
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        getVerifiedManifestFile(descriptor.psiElement)?.also {
-            WriteAction.run<Exception> {
-                PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue)
-            }
+            return AccessibilityFix(
+                message("inspection.fix.addBundleToRequired", headerValue), REQUIRE_BUNDLE, headerValue
+            )
         }
     }
 }

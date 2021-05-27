@@ -72,8 +72,8 @@ fun EventTarget.fileField(
                 when {
                     !file.isFile -> error("Path must be file")
                     !file.exists() -> error("File must existed")
-                    file.name.toLowerCase().let { name ->
-                        extensionFilter.flatMap { e -> e.extensions }.map { e -> e.toLowerCase() }
+                    file.name.lowercase().let { name ->
+                        extensionFilter.flatMap { e -> e.extensions }.map { e -> e.lowercase() }
                             .none { e -> name.endsWith(e) }
                     } -> error("File must be ends with ${extensionFilter.flatMap { e -> e.extensions }}")
                     else -> op(this, it)

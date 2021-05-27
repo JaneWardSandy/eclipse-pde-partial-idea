@@ -10,7 +10,7 @@ import com.intellij.ui.components.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.*
 import org.jetbrains.kotlin.idea.core.util.*
-import org.jetbrains.kotlin.idea.util.projectStructure.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import java.awt.*
 import javax.swing.*
 

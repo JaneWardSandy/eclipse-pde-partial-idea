@@ -1,10 +1,12 @@
 package cn.varsa.idea.pde.partial.plugin.manifest.lang
 
 import cn.varsa.idea.pde.partial.common.domain.*
+import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.manifest.psi.*
-import cn.varsa.idea.pde.partial.plugin.manifest.psi.BundleReference
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.lang.*
 import com.intellij.lang.annotation.*
 import com.intellij.openapi.util.*
@@ -12,8 +14,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*
 import com.intellij.psi.tree.*
-import org.jetbrains.kotlin.idea.util.module
-import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
 import org.jetbrains.lang.manifest.header.*
 import org.jetbrains.lang.manifest.header.impl.*
 import org.jetbrains.lang.manifest.parser.*
@@ -205,7 +205,6 @@ object BundleSymbolicNameParser : HeaderParser by OsgiHeaderParser {
                 )
                 annotated = true
             }
-            // TODO: 2021/2/7 Only one headerValuePart allow? Bundle-SymbolicName: demo.button;singleton:=true;thisPartNotAllowed
 
             clause.getDirectives().run {
                 if (any { it.name != SINGLETON_DIRECTIVE }) {
@@ -263,7 +262,34 @@ object BundleActivatorParser : ClassReferenceParser() {
 }
 
 object RequireBundleParser : HeaderParser by OsgiHeaderParser {
-    // TODO: 2021/2/8 annotate?
+    override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
+        var annotated = false
+
+        header.headerValues.mapNotNull { it as? Clause }.forEach { clause ->
+            val text = clause.getValue()?.unwrappedText
+            if (text.isNullOrBlank()) {
+                holder.createError(message("manifest.lang.invalidBlank"), clause.textRange)
+                annotated = true
+            } else {
+                val project = header.project
+                val cacheService = BundleManifestCacheService.getInstance(project)
+
+                if (header.module?.let { cacheService.getManifest(it) }?.bundleSymbolicName?.key == text) {
+                    holder.createError(message("manifest.lang.invalidValue", text), clause.textRange)
+                    annotated = true
+                } else if (BundleManagementService.getInstance(project).bundles[text] == null && project.allPDEModules()
+                        .mapNotNull { cacheService.getManifest(it) }.mapNotNull { it.bundleSymbolicName?.key }
+                        .none { it == text }
+                ) {
+                    holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
+                    annotated = true
+                }
+            }
+        }
+
+        return annotated
+    }
+
     override fun getReferences(headerValuePart: HeaderValuePart): Array<PsiReference> =
         if (headerValuePart.parent is Clause) arrayOf(BundleReference(headerValuePart)) else PsiReference.EMPTY_ARRAY
 }
@@ -337,7 +363,6 @@ object BundleClasspathParser : HeaderParser by OsgiHeaderParser {
 
         return annotated
     }
-    // TODO: 2021/2/8 reference
 }
 
 object ExportPackageParser : HeaderParser by BasePackageParser {

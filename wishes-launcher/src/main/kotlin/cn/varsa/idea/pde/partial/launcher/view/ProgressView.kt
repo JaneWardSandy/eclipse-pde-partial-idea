@@ -16,6 +16,8 @@ import kotlin.concurrent.*
 class ProgressView : View("Run") {
     private val configControl: ConfigControl by inject()
     private val wishesControl: WishesControl by inject()
+    private val loggerControl: LoggerControl by inject()
+
     private val logger = thisLogger()
 
     private val runningIcon = resources.imageview("/running.png")
@@ -63,6 +65,8 @@ class ProgressView : View("Run") {
         super.onDock()
 
         subscribe<LauncherStartEvent> {
+            loggerControl.initialAppender()
+
             try {
                 wishesServiceImpl = WishesServiceImpl(wishesControl, configControl)
                 val registry: Registry = try {
@@ -79,6 +83,8 @@ class ProgressView : View("Run") {
             }
         }
         subscribe<LauncherStopEvent> {
+            loggerControl.destroyAppender()
+
             try {
                 wishesControl.destroy()
                 configControl.portalRunning = false

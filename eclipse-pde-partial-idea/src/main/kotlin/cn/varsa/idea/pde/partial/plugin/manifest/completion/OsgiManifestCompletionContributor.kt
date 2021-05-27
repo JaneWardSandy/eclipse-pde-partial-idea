@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.manifest.completion
 
+import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.manifest.psi.*
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.*
@@ -20,6 +21,19 @@ class OsgiManifestCompletionContributor : CompletionContributor() {
                 .withSuperParent(2, PlatformPatterns.psiElement(Directive::class.java).withName(name))
         }
 
+
+        extend(
+            CompletionType.BASIC,
+            header(BUNDLE_SYMBOLICNAME),
+            HeaderParametersProvider("$SINGLETON_DIRECTIVE:", "$FRAGMENT_ATTACHMENT_DIRECTIVE:")
+        )
+
+        extend(
+            CompletionType.BASIC,
+            header(REQUIRE_BUNDLE),
+            HeaderParametersProvider(BUNDLE_VERSION_ATTRIBUTE, "$VISIBILITY_DIRECTIVE:", "$RESOLUTION_DIRECTIVE:")
+        )
+
         extend(
             CompletionType.BASIC,
             header(EXPORT_PACKAGE),
@@ -29,23 +43,41 @@ class OsgiManifestCompletionContributor : CompletionContributor() {
         extend(
             CompletionType.BASIC,
             header(IMPORT_PACKAGE),
-            HeaderParametersProvider(VERSION_ATTRIBUTE, "$RESOLUTION_DIRECTIVE:")
+            HeaderParametersProvider(VERSION_ATTRIBUTE, BUNDLE_SYMBOLICNAME_ATTRIBUTE, "$RESOLUTION_DIRECTIVE:")
+        )
+
+        extend(
+            CompletionType.BASIC, header(ACTIVATION_LAZY), ValueProvider(ACTIVATION_LAZY)
+        )
+
+        extend(
+            CompletionType.BASIC,
+            header(BUNDLE_REQUIREDEXECUTIONENVIRONMENT),
+            ValueProvider(*JavaVersions.values().map { it.ee }.toTypedArray())
+        )
+
+
+        extend(
+            CompletionType.BASIC, directive(SINGLETON_DIRECTIVE), ValueProvider(true.toString(), false.toString())
+        )
+
+        extend(
+            CompletionType.BASIC,
+            directive(FRAGMENT_ATTACHMENT_DIRECTIVE),
+            ValueProvider(FRAGMENT_ATTACHMENT_ALWAYS, FRAGMENT_ATTACHMENT_RESOLVETIME, FRAGMENT_ATTACHMENT_NEVER)
+        )
+
+        extend(
+            CompletionType.BASIC,
+            directive(VISIBILITY_DIRECTIVE),
+            ValueProvider(VISIBILITY_PRIVATE, VISIBILITY_REEXPORT)
         )
 
         extend(
             CompletionType.BASIC,
             directive(RESOLUTION_DIRECTIVE),
-            object : CompletionProvider<CompletionParameters>() {
-                override fun addCompletions(
-                    parameters: CompletionParameters,
-                    context: ProcessingContext,
-                    result: CompletionResultSet,
-                ) {
-                    arrayOf(RESOLUTION_MANDATORY, RESOLUTION_OPTIONAL).forEach { name ->
-                        result.addElement(LookupElementBuilder.create(name).withCaseSensitivity(false))
-                    }
-                }
-            })
+            ValueProvider(RESOLUTION_MANDATORY, RESOLUTION_OPTIONAL)
+        )
     }
 }
 
@@ -65,11 +97,21 @@ class HeaderParametersProvider(private vararg val names: String) : CompletionPro
     override fun addCompletions(
         parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet
     ) {
-        names.forEach { name ->
+        names.forEach {
             result.addElement(
-                LookupElementBuilder.create(name.substringBeforeLast(':')).withCaseSensitivity(false)
-                    .withInsertHandler(if (name.endsWith(':')) directiveHandler else attributeHandler)
+                LookupElementBuilder.create(it.substringBeforeLast(':')).withCaseSensitivity(false)
+                    .withInsertHandler(if (it.endsWith(':')) directiveHandler else attributeHandler)
             )
+        }
+    }
+}
+
+class ValueProvider(private vararg val values: String) : CompletionProvider<CompletionParameters>() {
+    override fun addCompletions(
+        parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet
+    ) {
+        values.forEach {
+            result.addElement(LookupElementBuilder.create(it).withCaseSensitivity(false))
         }
     }
 }

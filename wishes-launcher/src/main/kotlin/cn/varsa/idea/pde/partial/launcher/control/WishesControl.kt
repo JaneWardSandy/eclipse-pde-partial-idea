@@ -52,7 +52,6 @@ class WishesControl : Controller() {
     fun launch() {
         if (configControl.portalRunning) return
 
-        loggerControl.initialAppender()
         handler = ProcessHandler(setup.commandLine).apply {
             addProcessListener(object : ProcessListener {
                 override fun onProcessStart() {
@@ -93,7 +92,6 @@ class WishesControl : Controller() {
             }
         }
         handler = null
-        loggerControl.destroyAppender()
 
         runLater {
             configControl.portalRunning = false

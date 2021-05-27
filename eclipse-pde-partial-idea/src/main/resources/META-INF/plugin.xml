@@ -25,6 +25,26 @@
             <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea" target="_blank">Github</a></p>
         ]]></description>
 
+    <change-notes><![CDATA[
+        <p><b>Breaking Changes:</b></p>
+        <ul>
+            <li>New bundle management, split library by single bundle</li>
+            <li>Will add many library start with "Partial: "</li>
+        </ul>
+
+        <p><b>Fixed:</b></p>
+        <ul>
+            <li>Now it can resolve jar in bundle-class-path correct.</li>
+            <li>Meta-Inf file will created on facet added</li>
+            <li>Bundle dependency resolve wrong #1 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/1" target="_blank">issue</a></li>
+        </ul>
+
+        <p><b>New:</b></p>
+        <ul>
+            <li>Some manifest completion</li>
+        </ul>
+    ]]></change-notes>
+
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.kotlin</depends>
@@ -32,6 +52,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService"/>
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.TargetDefinitionService"/>
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"/>
 
         <projectConfigurable id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable" parentId="language"
                              instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
@@ -96,6 +117,9 @@
     <actions>
         <action class="cn.varsa.idea.pde.partial.plugin.action.ResolveWorkspaceAction" icon="AllIcons.Actions.Refresh">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
+        <action class="cn.varsa.idea.pde.partial.plugin.action.ResolveManifestAction" icon="AllIcons.Actions.Refresh">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>

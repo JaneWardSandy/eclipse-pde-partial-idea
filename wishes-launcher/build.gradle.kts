@@ -47,6 +47,7 @@ jlink {
 
     launcher {
         noConsole = false
+        imageName.set("wishes-launcher")
     }
 
     mergedModule {
@@ -84,6 +85,8 @@ tasks {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
             jvmTarget = "11"
+            apiVersion = "1.5"
+            languageVersion = "1.5"
         }
     }
 }

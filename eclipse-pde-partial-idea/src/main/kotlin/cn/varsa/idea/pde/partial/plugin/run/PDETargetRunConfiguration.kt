@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.psi.search.*
 import com.intellij.util.*
 import org.jdom.*
-import org.jetbrains.kotlin.idea.util.projectStructure.*
 import java.io.*
 import java.util.*
 
@@ -136,15 +135,13 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 
         override val libraries: List<File>
-            get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project).run {
-                DependencyScope.values().map { it.displayName }.map { getLibraryByName("$ProjectLibraryNamePrefix$it") }
-                    .mapNotNull { it?.getFiles(OrderRootType.CLASSES) }.flatMap { it.toList() }
-                    .map { it.presentableUrl.toFile() }
-            }
+            get() = LibraryTablesRegistrar.getInstance()
+                .getLibraryTable(project).libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }
+                .mapNotNull { it.getFiles(OrderRootType.CLASSES) }.flatMap { it.toList() }
+                .map { it.presentableUrl.toFile() }
 
         override val devModules: List<DevModule>
-            get() = project.allModules().filter { it.isLoaded }.mapNotNull { PDEFacet.getInstance(it) }
-                .map(PDEFacet::toDevModule)
+            get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
 
         override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
             LocalFileSystem.getInstance().findFileByIoFile(jarFileOrDirectory)?.let { cache.getManifest(it) }

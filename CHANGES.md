@@ -1,5 +1,12 @@
 # Changelog
 
+## Pre-Release 1.1.1
+
+<p><b>Fixed:</b></p>
+<ul>
+    <li>lib inner jar not support by IDEA #8 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/8" target="_blank">issue</a> </li>
+</ul>
+
 ## 1.1.0
 
 <p><b>Breaking Changes:</b></p>

@@ -1,8 +1,8 @@
 # Eclipse PDE Partial IDEA Plugin
 
 [![Apache License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/jetbrains/plugin/v/16761-eclipse-pde-partial.svg?style=flat-square)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
-[![View at JetBrains](https://img.shields.io/jetbrains/plugin/d/16761-eclipse-pde-partial.svg?style=flat-square)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
+[![Version](https://img.shields.io/jetbrains/plugin/v/16761-eclipse-pde-partial.svg)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
+[![View at JetBrains](https://img.shields.io/jetbrains/plugin/d/16761-eclipse-pde-partial.svg)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
 
 ## Download
 
@@ -40,6 +40,29 @@ By using Wishes-Launcher, allow using RMI to connect remote machine and debug by
 
 Clone the project and open it in IntelliJ IDEA, Selection the Gradle task `intellij > runIde` to start a sandbox
 instance of IntelliJ IDEA with the plugin installed
+
+## Comparision
+
+Feature | [PDE Partial]((https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)) | [Osmorc](https://plugins.jetbrains.com/plugin/1816-osgi)
+------- | ----------- | --------
+Framework support | equinox Only | equinox, felix, concierge, knopflerfish
+Project import support | x | by bnd
+Bundle source | eclipse target | bundle directory
+Manifest lint | partial support | partial support
+Manifest auto gen | x | by bnd
+Manifest manually edit | support with hint, reference navigate | support
+Code inspection | support | support
+Package accessibility | java, kotlin, import package, required bundle, re-export required bundle | java, import package only
+Quick fix | import package, required bundle, required bundle with version | import package
+Bundle startup manager | startup level only | startup level, auto startup
+BND | x | by bnd
+Maven | x | by bnd
+Library | auto create | x
+Facet | for binary package | for manifest file edit mode
+Artifact | auto create for package | x
+OSGI launche | x | support
+OSGI console | x | support
+Launche RCP | local run/debug, remote debug | x
 
 ## Screenshots
 

@@ -3,17 +3,17 @@ package cn.varsa.idea.pde.partial.plugin.config
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
+import com.jetbrains.rd.util.*
 
 class BundleManagementService : BackgroundResolvable {
     companion object {
         fun getInstance(project: Project): BundleManagementService =
-            ServiceManager.getService(project, BundleManagementService::class.java)
+            project.getService(BundleManagementService::class.java)
     }
 
-    val bundles = hashMapOf<String, BundleDefinition>()
+    val bundles = ConcurrentHashMap<String, BundleDefinition>()
     val libReExportRequiredSymbolName = hashMapOf<String, HashSet<String>>()
     val jarPathInnerBundle = hashMapOf<String, BundleDefinition>()
 
@@ -30,21 +30,21 @@ class BundleManagementService : BackgroundResolvable {
         indicator.isIndeterminate = false
         indicator.fraction = 0.0
 
-        val bundles = TargetDefinitionService.getInstance(project).locations.flatMap { it.bundles }
+        val localBundles = TargetDefinitionService.getInstance(project).locations.flatMap { it.bundles }
 
-        val step = 0.9 / bundles.size
-        bundles.forEach { bundle ->
+        val step = 0.9 / (localBundles.size + 1)
+        localBundles.forEach { bundle ->
             indicator.checkCanceled()
             indicator.text2 = "Resolving bundle ${bundle.file}"
 
             bundle.manifest?.also { manifest ->
                 val eclipseSourceBundle = manifest.eclipseSourceBundle
                 if (eclipseSourceBundle != null) {
-                    this.bundles[eclipseSourceBundle.key]?.takeIf { it.manifest?.bundleVersion == manifest.bundleVersion }
+                    bundles[eclipseSourceBundle.key]?.takeIf { it.manifest?.bundleVersion == manifest.bundleVersion }
                         ?.takeIf { it.sourceBundle == null }?.apply { sourceBundle = bundle }
                 } else {
-                    this.bundles.computeIfAbsent(bundle.bundleSymbolicName) {
-                        bundle.classPaths.map { it.presentableUrl }.forEach { jarPathInnerBundle[it] = bundle }
+                    bundles.computeIfAbsent(bundle.bundleSymbolicName) {
+                        bundle.delegateClassPathFile.map { it.presentableUrl }.forEach { jarPathInnerBundle[it] = bundle }
                         bundle
                     }
                 }
@@ -56,11 +56,11 @@ class BundleManagementService : BackgroundResolvable {
         indicator.text2 = "Resolving dependency tree"
         indicator.fraction = 0.9
 
-        this.bundles.map {
+        bundles.map {
             it.key to (it.value.manifest?.reExportRequiredBundleSymbolNames?.toHashSet() ?: hashSetOf())
         }.toMap().also { libReExportRequiredSymbolName += it }.run {
-                forEach { (symbolName, reExport) -> fillDependencies(symbolName, reExport, reExport, this) }
-            }
+            forEach { (symbolName, reExport) -> fillDependencies(symbolName, reExport, reExport, this) }
+        }
         indicator.fraction = 1.0
     }
 
@@ -84,7 +84,7 @@ class BundleManagementService : BackgroundResolvable {
                 indicator.text2 = "Reset module settings"
                 val allPDEModules = project.allPDEModules()
 
-                val step = 0.5 / allPDEModules.size
+                val step = 0.5 / (allPDEModules.size + 1)
                 allPDEModules.forEach {
                     indicator.checkCanceled()
 

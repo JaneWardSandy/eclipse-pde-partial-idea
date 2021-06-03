@@ -173,8 +173,8 @@ object ModuleHelper {
         }.map { (library, bundle) ->
             val libraryModel = library.modifiableModel
 
-            bundle.classPaths.map { it.protocolUrl }.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
-            bundle.sourceBundle?.classPaths?.map { it.protocolUrl }
+            bundle.delegateClassPathFile.map { it.protocolUrl }.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+            bundle.sourceBundle?.delegateClassPathFile?.map { it.protocolUrl }
                 ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
 
             project.allPDEModules().forEach { module ->

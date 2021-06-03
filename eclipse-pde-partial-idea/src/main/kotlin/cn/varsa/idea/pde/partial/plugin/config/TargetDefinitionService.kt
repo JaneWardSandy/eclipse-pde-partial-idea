@@ -5,12 +5,14 @@ import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.listener.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
+import com.intellij.util.*
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
 import java.io.*
@@ -50,7 +52,7 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
         indicator.isIndeterminate = false
         indicator.fraction = 0.0
 
-        val step = 1 / locations.size
+        val step = 1 / (locations.size + 1)
         locations.forEach {
             indicator.checkCanceled()
             it.resolve(project, indicator)
@@ -136,9 +138,31 @@ data class BundleDefinition(
     val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
 
     val bundleSymbolicName: String get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension
-    val classPaths: Set<VirtualFile>
+    private val classPaths: Set<VirtualFile>
         get() = setOf(root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
             ?.mapNotNull { root.findFileByRelativePath(it) }?.toSet() ?: emptySet())
+
+    val delegateClassPathFile: Set<VirtualFile>
+        get() = classPaths.map {
+            val rootEntry = JarFileSystem.getInstance().getRootByEntry(it)
+            if (rootEntry != null && rootEntry != it) {
+                val name =
+                    "${PathUtilRt.suggestFileName("${root.name}${it.presentableUrl.substringAfter(rootEntry.presentableUrl)}")}.${it.extension}"
+
+                WriteAction.computeAndWait<VirtualFile, Exception> {
+                    val projectFile = LocalFileSystem.getInstance().findFileByPath(project.presentableUrl!!)!!
+                    val outFile = projectFile.findChild("out") ?: projectFile.createChildDirectory(this, "out")
+                    val libFile = outFile.findChild("tmp_lib") ?: outFile.createChildDirectory(this, "tmp_lib")
+                    val virtualFile = libFile.findChild(name) ?: libFile.createChildData(this, name)
+
+                    virtualFile.setBinaryContent(it.contentsToByteArray())
+
+                    virtualFile
+                }
+            } else {
+                it
+            }
+        }.toSet()
 
     var sourceBundle: BundleDefinition? = null
 }

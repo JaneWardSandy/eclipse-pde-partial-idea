@@ -2,7 +2,6 @@ package cn.varsa.idea.pde.partial.plugin.cache
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
-import com.intellij.openapi.components.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
@@ -22,7 +21,7 @@ class BundleManifestCacheService(private val project: Project) {
 
     companion object {
         fun getInstance(project: Project): BundleManifestCacheService =
-            ServiceManager.getService(project, BundleManifestCacheService::class.java)
+            project.getService(BundleManifestCacheService::class.java)
     }
 
     fun clearCache() {

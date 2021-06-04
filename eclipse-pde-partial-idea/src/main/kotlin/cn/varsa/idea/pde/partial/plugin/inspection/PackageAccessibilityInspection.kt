@@ -71,20 +71,23 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
         }
 
         fun checkAccessibility(targetClass: PsiClass, facet: PDEFacet): Problem? {
-            if (targetClass.isAnnotationType) {
-                val policy = AnnotationsHighlightUtil.getRetentionPolicy(targetClass)
+            var clzz = targetClass
+            while (clzz.parent is PsiClass) clzz = clzz.parent as PsiClass
+
+            if (clzz.isAnnotationType) {
+                val policy = AnnotationsHighlightUtil.getRetentionPolicy(clzz)
                 if (policy == RetentionPolicy.CLASS || policy == RetentionPolicy.SOURCE) return null
             }
 
-            val targetFile = targetClass.containingFile
+            val targetFile = clzz.containingFile
             if (targetFile !is PsiClassOwner) return null
 
             val packageName = targetFile.packageName
             if (packageName.isBlank() || packageName.startsWith(Java)) return null
 
-            val qualifiedName = targetClass.qualifiedName ?: return null
+            val qualifiedName = clzz.qualifiedName ?: return null
 
-            if (facet.module == ModuleUtilCore.findModuleForPsiElement(targetClass)) return null
+            if (facet.module == ModuleUtilCore.findModuleForPsiElement(clzz)) return null
 
             return checkAccessibility(targetFile, packageName, qualifiedName, facet.module)
         }

@@ -161,7 +161,9 @@ object ModuleHelper {
                     val libraryName = "$ProjectLibraryNamePrefix${bundle.bundleSymbolicName}"
 
                     val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).let { libraryTable ->
-                        libraryTable.getLibraryByName(libraryName)?.also { libraryTable.removeLibrary(it) }
+                        libraryTable.getLibraryByName(libraryName)
+                            ?.also { WriteAction.runAndWait<Exception> { libraryTable.removeLibrary(it) } }
+
                         WriteAction.compute<Library, Exception> { libraryTable.createLibrary(libraryName) }
                     }
 
@@ -173,7 +175,8 @@ object ModuleHelper {
         }.map { (library, bundle) ->
             val libraryModel = library.modifiableModel
 
-            bundle.delegateClassPathFile.map { it.protocolUrl }.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+            bundle.delegateClassPathFile.map { it.protocolUrl }
+                .forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
             bundle.sourceBundle?.delegateClassPathFile?.map { it.protocolUrl }
                 ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
 

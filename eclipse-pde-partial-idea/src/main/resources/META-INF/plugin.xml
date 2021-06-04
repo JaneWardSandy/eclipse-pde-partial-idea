@@ -26,22 +26,12 @@
         ]]></description>
 
     <change-notes><![CDATA[
-        <p><b>Breaking Changes:</b></p>
-        <ul>
-            <li>New bundle management, split library by single bundle</li>
-            <li>Will add many library start with "Partial: "</li>
-        </ul>
-
         <p><b>Fixed:</b></p>
         <ul>
-            <li>Now it can resolve jar in bundle-class-path correct.</li>
-            <li>Meta-Inf file will created on facet added</li>
-            <li>Bundle dependency resolve wrong #1 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/1" target="_blank">issue</a></li>
-        </ul>
-
-        <p><b>New:</b></p>
-        <ul>
-            <li>Some manifest completion</li>
+            <li>Lib inner jar not support by IDEA #8 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/8" target="_blank">issue</a></li>
+            <li>Accessibility: Bundle-ClassPath not highest priority #9 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/9" target="_blank">issue</a></li>
+            <li>Inner class not resolve as inner, wrong accessibility inspection</li>
+            <li>Write access required write action</li>
         </ul>
     ]]></change-notes>
 

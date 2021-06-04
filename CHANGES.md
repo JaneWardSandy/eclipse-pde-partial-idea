@@ -1,10 +1,13 @@
 # Changelog
 
-## Pre-Release 1.1.1
+## 1.1.1
 
 <p><b>Fixed:</b></p>
 <ul>
-    <li>lib inner jar not support by IDEA #8 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/8" target="_blank">issue</a> </li>
+    <li>Lib inner jar not support by IDEA #8 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/8" target="_blank">issue</a></li>
+    <li>Accessibility: Bundle-ClassPath not highest priority #9 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/9" target="_blank">issue</a></li>
+    <li>Inner class not resolve as inner, wrong accessibility inspection</li>
+    <li>Write access required write action</li>
 </ul>
 
 ## 1.1.0

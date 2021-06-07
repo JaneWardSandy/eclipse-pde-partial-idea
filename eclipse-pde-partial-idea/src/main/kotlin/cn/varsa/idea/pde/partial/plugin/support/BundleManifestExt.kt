@@ -9,9 +9,9 @@ val BundleManifest.reExportRequiredBundleSymbolNames: Set<String>
         ?: emptySet()
 
 fun BundleManifest.getExportedPackage(packageName: String): String? =
-    exportPackage?.keys?.map { it.substringBefore(".*") }?.firstOrNull { PsiNameHelper.isSubpackageOf(packageName, it) }
+    exportPackage?.keys?.map { it.substringBefore(".*") }?.firstOrNull { packageName == it }
 
 fun BundleManifest.isPackageImported(packageName: String): Boolean =
-    importPackage?.keys?.any { PsiNameHelper.isSubpackageOf(packageName, it) } == true
+    importPackage?.keys?.any { packageName == it } == true
 
 fun BundleManifest.isBundleRequired(symbolicName: String): Boolean = requireBundle?.keys?.contains(symbolicName) == true

@@ -138,61 +138,62 @@ object ModuleHelper {
         if (project.allPDEModules().isEmpty()) return
         val cacheService = BundleManifestCacheService.getInstance(project)
 
-        LibraryTablesRegistrar.getInstance().getLibraryTable(project).also { libraryTable ->
-            ApplicationManager.getApplication().invokeAndWait {
-                WriteAction.runAndWait<Exception> {
-                    libraryTable.libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }.forEach {
-                        libraryTable.removeLibrary(it)
-                    }
-                }
-            }
-        }
-
-
         val moduleNames = project.allPDEModules()
             .mapNotNull { ReadAction.compute<BundleManifest, Exception> { cacheService.getManifest(it) } }
             .mapNotNull { it.bundleSymbolicName?.key }.toSet()
 
-        BundleManagementService.getInstance(project).bundles.filterKeys { !moduleNames.contains(it) }.values.let { bundles ->
-            val map = hashMapOf<Library, BundleDefinition>()
+        LibraryTablesRegistrar.getInstance().getLibraryTable(project).modifiableModel.also { model ->
+            model.libraries.filter { library ->
+                library.name?.let { name ->
+                    name.substringAfter(ProjectLibraryNamePrefix, name).let { it != name && moduleNames.contains(it) }
+                } == true
+            }.forEach { model.removeLibrary(it) }
+
+            ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { model.commit() } }
+        }
+
+        BundleManagementService.getInstance(project).bundles.filterKeys { !moduleNames.contains(it) }.values.also { bundles ->
+            val model = LibraryTablesRegistrar.getInstance().getLibraryTable(project).modifiableModel
+            val map = hashMapOf<BundleDefinition, Library>()
 
             ApplicationManager.getApplication().invokeAndWait {
                 bundles.forEach { bundle ->
                     val libraryName = "$ProjectLibraryNamePrefix${bundle.bundleSymbolicName}"
-
-                    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).let { libraryTable ->
-                        libraryTable.getLibraryByName(libraryName)
-                            ?.also { WriteAction.runAndWait<Exception> { libraryTable.removeLibrary(it) } }
-
-                        WriteAction.compute<Library, Exception> { libraryTable.createLibrary(libraryName) }
-                    }
-
-                    map[library] = bundle
+                    map[bundle] = model.getLibraryByName(libraryName)
+                        ?: WriteAction.compute<Library, Exception> { model.createLibrary(libraryName) }
                 }
             }
 
-            map
-        }.map { (library, bundle) ->
-            val libraryModel = library.modifiableModel
+            map.map { (bundle, library) ->
+                val libraryModel = library.modifiableModel
 
-            bundle.delegateClassPathFile.map { it.protocolUrl }
-                .forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
-            bundle.sourceBundle?.delegateClassPathFile?.map { it.protocolUrl }
-                ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
+                libraryModel.getUrls(OrderRootType.CLASSES)
+                    .forEach { libraryModel.removeRoot(it, OrderRootType.CLASSES) }
+                libraryModel.getUrls(OrderRootType.SOURCES)
+                    .forEach { libraryModel.removeRoot(it, OrderRootType.SOURCES) }
+
+                bundle.delegateClassPathFile.map { it.protocolUrl }
+                    .forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+                bundle.sourceBundle?.delegateClassPathFile?.map { it.protocolUrl }
+                    ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
+
+                libraryModel
+            }.also { list ->
+                ApplicationManager.getApplication()
+                    .invokeAndWait { WriteAction.run<Exception> { list.forEach { it.commit() } } }
+            }
+
+            ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { model.commit() } }
 
             project.allPDEModules().forEach { module ->
                 ModuleRootModificationUtil.updateModel(module) { model ->
-                    (model.findLibraryOrderEntry(library) ?: model.addLibraryEntry(library)).apply {
-                        scope = bundle.dependencyScope
-                        isExported = false
+                    map.forEach { (bundle, library) ->
+                        (model.findLibraryOrderEntry(library) ?: model.addLibraryEntry(library)).apply {
+                            scope = bundle.dependencyScope
+                            isExported = false
+                        }
                     }
                 }
-            }
-
-            libraryModel
-        }.also { list ->
-            ApplicationManager.getApplication().invokeAndWait {
-                WriteAction.run<Exception> { list.forEach { it.commit() } }
             }
         }
     }
@@ -220,6 +221,16 @@ object ModuleHelper {
     ) {
         PDEFacet.getInstance(module) ?: return
 
+        ModuleRootModificationUtil.updateModel(module) { model ->
+            val table = model.moduleLibraryTable.modifiableModel
+
+            table.libraries.filter {
+                it.presentableName.startsWith(ProjectLibraryNamePrefix) || it is ModuleOrderEntry
+            }.forEach { table.removeLibrary(it) }
+
+            ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { table.commit() } }
+        }
+
         ModuleRootModificationUtil.updateModel(module) {
             setLibrary(it, dependencyScope, exported, classesRootUrls, sourceRootUrls)
         }
@@ -234,10 +245,6 @@ object ModuleHelper {
     ) {
         PDEFacet.getInstance(model.module) ?: return
 
-        model.orderEntries.filter {
-            it.presentableName == ModuleLibraryName || it.presentableName.startsWith(ProjectLibraryNamePrefix) || it is ModuleOrderEntry
-        }.forEach { model.removeOrderEntry(it) }
-
         ApplicationManager.getApplication().invokeAndWait {
             val moduleLibraryTable = model.moduleLibraryTable.modifiableModel
 
@@ -249,11 +256,20 @@ object ModuleHelper {
             model.findLibraryOrderEntry(library)?.apply {
                 scope = dependencyScope
                 isExported = exported
+
+                val orderEntriesList = model.orderEntries.toMutableList()
+                orderEntriesList.remove(this)
+
+                val lastIndex = orderEntriesList.indexOfLast { it is JdkOrderEntry || it is ModuleSourceOrderEntry }
+                orderEntriesList.add(lastIndex + 1, this)
+
+                model.rearrangeOrderEntries(orderEntriesList.toTypedArray())
             }
 
             val libraryModel = library.modifiableModel
-            OrderRootType.getAllTypes()
-                .forEach { type -> libraryModel.getUrls(type).forEach { libraryModel.removeRoot(it, type) } }
+
+            libraryModel.getUrls(OrderRootType.CLASSES).forEach { libraryModel.removeRoot(it, OrderRootType.CLASSES) }
+            libraryModel.getUrls(OrderRootType.SOURCES).forEach { libraryModel.removeRoot(it, OrderRootType.SOURCES) }
 
             classesRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
             sourceRootUrls.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }

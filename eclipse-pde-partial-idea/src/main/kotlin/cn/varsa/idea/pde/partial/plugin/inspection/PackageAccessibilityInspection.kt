@@ -14,15 +14,21 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.*
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.packageDependencies.*
 import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.quickfix.*
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
+import org.jetbrains.kotlin.idea.refactoring.fqName.*
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.projectStructure.*
+import org.jetbrains.kotlin.nj2k.postProcessing.*
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.osgi.framework.Constants.*
 import java.lang.annotation.*
 
@@ -36,23 +42,28 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
 
         val facet = file.module?.let { PDEFacet.getInstance(it) } ?: return null
 
-        val list = mutableListOf<ProblemDescriptor>()
+        val problems = hashSetOf<ProblemDescriptor>()
+        val addMessage: (Problem, PsiElement) -> Unit = { problem, place ->
+            problems.add(manager.createProblemDescriptor(place, problem.message, isOnTheFly, problem.fixes, problem.type))
+        }
+
         DependenciesBuilder.analyzeFileDependencies(file, { place, dependency ->
             when (dependency) {
-                is PsiClass -> checkAccessibility(dependency, facet)?.also {
-                    list.add(manager.createProblemDescriptor(place, it.message, isOnTheFly, it.fixes, it.type))
-                }
+                is PsiClass -> checkAccessibility(dependency, facet)?.also { addMessage(it, place) }
                 is PsiMethod -> dependency.parent?.let { it as? PsiClass }?.let { checkAccessibility(it, facet) }
-                    ?.also {
-                        list.add(manager.createProblemDescriptor(place, it.message, isOnTheFly, it.fixes, it.type))
-                    }
-                is KtNamedDeclaration -> checkAccessibility(dependency, facet)?.also {
-                    list.add(manager.createProblemDescriptor(place, it.message, isOnTheFly, it.fixes, it.type))
+                    ?.also { addMessage(it, place) }
+                is KtNamedDeclaration -> {
+                    checkAccessibility(dependency, facet)?.also { addMessage(it, place) }
+
+                    dependency.getValueParameters().mapNotNull { it.typeReference?.classForRefactor() }
+                        .forEach { clazz -> checkAccessibility(clazz, facet)?.also { addMessage(it, place) } }
+                    dependency.getReturnTypeReference()?.classForRefactor()?.let { checkAccessibility(it, facet) }
+                        ?.also { addMessage(it, place) }
                 }
             }
         }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS)
 
-        return list.takeIf { it.isNotEmpty() }?.toTypedArray()
+        return problems.takeIf { it.isNotEmpty() }?.toTypedArray()
     }
 
     companion object {

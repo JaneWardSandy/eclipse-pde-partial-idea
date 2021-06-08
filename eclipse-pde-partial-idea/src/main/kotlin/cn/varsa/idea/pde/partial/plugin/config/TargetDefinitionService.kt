@@ -155,7 +155,9 @@ data class BundleDefinition(
                     val libFile = outFile.findChild("tmp_lib") ?: outFile.createChildDirectory(this, "tmp_lib")
                     val virtualFile = libFile.findChild(name) ?: libFile.createChildData(this, name)
 
-                    virtualFile.setBinaryContent(it.contentsToByteArray())
+                    virtualFile.getOutputStream(virtualFile).use { ous ->
+                        it.inputStream.use { ins -> ins.copyTo(ous) }
+                    }
 
                     virtualFile
                 }

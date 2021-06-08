@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.2
+
+<p><b>Fixed:</b></p>
+<ul>
+    <li>Cannot find entity for library with ID LibraryId #11 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/11" target="_blank">issue</a></li>
+    <li>FileTooBigException on Target definition #12 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/12" target="_blank">issue</a></li>
+    <li>Class in function parameter should be import too #15 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/15" target="_blank">issue</a></li>
+</ul>
+
+<p><b>Performance:</b></p>
+<ul>
+    <li>Speed-up re-build project library</li>
+</ul>
+
 ## 1.1.1
 
 <p><b>Fixed:</b></p>

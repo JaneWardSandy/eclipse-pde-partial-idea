@@ -140,7 +140,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     init {
         // Target tab
         val reloadActionButton = object : AnActionButton(message("config.target.reload"), AllIcons.Actions.Refresh) {
-            override fun actionPerformed(e: AnActionEvent) = locationList.selectedValue.backgroundResolve(project)
+            override fun actionPerformed(e: AnActionEvent) =
+                locationList.selectedValue.backgroundResolve(project, onFinished = { updateComboBox() })
         }.apply {
             isEnabled = false
             locationList.addListSelectionListener { isEnabled = locationList.isSelectionEmpty.not() }
@@ -182,9 +183,12 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 .disableUpDownActions().addExtraActions(object : AnActionButton(
                     message("config.target.reload"), AllIcons.Actions.Refresh
                 ) {
-                    override fun actionPerformed(e: AnActionEvent) = reloadContentList(service.bundleVersionSelection)
+                    override fun actionPerformed(e: AnActionEvent) = reloadContentList(
+                        locationModel.elements().toList().flatMap { it.bundles }, service.bundleVersionSelection
+                    )
                 }, object : AnActionButton(message("config.content.reload"), AllIcons.Actions.ForceRefresh) {
-                    override fun actionPerformed(e: AnActionEvent) = reloadContentList(hashMapOf())
+                    override fun actionPerformed(e: AnActionEvent) =
+                        reloadContentList(locationModel.elements().toList().flatMap { it.bundles }, hashMapOf())
                 }).createPanel()
         )
 
@@ -273,12 +277,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         service.startupLevels.forEach { startupModel.addElement(it.toPair()) }
 
         updateComboBox()
-
-        reloadContentList(service.bundleVersionSelection)
+        reloadContentList(service.locations.flatMap { it.bundles }, service.bundleVersionSelection)
     }
 
-    private fun reloadContentList(versionMap: HashMap<String, String>) {
-        val bundles = service.locations.flatMap { it.bundles }
+    private fun reloadContentList(bundles: List<BundleDefinition>, versionMap: HashMap<String, String>) {
         val map = ConcurrentHashMap<String, BundleVersionRow>(bundles.size)
         bundles.forEach { bundle ->
             bundle.manifest?.also { manifest ->
@@ -338,10 +340,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             locationList.setSelectedValue(location, true)
             locationModified += Pair(null, location)
 
-            location.backgroundResolve(project, onFinished = {
-                updateComboBox()
-                reloadContentList(service.bundleVersionSelection)
-            })
+            location.backgroundResolve(project, onFinished = { updateComboBox() })
         }
     }
 
@@ -352,7 +351,6 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             locationModified += Pair(location, null)
 
             updateComboBox()
-            reloadContentList(service.bundleVersionSelection)
         }
     }
 
@@ -369,10 +367,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 locationList.setSelectedValue(location, true)
                 locationModified += Pair(value, location)
 
-                location.backgroundResolve(project, onFinished = {
-                    updateComboBox()
-                    reloadContentList(service.bundleVersionSelection)
-                })
+                location.backgroundResolve(project, onFinished = { updateComboBox() })
             }
         }
     }

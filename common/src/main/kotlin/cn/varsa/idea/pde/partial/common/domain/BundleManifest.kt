@@ -4,17 +4,7 @@ import cn.varsa.idea.pde.partial.common.support.*
 import org.osgi.framework.*
 import org.osgi.framework.Constants.*
 import java.util.jar.*
-import kotlin.collections.Map
-import kotlin.collections.MutableMap
-import kotlin.collections.associate
-import kotlin.collections.firstOrNull
-import kotlin.collections.forEach
-import kotlin.collections.hashMapOf
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.plusAssign
 import kotlin.collections.set
-import kotlin.collections.toMap
 
 class BundleManifest private constructor(private val map: Map<String, String>) : Map<String, String> by map {
     private val parametersMap = hashMapOf<String, Parameters?>()
@@ -26,6 +16,7 @@ class BundleManifest private constructor(private val map: Map<String, String>) :
     }
 
     fun getParameters(key: String): Parameters? = parametersMap.computeIfAbsent(key) { get(key)?.let(::Parameters) }
+    override fun toString(): String = "BundleManifest(map=$map)"
 
     val requireBundle by lazy { getParameters(REQUIRE_BUNDLE) }
     val importPackage by lazy { getParameters(IMPORT_PACKAGE) }

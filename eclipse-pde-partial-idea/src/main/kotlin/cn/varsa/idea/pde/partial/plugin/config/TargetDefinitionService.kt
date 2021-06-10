@@ -25,7 +25,7 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
     @Attribute var launcherJar: String? = null
     @Attribute var launcher: String? = null
 
-    @XMap(entryTagName = "BundleLevel", keyAttributeName = "bundleSymbolicName", valueAttributeName = "startupLevel")
+    @XMap(entryTagName = "bundleLevel", keyAttributeName = "bundleSymbolicName", valueAttributeName = "startupLevel")
     val startupLevels = hashMapOf(
         "org.eclipse.core.runtime" to 4,
         "org.eclipse.equinox.common" to 2,
@@ -41,6 +41,9 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
         "org.apache.felix.gogo.shell" to 4,
         "org.eclipse.equinox.console" to 4
     )
+
+    @XMap(entryTagName = "bundleVersion", keyAttributeName = "bundleSymbolicName", valueAttributeName = "version")
+    val bundleVersionSelection = hashMapOf<String, String>()
 
     companion object {
         fun getInstance(project: Project): TargetDefinitionService =

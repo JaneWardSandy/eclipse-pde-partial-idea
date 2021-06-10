@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
+import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.listener.*
 import com.intellij.icons.*
@@ -12,12 +13,15 @@ import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
+import com.intellij.ui.table.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.*
+import com.jetbrains.rd.util.*
 import org.jetbrains.kotlin.idea.util.*
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
+import javax.swing.table.*
 
 class TargetConfigurable(private val project: Project) : SearchableConfigurable, PanelWithAnchor {
     private val service by lazy { TargetDefinitionService.getInstance(project) }
@@ -88,6 +92,51 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         }.installOn(this)
     }
 
+    private val contentList = arrayListOf<BundleVersionRow>()
+    private val contentModel = ListTableModel(arrayOf(object : ColumnInfo<BundleVersionRow, Boolean>(
+        message("config.content.table.column.checked")
+    ) {
+        override fun getWidth(table: JTable?): Int = 50
+        override fun getColumnClass(): Class<*> = Boolean::class.java
+        override fun valueOf(item: BundleVersionRow?): Boolean? = item?.checked
+        override fun getComparator(): Comparator<BundleVersionRow>? = Comparator.comparing(BundleVersionRow::checked)
+        override fun getRenderer(item: BundleVersionRow?): TableCellRenderer = BooleanTableCellRenderer()
+        override fun isCellEditable(item: BundleVersionRow?): Boolean = true
+        override fun getEditor(item: BundleVersionRow?): TableCellEditor = BooleanTableCellEditor()
+        override fun setValue(item: BundleVersionRow?, value: Boolean?) {
+            value?.also { item?.checked = it }
+        }
+    }, object : ColumnInfo<BundleVersionRow, String>(message("config.content.table.column.symbolName")) {
+        override fun valueOf(item: BundleVersionRow?): String? = item?.symbolicName
+        override fun getComparator(): Comparator<BundleVersionRow>? =
+            Comparator.comparing(BundleVersionRow::symbolicName)
+    }, object : ColumnInfo<BundleVersionRow, String>(message("config.content.table.column.version")) {
+        override fun valueOf(item: BundleVersionRow?): String? = item?.version
+        override fun getComparator(): Comparator<BundleVersionRow>? = Comparator.comparing(BundleVersionRow::version)
+        override fun isCellEditable(item: BundleVersionRow?): Boolean = item?.availableVersions?.isNotEmpty() ?: false
+        override fun getEditor(item: BundleVersionRow?): TableCellEditor =
+            ComboBoxTableRenderer(item?.availableVersions?.toTypedArray() ?: arrayOf(""))
+
+        override fun setValue(item: BundleVersionRow?, value: String?) {
+            value?.also { item?.version = it }
+        }
+    }, object : ColumnInfo<BundleVersionRow, String>(message("config.content.table.column.sourceVersion")) {
+        override fun valueOf(item: BundleVersionRow?): String? = item?.sourceVersion
+        override fun getComparator(): Comparator<BundleVersionRow>? =
+            Comparator.comparing(BundleVersionRow::sourceVersion)
+
+        override fun isCellEditable(item: BundleVersionRow?): Boolean =
+            item?.availableSourceVersions?.isNotEmpty() ?: false
+
+        override fun getEditor(item: BundleVersionRow?): TableCellEditor =
+            ComboBoxTableRenderer(item?.availableSourceVersions?.toTypedArray() ?: arrayOf(""))
+
+        override fun setValue(item: BundleVersionRow?, value: String?) {
+            value?.also { item?.sourceVersion = it }
+        }
+    }), contentList, 1)
+    private val contentTable = TableView(contentModel)
+
     init {
         // Target tab
         val reloadActionButton = object : AnActionButton(message("config.target.reload"), AllIcons.Actions.Refresh) {
@@ -111,6 +160,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
 
         panel.addTab(message("config.target.tab"), locationsPanel)
 
+
         // Startup tab
         val startupPanel = BorderLayoutPanel().withBorder(
             IdeBorderFactory.createTitledBorder(
@@ -120,6 +170,26 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                           .setRemoveAction { removeStartup() }.setEditAction { editStartup() }.createPanel())
 
         panel.addTab(message("config.startup.tab"), startupPanel)
+
+
+        // Content tab
+        val contentPanel = BorderLayoutPanel().withBorder(
+            IdeBorderFactory.createTitledBorder(
+                message("config.content.borderHint"), false, JBUI.insetsTop(8)
+            ).setShowLine(true)
+        ).addToCenter(
+            ToolbarDecorator.createDecorator(contentTable).disableAddAction().disableRemoveAction()
+                .disableUpDownActions().addExtraActions(object : AnActionButton(
+                    message("config.target.reload"), AllIcons.Actions.Refresh
+                ) {
+                    override fun actionPerformed(e: AnActionEvent) = reloadContentList(service.bundleVersionSelection)
+                }, object : AnActionButton(message("config.content.reload"), AllIcons.Actions.ForceRefresh) {
+                    override fun actionPerformed(e: AnActionEvent) = reloadContentList(hashMapOf())
+                }).createPanel()
+        )
+
+        panel.addTab(message("config.content.tab"), contentPanel)
+
 
         // Anchor
         myAnchor = UIUtil.mergeComponentsWithAnchor(launcherJar, launcher)
@@ -151,6 +221,15 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         service.startupLevels.entries.run { mapIndexed { index, entry -> startups[index].run { first != entry.key || second != entry.value } } }
             .any { it }.ifTrue { return true }
 
+        val versionMap = contentList.filter { it.checked }.flatMap {
+            listOf(
+                it.symbolicName to it.version, "${it.symbolicName}$BundleSymbolNameSourcePostFix" to it.sourceVersion
+            )
+        }.filterNot { it.first.isBlank() || it.second.isBlank() }.toMap()
+        if (versionMap.size != service.bundleVersionSelection.size) return true
+        service.bundleVersionSelection.run { !keys.containsAll(versionMap.keys) || !versionMap.keys.containsAll(keys) || any { versionMap[it.key] != it.value } }
+            .ifTrue { return true }
+
         return false
     }
 
@@ -166,6 +245,16 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         service.startupLevels.also {
             it.clear()
             it += startupModel.elements().toList()
+        }
+
+        service.bundleVersionSelection.also { map ->
+            map.clear()
+            map += contentList.filter { it.checked }.flatMap {
+                listOf(
+                    it.symbolicName to it.version,
+                    "${it.symbolicName}$BundleSymbolNameSourcePostFix" to it.sourceVersion
+                )
+            }.filterNot { it.first.isBlank() || it.second.isBlank() }
         }
 
         TargetDefinitionChangeListener.notifyLocationsChanged(project)
@@ -184,6 +273,46 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         service.startupLevels.forEach { startupModel.addElement(it.toPair()) }
 
         updateComboBox()
+
+        reloadContentList(service.bundleVersionSelection)
+    }
+
+    private fun reloadContentList(versionMap: HashMap<String, String>) {
+        val bundles = service.locations.flatMap { it.bundles }
+        val map = ConcurrentHashMap<String, BundleVersionRow>(bundles.size)
+        bundles.forEach { bundle ->
+            bundle.manifest?.also { manifest ->
+                val eclipseSourceBundle = manifest.eclipseSourceBundle
+                if (eclipseSourceBundle != null) {
+                    map.computeIfAbsent(eclipseSourceBundle.key) {
+                        BundleVersionRow(it).apply {
+                            checked =
+                                versionMap.isEmpty() || versionMap.containsKey(it) || versionMap.containsKey("$it$BundleSymbolNameSourcePostFix")
+                        }
+                    }.apply {
+                        manifest.bundleVersion?.toString()?.also {
+                            sourceVersion.isBlank().ifTrue {
+                                sourceVersion = versionMap["$symbolicName$BundleSymbolNameSourcePostFix"] ?: it
+                            }
+                            availableSourceVersions += it
+                        }
+                    }
+                } else {
+                    map.computeIfAbsent(bundle.bundleSymbolicName) {
+                        BundleVersionRow(it).apply { checked = versionMap.isEmpty() || versionMap.containsKey(it) }
+                    }.apply {
+                        manifest.bundleVersion?.toString()?.also {
+                            version.isBlank().ifTrue { version = versionMap[bundle.bundleSymbolicName] ?: it }
+                            availableVersions += it
+                        }
+                    }
+                }
+            }
+        }
+
+        contentList.clear()
+        contentList += map.values
+        contentModel.items = contentList
     }
 
     private fun updateComboBox() {
@@ -209,7 +338,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             locationList.setSelectedValue(location, true)
             locationModified += Pair(null, location)
 
-            location.backgroundResolve(project, onFinished = { updateComboBox() })
+            location.backgroundResolve(project, onFinished = {
+                updateComboBox()
+                reloadContentList(service.bundleVersionSelection)
+            })
         }
     }
 
@@ -218,7 +350,9 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             val location = locationList.selectedValue
             locationModel.removeElement(location)
             locationModified += Pair(location, null)
+
             updateComboBox()
+            reloadContentList(service.bundleVersionSelection)
         }
     }
 
@@ -235,7 +369,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 locationList.setSelectedValue(location, true)
                 locationModified += Pair(value, location)
 
-                location.backgroundResolve(project, onFinished = { updateComboBox() })
+                location.backgroundResolve(project, onFinished = {
+                    updateComboBox()
+                    reloadContentList(service.bundleVersionSelection)
+                })
             }
         }
     }
@@ -361,4 +498,13 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
 
         fun getNewLevel(): Pair<String, Int> = Pair(nameTextField.text, levelSpinner.number)
     }
+}
+
+private data class BundleVersionRow(val symbolicName: String) {
+    var checked: Boolean = true
+    var version: String = ""
+    var sourceVersion: String = ""
+
+    val availableVersions = hashSetOf<String>()
+    val availableSourceVersions = hashSetOf<String>()
 }

@@ -15,10 +15,10 @@ class RunConfigView : View("Basic Configuration") {
     override val root: Parent = form {
         fieldset("Run Configuration") {
             fileField(
-                "Java Executor",
-                configControl.javaExeProperty,
-                arrayOf(FileChooser.ExtensionFilter("Java.exe", "java.exe", "Java.exe")),
-                validationContext
+                "Java Executor", configControl.javaExeProperty, arrayOf(
+                    FileChooser.ExtensionFilter("Java.exe", "java.exe", "Java.exe"),
+                    FileChooser.ExtensionFilter("Java", "java", "Java")
+                ), validationContext
             )
             directoryField("Runtime directory", configControl.runtimeDirectoryProperty, validationContext)
             directoryField("Project root", configControl.projectRootProperty, validationContext) {

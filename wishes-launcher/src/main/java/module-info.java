@@ -1,5 +1,5 @@
 module Wishes {
-    requires kotlin.stdlib;
+    requires kotlin.reflect;
 
     requires javafx.controls;
     requires tornadofx;

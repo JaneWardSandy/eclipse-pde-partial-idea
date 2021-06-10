@@ -52,15 +52,17 @@ class LibraryView : View("Libraries") {
     override fun onDock() {
         super.onDock()
         configControl.librariesProperty.clear()
-        configControl.librariesProperty += config.string("libraries", "").split(",")
+        configControl.librariesProperty += config.string("libraries", "").split(",").filterNot { it.isBlank() }
 
         launcherProperty.clear()
         launcherJarProperty.clear()
         configControl.librariesProperty.map(::File).filter(File::exists).filter(File::isDirectory)
             .map { File(it, Plugins).takeIf(File::exists) ?: it }.run {
-                launcherProperty += map(File::getParentFile).distinct()
-                    .flatMap { listOf(File(it, "Teamcenter.exe"), File(it, "eclipse.exe")) }.filter(File::exists)
-                    .map(File::getCanonicalPath).distinct()
+                launcherProperty += map(File::getParentFile).distinct().flatMap {
+                    listOf(
+                        File(it, "Teamcenter.exe"), File(it, "eclipse.exe"), File(it.parentFile, "MacOS/eclipse")
+                    )
+                }.filter(File::exists).map(File::getCanonicalPath).distinct()
 
                 launcherJarProperty += mapNotNull(File::listFiles).flatMap { it.toList() }
                     .filter { it.extension.lowercase() == "jar" && it.name.startsWith("org.eclipse.equinox.launcher_") }

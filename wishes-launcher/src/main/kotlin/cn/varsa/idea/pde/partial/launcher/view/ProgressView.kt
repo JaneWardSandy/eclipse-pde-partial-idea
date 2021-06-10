@@ -8,6 +8,7 @@ import cn.varsa.idea.pde.partial.launcher.support.*
 import javafx.beans.binding.*
 import javafx.scene.*
 import tornadofx.*
+import java.net.*
 import java.rmi.registry.*
 import java.rmi.server.*
 import java.util.*
@@ -27,6 +28,9 @@ class ProgressView : View("Run") {
     private val listeningIcon = resources.imageview("/listening.png")
     private val tuneOutIcon = resources.imageview("/tune-out.png")
 
+    private val hostIPProperty = stringProperty("")
+    private var hostIP: String by hostIPProperty
+
     private var timer: Timer? = null
     private var wishesServiceImpl: WishesServiceImpl? = null
 
@@ -36,6 +40,7 @@ class ProgressView : View("Run") {
             field("Runtime directory") { label(configControl.runtimeDirectoryProperty) }
             field("Project root") { label(configControl.projectRootProperty) }
             field("RMI naming") { label(configControl.rmiUrlProperty) }
+            field("IP address") { label(hostIPProperty) }
         }
         fieldset("Status") {
             field("RMI Service") {
@@ -63,6 +68,10 @@ class ProgressView : View("Run") {
 
     override fun onDock() {
         super.onDock()
+
+        hostIP = NetworkInterface.getNetworkInterfaces().asSequence().flatMap { it.inetAddresses.asSequence() }
+            .mapNotNull { it as? Inet4Address }.mapNotNull { it.hostAddress }
+            .filterNot { it == "127.0.0.1" || it == "0.0.0.0" }.joinToString()
 
         subscribe<LauncherStartEvent> {
             loggerControl.initialAppender()

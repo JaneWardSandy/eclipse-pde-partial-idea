@@ -1,7 +1,19 @@
-# Changelog
+<H1>Changelog</H1>
 
-## 1.1.2
+<H2>1.1.3-Snapshot</H2>
+<p><b>Fixed:</b></p>
+<ul>
+    <li>Not exited library should be removed</li>
+    <li>Select latest version of a library if multiple are present #14 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/14" target="_blank">issue</a></li>
+</ul>
 
+<p><b>Feature:</b></p>
+<ul>
+    <li>Wishes launcher showed IP address in ProgressView</li>
+</ul>
+
+
+<H2>1.1.2</H2>
 <p><b>Fixed:</b></p>
 <ul>
     <li>Cannot find entity for library with ID LibraryId #11 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/11" target="_blank">issue</a></li>
@@ -14,8 +26,8 @@
     <li>Speed-up re-build project library</li>
 </ul>
 
-## 1.1.1
 
+<H2>1.1.1</H2>
 <p><b>Fixed:</b></p>
 <ul>
     <li>Lib inner jar not support by IDEA #8 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/8" target="_blank">issue</a></li>
@@ -24,8 +36,8 @@
     <li>Write access required write action</li>
 </ul>
 
-## 1.1.0
 
+<H2>1.1.0</H2>
 <p><b>Breaking Changes:</b></p>
 <ul>
     <li>New bundle management, split library by single bundle</li>
@@ -44,8 +56,8 @@
     <li>Some manifest completion</li>
 </ul>
 
-## 1.0.1
 
+<H2>1.0.1</H2>
 <p><b>Fixed:</b></p>
 <ul>
     <li>Module in same project was required in another module, but not add into dependency tree.</li>
@@ -55,8 +67,8 @@
     <li>Kotlin project alert kotlin bundle not required #5 ([issue](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/5))</li>
 </ul>
 
-## 1.0.0
 
+<H2>1.0.0</H2>
 <ul>
     <li>Initial project, migrating</li>
 </ul>

@@ -137,6 +137,7 @@ object ModuleHelper {
     fun resetLibrary(project: Project) {
         if (project.allPDEModules().isEmpty()) return
         val cacheService = BundleManifestCacheService.getInstance(project)
+        val symbolicName2Bundle = BundleManagementService.getInstance(project).bundles
 
         val moduleNames = project.allPDEModules()
             .mapNotNull { ReadAction.compute<BundleManifest, Exception> { cacheService.getManifest(it) } }
@@ -145,14 +146,15 @@ object ModuleHelper {
         LibraryTablesRegistrar.getInstance().getLibraryTable(project).modifiableModel.also { model ->
             model.libraries.filter { library ->
                 library.name?.let { name ->
-                    name.substringAfter(ProjectLibraryNamePrefix, name).let { it != name && moduleNames.contains(it) }
+                    name.substringAfter(ProjectLibraryNamePrefix, name)
+                        .let { it != name && (moduleNames.contains(it) || !symbolicName2Bundle.containsKey(it)) }
                 } == true
             }.forEach { model.removeLibrary(it) }
 
             ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { model.commit() } }
         }
 
-        BundleManagementService.getInstance(project).bundles.filterKeys { !moduleNames.contains(it) }.values.also { bundles ->
+        symbolicName2Bundle.filterKeys { !moduleNames.contains(it) }.values.also { bundles ->
             val model = LibraryTablesRegistrar.getInstance().getLibraryTable(project).modifiableModel
             val map = hashMapOf<BundleDefinition, Library>()
 

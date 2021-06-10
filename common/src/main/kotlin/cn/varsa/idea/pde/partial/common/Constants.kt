@@ -13,6 +13,8 @@ const val ArtifactPrefix = PartialPrefix
 const val ModuleLibraryName = "Partial-Runtime"
 const val ProjectLibraryNamePrefix = PartialPrefix
 
+const val BundleSymbolNameSourcePostFix = ".source"
+
 const val KotlinBundleSymbolName = "org.jetbrains.kotlin.osgi-bundle"
 
 const val KILOBYTE = 1024

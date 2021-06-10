@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
+import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
@@ -30,9 +31,12 @@ class BundleManagementService : BackgroundResolvable {
         indicator.isIndeterminate = false
         indicator.fraction = 0.0
 
-        val localBundles = TargetDefinitionService.getInstance(project).locations.flatMap { it.bundles }
+        val definitionService = TargetDefinitionService.getInstance(project)
+        val bundleVersionSelection = definitionService.bundleVersionSelection
+        val localBundles = definitionService.locations.flatMap { it.bundles }
 
-        val step = 0.9 / (localBundles.size + 1)
+        val bundleStep = 0.45 / (localBundles.size + 1)
+        val name2Source = hashMapOf<String, BundleDefinition>()
         localBundles.forEach { bundle ->
             indicator.checkCanceled()
             indicator.text2 = "Resolving bundle ${bundle.file}"
@@ -40,16 +44,31 @@ class BundleManagementService : BackgroundResolvable {
             bundle.manifest?.also { manifest ->
                 val eclipseSourceBundle = manifest.eclipseSourceBundle
                 if (eclipseSourceBundle != null) {
-                    bundles[eclipseSourceBundle.key]?.takeIf { it.manifest?.bundleVersion == manifest.bundleVersion }
-                        ?.takeIf { it.sourceBundle == null }?.apply { sourceBundle = bundle }
-                } else {
-                    bundles.computeIfAbsent(bundle.bundleSymbolicName) {
-                        bundle.delegateClassPathFile.map { it.presentableUrl }.forEach { jarPathInnerBundle[it] = bundle }
-                        bundle
+                    val symbolName = eclipseSourceBundle.key
+                    if (bundleVersionSelection["$symbolName$BundleSymbolNameSourcePostFix"] == manifest.bundleVersion?.toString()) {
+                        name2Source[symbolName] = bundle
                     }
+                } else if (bundleVersionSelection[bundle.bundleSymbolicName] == manifest.bundleVersion?.toString()) {
+                    bundles[bundle.bundleSymbolicName] = bundle
+                    bundle.delegateClassPathFile.map { it.presentableUrl }.forEach { jarPathInnerBundle[it] = bundle }
                 }
             }
-            indicator.fraction += step
+            indicator.fraction += bundleStep
+        }
+
+        val sourceStep = 0.45 / (name2Source.size + 1)
+        name2Source.forEach { (symbolName, source) ->
+            indicator.checkCanceled()
+            indicator.text2 = "Resolving source ${source.file}"
+
+            val bundle = bundles[symbolName]
+            if (bundle != null) {
+                bundle.sourceBundle = source
+            } else {
+                bundles["$symbolName$BundleSymbolNameSourcePostFix"] = source.apply { sourceBundle = this }
+            }
+
+            indicator.fraction += sourceStep
         }
 
         indicator.checkCanceled()

@@ -74,16 +74,16 @@ Launche RCP | local run/debug, remote debug | x
 
 ![](https://plugins.jetbrains.com/files/16761/screenshot_8e905ded-1a8f-41dd-8a0d-a2c9f403e0bf)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_f84cda89-7af8-4556-898f-98e878d7cb6c)
+![](https://plugins.jetbrains.com/files/16761/screenshot_66e04a1a-13a0-4368-a566-934e54535d80)
 
 ![](https://plugins.jetbrains.com/files/16761/screenshot_7b53b865-e7ae-4cea-947d-b26ed68a58bb)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_e3a049ba-e712-4731-947d-f17351421a59)
+![](https://plugins.jetbrains.com/files/16761/screenshot_f1024b54-7c4a-4d1b-ab01-f112ce307435)
 
 ![](https://plugins.jetbrains.com/files/16761/screenshot_5ced688f-a4ae-4cce-a2d3-9d06928f5c3f)
 
 ![](https://plugins.jetbrains.com/files/16761/screenshot_0f27f96f-5756-4a91-9dcf-f51a8a7b2d22)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_7854ef7f-7da5-4985-84a1-51f438021f76)
+![](https://plugins.jetbrains.com/files/16761/screenshot_099feaaf-20e8-446c-b551-1981f70b030a)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_5d0767e3-86a0-4f5d-905e-3230fc33d7ce)
+![](https://plugins.jetbrains.com/files/16761/screenshot_2d06941b-6641-447f-84f2-7b7b17072393)

@@ -1,6 +1,6 @@
 <H1>Changelog</H1>
 
-<H2>1.1.3-Snapshot</H2>
+<H2>1.1.3</H2>
 <p><b>Fixed:</b></p>
 <ul>
     <li>Not exited library should be removed</li>

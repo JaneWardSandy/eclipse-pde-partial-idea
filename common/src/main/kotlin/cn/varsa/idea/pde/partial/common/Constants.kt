@@ -16,6 +16,7 @@ const val ProjectLibraryNamePrefix = PartialPrefix
 const val BundleSymbolNameSourcePostFix = ".source"
 
 const val KotlinBundleSymbolName = "org.jetbrains.kotlin.osgi-bundle"
+const val KotlinOrderEntryName = "KotlinJavaRuntime"
 
 const val KILOBYTE = 1024
 const val MEGABYTE = KILOBYTE * KILOBYTE

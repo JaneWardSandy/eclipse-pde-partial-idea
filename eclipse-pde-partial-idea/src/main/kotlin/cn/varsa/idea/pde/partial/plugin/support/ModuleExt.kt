@@ -27,9 +27,7 @@ fun Module.isBundleRequiredOrFromReExport(symbolName: String): Boolean {
         project.allPDEModules().filterNot { it == this }.mapNotNull(cacheService::getManifest).toHashSet()
 
     modulesManifest.filter {
-        it.bundleSymbolicName?.key?.run {
-            requiredBundle.contains(this) || allRequiredFromReExport.contains(this)
-        } == true
+        it.bundleSymbolicName?.key?.run { requiredBundle.contains(this) || allRequiredFromReExport.contains(this) } == true
     }.any { isBundleFromReExportOnly(it, symbolName, cacheService, managementService, modulesManifest) }
         .ifTrue { return true }
 
@@ -56,4 +54,48 @@ private fun isBundleFromReExportOnly(
     // Dependency tree contains module, it need calc again, and remove it from module set to not calc again and again and again
     return modulesManifest.filter { allReExport.contains(it.bundleSymbolicName?.key) }.also { modulesManifest -= it }
         .any { isBundleFromReExportOnly(it, symbolName, cacheService, managementService, modulesManifest) }
+}
+
+val Module.bundleRequiredOrFromReExportOrderedList: LinkedHashSet<String>
+    get() {
+        val cacheService = BundleManifestCacheService.getInstance(project)
+        val managementService = BundleManagementService.getInstance(project)
+
+        val result = linkedSetOf<String>()
+
+        val manifest = cacheService.getManifest(this) ?: return result
+        val requiredBundle = manifest.requireBundle?.keys ?: return result
+
+        // Bundle required directly
+        manifest.requireBundle?.keys?.also { result += it }
+
+        result += requiredBundle.mapNotNull { managementService.libReExportRequiredSymbolName[it] }.flatten().toSet()
+
+        // Re-export bundle contain module, it need calc again
+        val modulesManifest =
+            project.allPDEModules().filterNot { it == this }.mapNotNull(cacheService::getManifest).toHashSet()
+
+        modulesManifest.filter {
+            it.bundleSymbolicName?.key?.run { requiredBundle.contains(this) || result.contains(this) } == true
+        }.forEach { bundleFromReExportOrderedListTo(it, cacheService, managementService, modulesManifest, result) }
+
+        return result
+    }
+
+private fun bundleFromReExportOrderedListTo(
+    manifest: BundleManifest,
+    cacheService: BundleManifestCacheService,
+    managementService: BundleManagementService,
+    modulesManifest: HashSet<BundleManifest>,
+    result: LinkedHashSet<String>
+) {
+    // Re-export directly
+    result += manifest.reExportRequiredBundleSymbolNames
+
+    result += manifest.reExportRequiredBundleSymbolNames.mapNotNull { managementService.libReExportRequiredSymbolName[it] }
+        .flatten().toSet()
+
+    // Dependency tree contains module, it need calc again, and remove it from module set to not calc again and again and again
+    modulesManifest.filter { result.contains(it.bundleSymbolicName?.key) }.also { modulesManifest -= it }
+        .forEach { bundleFromReExportOrderedListTo(it, cacheService, managementService, modulesManifest, result) }
 }

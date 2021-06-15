@@ -204,6 +204,9 @@
 
         <listener class="cn.varsa.idea.pde.partial.plugin.listener.ProjectLibraryResetOperation"
                   topic="cn.varsa.idea.pde.partial.plugin.listener.TargetDefinitionChangeListener"/>
+
+        <listener class="cn.varsa.idea.pde.partial.plugin.listener.ModuleChangedListener"
+                  topic="com.intellij.openapi.project.ModuleListener"/>
     </projectListeners>
 
     <actions>

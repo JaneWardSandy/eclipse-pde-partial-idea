@@ -242,6 +242,7 @@ object ModuleHelper {
     ) {
         PDEFacet.getInstance(model.module) ?: return
 
+        var libraryIndex = -1
         ApplicationManager.getApplication().invokeAndWait {
             val moduleLibraryTable = model.moduleLibraryTable.modifiableModel
 
@@ -257,8 +258,12 @@ object ModuleHelper {
                 val orderEntriesList = model.orderEntries.toMutableList()
                 orderEntriesList.remove(this)
 
-                val lastIndex = orderEntriesList.indexOfLast { it is JdkOrderEntry || it is ModuleSourceOrderEntry }
-                orderEntriesList.add(lastIndex + 1, this)
+                libraryIndex = orderEntriesList.indexOfLast {
+                    it is JdkOrderEntry || it is ModuleSourceOrderEntry || it.presentableName.contains(
+                        KotlinOrderEntryName
+                    )
+                }
+                orderEntriesList.add(++libraryIndex, this)
 
                 model.rearrangeOrderEntries(orderEntriesList.toTypedArray())
             }
@@ -299,6 +304,18 @@ object ModuleHelper {
                 }
             }
         }
+
+        val orderEntriesMap = model.orderEntries.associateBy { it.presentableName }
+        val firstOrder = ReadAction.compute<List<OrderEntry>, Exception> {
+            model.module.bundleRequiredOrFromReExportOrderedList.mapNotNull {
+                orderEntriesMap[it] ?: orderEntriesMap["$ProjectLibraryNamePrefix$it"]
+            }
+        }
+
+        val newOrderEntries = orderEntriesMap.values.toMutableList().also { it -= firstOrder }
+            .also { it.addAll(++libraryIndex, firstOrder) }.toTypedArray()
+
+        model.rearrangeOrderEntries(newOrderEntries)
     }
 
     fun setupManifestFile(module: Module) {

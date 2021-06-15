@@ -3,6 +3,7 @@ package cn.varsa.idea.pde.partial.plugin.config
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
+import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
@@ -96,8 +97,8 @@ class BundleManagementService : BackgroundResolvable {
                 BundleManifestCacheService.getInstance(project).clearCache()
                 indicator.fraction = 0.25
 
-                indicator.text2 = "Reset project library"
-                ModuleHelper.resetLibrary(project)
+                indicator.text2 = "Resolve project library"
+                PdeLibraryResolverRegistry.instance.resolveProject(project, indicator)
                 indicator.fraction = 0.5
 
                 indicator.text2 = "Reset module settings"
@@ -109,7 +110,7 @@ class BundleManagementService : BackgroundResolvable {
 
                     ModuleHelper.resetCompileOutputPath(it)
                     ModuleHelper.resetCompileArtifact(it)
-                    ModuleHelper.resetLibrary(it)
+                    PdeLibraryResolverRegistry.instance.resolveModule(it, indicator)
 
                     indicator.fraction += step
                 }

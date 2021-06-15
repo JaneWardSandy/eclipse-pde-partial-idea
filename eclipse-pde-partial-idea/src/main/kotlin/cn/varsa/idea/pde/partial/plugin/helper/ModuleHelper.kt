@@ -224,13 +224,8 @@ object ModuleHelper {
         PDEFacet.getInstance(module) ?: return
 
         ModuleRootModificationUtil.updateModel(module) { model ->
-            val table = model.moduleLibraryTable.modifiableModel
-
-            table.libraries.filter {
-                it.presentableName.startsWith(ProjectLibraryNamePrefix) || it is ModuleOrderEntry
-            }.forEach { table.removeLibrary(it) }
-
-            ApplicationManager.getApplication().invokeAndWait { WriteAction.run<Exception> { table.commit() } }
+            model.orderEntries.filter { it.presentableName.startsWith(ProjectLibraryNamePrefix) || it is ModuleOrderEntry }
+                .forEach { model.removeOrderEntry(it) }
         }
 
         ModuleRootModificationUtil.updateModel(module) {

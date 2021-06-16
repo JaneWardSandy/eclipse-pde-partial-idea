@@ -16,7 +16,7 @@ class BundleManagementService : BackgroundResolvable {
     }
 
     val bundles = ConcurrentHashMap<String, BundleDefinition>()
-    val libReExportRequiredSymbolName = hashMapOf<String, HashSet<String>>()
+    val libReExportRequiredSymbolName = hashMapOf<String, LinkedHashSet<String>>()
     val jarPathInnerBundle = hashMapOf<String, BundleDefinition>()
 
     private fun clear() {
@@ -76,11 +76,20 @@ class BundleManagementService : BackgroundResolvable {
         indicator.text2 = "Resolving dependency tree"
         indicator.fraction = 0.9
 
-        bundles.map {
-            it.key to (it.value.manifest?.reExportRequiredBundleSymbolNames?.toHashSet() ?: hashSetOf())
-        }.toMap().also { libReExportRequiredSymbolName += it }.run {
-            forEach { (symbolName, reExport) -> fillDependencies(symbolName, reExport, reExport, this) }
+        bundles.mapValues { (_, definition) ->
+            definition.manifest?.reExportRequiredBundleSymbolNames ?: emptySet()
+        }.also { l1ReExport ->
+            l1ReExport.forEach { (symbolName, exported) ->
+                val export = linkedSetOf<String>()
+                libReExportRequiredSymbolName[symbolName] = export
+
+                exported.forEach {
+                    export += it
+                    fillDependencies(symbolName, export, setOf(it), l1ReExport)
+                }
+            }
         }
+
         indicator.fraction = 1.0
     }
 

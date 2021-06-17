@@ -4,7 +4,11 @@ import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.*
+import cn.varsa.idea.pde.partial.plugin.openapi.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.project.*
 import org.jetbrains.kotlin.idea.util.*
 
 class ResolveManifestAction : AnAction() {
@@ -25,7 +29,14 @@ class ResolveManifestAction : AnAction() {
                 ?.findModule(this)?.also {
                     ModuleHelper.resetCompileOutputPath(it)
                     ModuleHelper.resetCompileArtifact(it)
-                    ModuleHelper.resetLibrary(it)
+
+                    object : BackgroundResolvable {
+                        override fun resolve(project: Project, indicator: ProgressIndicator) {
+                            indicator.checkCanceled()
+                            indicator.text = "Reset module settings"
+                            PdeLibraryResolverRegistry.instance.resolveModule(it, indicator)
+                        }
+                    }.backgroundResolve(this)
                 }
         }
     }

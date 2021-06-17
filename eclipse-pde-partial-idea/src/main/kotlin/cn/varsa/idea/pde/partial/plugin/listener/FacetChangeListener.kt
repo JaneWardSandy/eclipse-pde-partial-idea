@@ -3,8 +3,9 @@ package cn.varsa.idea.pde.partial.plugin.listener
 import com.intellij.openapi.application.*
 import com.intellij.openapi.module.*
 import com.intellij.util.messages.*
+import java.util.*
 
-interface FacetChangeListener {
+interface FacetChangeListener : EventListener {
     fun compileOutputRelativePathChanged(module: Module, oldValue: String, newValue: String) {
     }
 

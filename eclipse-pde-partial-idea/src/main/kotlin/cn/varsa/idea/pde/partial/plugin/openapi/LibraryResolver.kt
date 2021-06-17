@@ -7,7 +7,7 @@ import org.jetbrains.annotations.*
 interface LibraryResolver<AREA : AreaInstance> {
     @get:Nls(capitalization = Nls.Capitalization.Title) val displayName: String
 
-    fun preResolve(area: AREA, indicator: ProgressIndicator) {}
-    fun resolve(area: AREA, indicator: ProgressIndicator)
-    fun postResolve(area: AREA, indicator: ProgressIndicator) {}
+    fun preResolve(area: AREA) {}
+    fun resolve(area: AREA)
+    fun postResolve(area: AREA) {}
 }

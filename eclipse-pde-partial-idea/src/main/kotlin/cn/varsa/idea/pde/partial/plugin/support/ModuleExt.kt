@@ -4,7 +4,12 @@ import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import com.intellij.openapi.module.*
+import com.intellij.openapi.roots.*
+import com.intellij.util.*
 import org.jetbrains.kotlin.idea.util.*
+
+val Module.moduleRootManager: ModuleRootManager get() = ModuleRootManager.getInstance(this)
+fun Module.updateModel(task: Consumer<in ModifiableRootModel>) = ModuleRootModificationUtil.updateModel(this, task)
 
 fun Module.isBundleRequiredOrFromReExport(symbolName: String): Boolean {
     val cacheService = BundleManifestCacheService.getInstance(project)

@@ -58,19 +58,19 @@ class PdeLibraryResolverRegistry {
         extensions.forEach {
             indicator.text = message("resolver.preResolve", areaName, it.displayName)
             indicator.checkCanceled()
-            it.preResolve(area, indicator)
+            it.preResolve(area)
         }
 
         extensions.forEach {
             indicator.text = message("resolver.resolve", areaName, it.displayName)
             indicator.checkCanceled()
-            it.resolve(area, indicator)
+            it.resolve(area)
         }
 
         extensions.forEach {
             indicator.text = message("resolver.postResolve", areaName, it.displayName)
             indicator.checkCanceled()
-            it.postResolve(area, indicator)
+            it.postResolve(area)
         }
     }
 

@@ -26,7 +26,26 @@
         ]]></description>
 
     <change-notes><![CDATA[
-        <H2>1.1.3</H2><p><b>Fixed:</b></p>
+        <H2>1.2.0</H2>
+
+        <p><b>Feature:</b></p>
+        <ul>
+            <li>Migrate libraries register from ModuleHelper to EP #16
+                <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/16" target="_blank">issue</a>
+            </li>
+        </ul>
+
+        <p><b>Fixed:</b></p>
+        <ul>
+            <li>Wrong imported JAR #19
+                <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/19" target="_blank">issue</a>
+            </li>
+        </ul>
+
+
+        <H2>1.1.3</H2>
+
+        <p><b>Fixed:</b></p>
         <ul>
             <li>Not exited library should be removed</li>
             <li>Select latest version of a library if multiple are present #14
@@ -40,7 +59,9 @@
         </ul>
 
 
-        <H2>1.1.2</H2><p><b>Fixed:</b></p>
+        <H2>1.1.2</H2>
+
+        <p><b>Fixed:</b></p>
         <ul>
             <li>Cannot find entity for library with ID LibraryId #11
                 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/11" target="_blank">issue</a>
@@ -59,7 +80,9 @@
         </ul>
 
 
-        <H2>1.1.1</H2><p><b>Fixed:</b></p>
+        <H2>1.1.1</H2>
+
+        <p><b>Fixed:</b></p>
         <ul>
             <li>Lib inner jar not support by IDEA #8
                 <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/8" target="_blank">issue</a>
@@ -72,7 +95,9 @@
         </ul>
 
 
-        <H2>1.1.0</H2><p><b>Breaking Changes:</b></p>
+        <H2>1.1.0</H2>
+
+        <p><b>Breaking Changes:</b></p>
         <ul>
             <li>New bundle management, split library by single bundle</li>
             <li>Will add many library start with "Partial: "</li>
@@ -93,19 +118,21 @@
         </ul>
 
 
-        <H2>1.0.1</H2><p><b>Fixed:</b></p>
+        <H2>1.0.1</H2>
+
+        <p><b>Fixed:</b></p>
         <ul>
             <li>Module in same project was required in another module, but not add into dependency tree.</li>
             <li>Module in same project was required in another module, but reexport not resolve. Module reexport bundle
                 not pass to another module #3
-                ([issue](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/3))
+                <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/3" target="_blank">issue</a>
             </li>
             <li>Manifest bundle reference in same project, linked to wrong module</li>
             <li>Kotlin's property ext access inspection not work #4
-                ([issue](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/4))
+                <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/4" target="_blank">issue</a>
             </li>
             <li>Kotlin project alert kotlin bundle not required #5
-                ([issue](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/5))
+                <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/5" target="_blank">issue</a>
             </li>
         </ul>
 

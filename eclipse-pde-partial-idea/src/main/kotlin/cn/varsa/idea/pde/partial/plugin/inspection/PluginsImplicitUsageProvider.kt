@@ -2,12 +2,12 @@ package cn.varsa.idea.pde.partial.plugin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.codeInsight.daemon.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.roots.*
 import com.intellij.psi.*
 import com.intellij.psi.util.*
-import org.jetbrains.kotlin.idea.util.*
 
 class PluginsImplicitUsageProvider : ImplicitUsageProvider {
     override fun isImplicitRead(element: PsiElement): Boolean = false

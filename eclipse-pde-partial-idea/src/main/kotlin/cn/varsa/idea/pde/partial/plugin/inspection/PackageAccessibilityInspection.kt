@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.osgi.framework.Constants.*
 import java.lang.annotation.*
 
-class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
+abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
 
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (file !is PsiClassOwner || ProjectRootsUtil.isInTestSource(file)) return null
@@ -44,66 +44,24 @@ class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
 
         val problems = hashSetOf<ProblemDescriptor>()
         val addMessage: (Problem, PsiElement) -> Unit = { problem, place ->
-            problems.add(manager.createProblemDescriptor(place, problem.message, isOnTheFly, problem.fixes, problem.type))
+            problems.add(
+                manager.createProblemDescriptor(place, problem.message, isOnTheFly, problem.fixes, problem.type)
+            )
         }
 
         DependenciesBuilder.analyzeFileDependencies(file, { place, dependency ->
-            when (dependency) {
-                is PsiClass -> checkAccessibility(dependency, facet)?.also { addMessage(it, place) }
-                is PsiMethod -> dependency.parent?.let { it as? PsiClass }?.let { checkAccessibility(it, facet) }
-                    ?.also { addMessage(it, place) }
-                is KtNamedDeclaration -> {
-                    checkAccessibility(dependency, facet)?.also { addMessage(it, place) }
-
-                    dependency.getValueParameters().mapNotNull { it.typeReference?.classForRefactor() }
-                        .forEach { clazz -> checkAccessibility(clazz, facet)?.also { addMessage(it, place) } }
-                    dependency.getReturnTypeReference()?.classForRefactor()?.let { checkAccessibility(it, facet) }
-                        ?.also { addMessage(it, place) }
-                }
-            }
+            checkElement(place, dependency, facet, addMessage)
         }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS)
 
         return problems.takeIf { it.isNotEmpty() }?.toTypedArray()
     }
 
+    abstract fun checkElement(
+        place: PsiElement, dependency: PsiElement, facet: PDEFacet, occurProblem: (Problem, PsiElement) -> Unit
+    )
+
     companion object {
-        fun checkAccessibility(namedDeclaration: KtNamedDeclaration, facet: PDEFacet): Problem? {
-            val targetFile = namedDeclaration.containingFile
-            if (targetFile !is KtFile) return null
-
-            val packageName = targetFile.packageFqName.asString()
-            if (packageName.isBlank() || packageName.startsWith(Kotlin)) return null
-
-            val qualifiedName = namedDeclaration.fqName?.asString() ?: return null
-
-            if (facet.module == ModuleUtilCore.findModuleForPsiElement(namedDeclaration)) return null
-
-            return checkAccessibility(targetFile, packageName, qualifiedName, facet.module)
-        }
-
-        fun checkAccessibility(targetClass: PsiClass, facet: PDEFacet): Problem? {
-            var clzz = targetClass
-            while (clzz.parent is PsiClass) clzz = clzz.parent as PsiClass
-
-            if (clzz.isAnnotationType) {
-                val policy = AnnotationsHighlightUtil.getRetentionPolicy(clzz)
-                if (policy == RetentionPolicy.CLASS || policy == RetentionPolicy.SOURCE) return null
-            }
-
-            val targetFile = clzz.containingFile
-            if (targetFile !is PsiClassOwner) return null
-
-            val packageName = targetFile.packageName
-            if (packageName.isBlank() || packageName.startsWith(Java)) return null
-
-            val qualifiedName = clzz.qualifiedName ?: return null
-
-            if (facet.module == ModuleUtilCore.findModuleForPsiElement(clzz)) return null
-
-            return checkAccessibility(targetFile, packageName, qualifiedName, facet.module)
-        }
-
-        private fun checkAccessibility(
+        fun checkAccessibility(
             item: PsiFileSystemItem, packageName: String, qualifiedName: String, requesterModule: Module
         ): Problem? {
             // In bundleClassPath

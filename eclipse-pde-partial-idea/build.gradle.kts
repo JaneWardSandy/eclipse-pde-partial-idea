@@ -1,5 +1,3 @@
-import org.jetbrains.intellij.tasks.*
-
 plugins {
     kotlin("jvm")
     id("org.jetbrains.intellij")
@@ -18,9 +16,13 @@ intellij {
 }
 
 tasks {
-    getByName<PatchPluginXmlTask>("patchPluginXml") {
+    patchPluginXml {
         sinceBuild("203")
         untilBuild("")
+
+        val projectPath = rootProject.projectDir.path
+        pluginDescription(File("$projectPath/DESCRIPTION.html").readText(Charsets.UTF_8))
+        changeNotes(File("$projectPath/CHANGES.html").readText(Charsets.UTF_8))
     }
 
     publishPlugin {

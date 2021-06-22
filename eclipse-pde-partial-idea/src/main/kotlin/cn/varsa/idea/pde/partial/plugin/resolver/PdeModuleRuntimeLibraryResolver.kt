@@ -36,21 +36,22 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
         area.updateModel { model ->
             val libraryTableModel = model.moduleLibraryTable.modifiableModel
 
-            val library = libraryTableModel.getLibraryByName(ModuleLibraryName) ?: writeCompute {
-                libraryTableModel.createLibrary(ModuleLibraryName)
-            }
-
-            model.findLibraryOrderEntry(library)?.apply {
-                scope = DependencyScope.COMPILE
-                isExported = true
-            }
-
-            val libraryModel = library.modifiableModel
-
-            libraryModel.getUrls(OrderRootType.CLASSES).forEach { libraryModel.removeRoot(it, OrderRootType.CLASSES) }
-            classesRoot.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
-
             applicationInvokeAndWait {
+                val library = libraryTableModel.getLibraryByName(ModuleLibraryName) ?: writeCompute {
+                    libraryTableModel.createLibrary(ModuleLibraryName)
+                }
+
+                model.findLibraryOrderEntry(library)?.apply {
+                    scope = DependencyScope.COMPILE
+                    isExported = true
+                }
+
+                val libraryModel = library.modifiableModel
+
+                libraryModel.getUrls(OrderRootType.CLASSES)
+                    .forEach { libraryModel.removeRoot(it, OrderRootType.CLASSES) }
+                classesRoot.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+
                 writeRun {
                     libraryModel.commit()
                     libraryTableModel.commit()

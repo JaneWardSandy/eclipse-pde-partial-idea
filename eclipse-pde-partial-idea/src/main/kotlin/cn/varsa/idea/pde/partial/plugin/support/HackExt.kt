@@ -11,4 +11,5 @@ fun Project.allModules(): List<Module> = allModulesIdea()
 fun Module.getModuleDir(): String = getModuleDirIdea()
 
 val PsiFile.module: Module? get() = ModuleUtilCore.findModuleForFile(this)
+val PsiClass.module: Module? get() = ModuleUtilCore.findModuleForPsiElement(this)
 val PsiElement.module: Module? get() = ModuleUtilCore.findModuleForPsiElement(this)

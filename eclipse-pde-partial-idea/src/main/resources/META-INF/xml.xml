@@ -1,0 +1,15 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- plugin.xml -->
+        <dom.fileMetaData rootTagName="plugin"
+                          implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.PluginDescriptorDomFileDescription"/>
+        <dom.extender domClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.Extension"
+                      extenderClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionsDomExtender"/>
+        <dom.implementation implementationClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.OsgiPluginImpl"
+                            interfaceClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.OsgiPlugin"/>
+        <dom.implementation implementationClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionImpl"
+                            interfaceClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.Extension"/>
+        <dom.implementation implementationClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionPointImpl"
+                            interfaceClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.ExtensionPoint"/>
+    </extensions>
+</idea-plugin>

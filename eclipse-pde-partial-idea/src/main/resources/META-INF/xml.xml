@@ -1,15 +1,16 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.ExtensionPointCacheService"/>
+
         <!-- plugin.xml -->
         <dom.fileMetaData rootTagName="plugin"
                           implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.PluginDescriptorDomFileDescription"/>
         <dom.extender domClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.Extension"
                       extenderClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionsDomExtender"/>
-        <dom.implementation implementationClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.OsgiPluginImpl"
-                            interfaceClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.OsgiPlugin"/>
         <dom.implementation implementationClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionImpl"
                             interfaceClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.Extension"/>
-        <dom.implementation implementationClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionPointImpl"
-                            interfaceClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.ExtensionPoint"/>
+
+        <!-- exsd -->
+        <fileTypeDetector implementation="cn.varsa.idea.pde.partial.plugin.dom.exsd.ExsdFileTypeDetector"/>
     </extensions>
 </idea-plugin>

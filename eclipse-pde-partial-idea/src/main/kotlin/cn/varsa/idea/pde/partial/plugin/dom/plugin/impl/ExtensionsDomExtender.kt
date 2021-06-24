@@ -1,31 +1,38 @@
 package cn.varsa.idea.pde.partial.plugin.dom.plugin.impl
 
+import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.*
+import com.intellij.openapi.vfs.*
+import com.intellij.util.xml.*
 import com.intellij.util.xml.reflect.*
+import java.io.*
 
 class ExtensionsDomExtender : DomExtender<Extension>() {
-//    private val logger = thisLogger()
 
     override fun supportsStubs(): Boolean = false
     override fun registerExtensions(extension: Extension, registrar: DomExtensionsRegistrar) {
-//        val file =
-//            File("/Users/janewardsandy/eclipse-workspace/测试文件/com.hnintel.casc.rac.exportcard.assemblyDetailsList.xsd")
-//
-//        val document = SAXBuilder().apply { saxHandlerFactory = NameSpaceCleanerFactory() }.build(file)
-//        XPathFactory.instance()
-//            .compile("/schema/element[@name='extension']/complexType/sequence/element", Filters.element())
-//            .evaluate(document).also { logger.warn("Size: ${it.size}") }.forEach {
-//                logger.warn(it.toString())
-//
-//                registrar.registerCollectionChildrenExtension(
-//                    XmlName(it.getAttributeValue("ref")), DomElement::class.java
-//                )
-//            }
-        // TODO: 2021/6/23
+        val file = File("/Users/janewardsandy/eclipse-workspace/测试文件/commands.exsd")
+        VfsUtil.findFileByIoFile(file, false)?.let { ExtensionPointDefinition(it) }?.also {
+            registerElement(it, it.extension, registrar)
+        }
 
-        // "fallback" extension
-        registrar.registerCustomChildrenExtension(
-            Extension.UnresolvedExtension::class.java, CustomDomChildrenDescription.TagNameDescriptor()
-        )
+        // TODO: 2021/6/24
+    }
+
+    private fun registerElement(
+        extension: ExtensionPointDefinition, element: ElementDefinition, registrar: DomExtensionsRegistrar
+    ) {
+        element.elementRefs.mapNotNull { ref -> extension.elements.firstOrNull { it.name == ref.ref } }.forEach {
+            registrar.registerCollectionChildrenExtension(XmlName(it.name), DomElement::class.java)
+                .addExtender(object : DomExtender<DomElement>() {
+                    override fun registerExtensions(t: DomElement, registrar: DomExtensionsRegistrar) {
+                        registerElement(extension, it, registrar)
+                    }
+                })
+        }
+
+        element.attributes.forEach {
+            registrar.registerGenericAttributeValueChildExtension(XmlName(it.name), String::class.java)
+        }
     }
 }

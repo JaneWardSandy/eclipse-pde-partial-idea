@@ -56,9 +56,9 @@ class PdeProjectLibraryResolver : TargetPlatformLibraryResolver {
                 libraryModel.getUrls(OrderRootType.SOURCES)
                     .forEach { libraryModel.removeRoot(it, OrderRootType.SOURCES) }
 
-                bundle.delegateClassPathFile.map { it.protocolUrl }
+                bundle.delegateClassPathFile.values.map { it.protocolUrl }
                     .forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
-                bundle.sourceBundle?.delegateClassPathFile?.map { it.protocolUrl }
+                bundle.sourceBundle?.delegateClassPathFile?.values?.map { it.protocolUrl }
                     ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
 
                 libraryModel

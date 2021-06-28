@@ -62,13 +62,13 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
             applicationInvokeAndWait {
                 area.project.allPDEModules().filterNot { it == area }
                     .filter { bundleRequiredOrFromReExportOrderedList.contains(readCompute { cacheService.getManifest(it)?.bundleSymbolicName?.key }) }
-                    .forEach { model.addModuleOrderEntry(it) }
+                    .forEach { model.findModuleOrderEntry(it) ?: model.addModuleOrderEntry(it) }
             }
 
             area.project.libraryTable().libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }
                 .forEach { depLibrary ->
                     managementService.bundles[depLibrary.name?.substringAfter(ProjectLibraryNamePrefix)]?.dependencyScope?.also {
-                        model.addLibraryEntry(depLibrary).apply {
+                        (model.findLibraryOrderEntry(depLibrary) ?: model.addLibraryEntry(depLibrary)).apply {
                             scope = it
                             isExported = false
                         }

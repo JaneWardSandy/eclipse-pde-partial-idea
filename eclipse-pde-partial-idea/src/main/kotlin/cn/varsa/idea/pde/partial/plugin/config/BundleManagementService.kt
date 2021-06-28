@@ -51,7 +51,8 @@ class BundleManagementService : BackgroundResolvable {
                     }
                 } else if (bundleVersionSelection[bundle.bundleSymbolicName] == manifest.bundleVersion?.toString()) {
                     bundles[bundle.bundleSymbolicName] = bundle
-                    bundle.delegateClassPathFile.map { it.presentableUrl }.forEach { jarPathInnerBundle[it] = bundle }
+                    bundle.delegateClassPathFile.values.map { it.presentableUrl }
+                        .forEach { jarPathInnerBundle[it] = bundle }
                 }
             }
             indicator.fraction += bundleStep

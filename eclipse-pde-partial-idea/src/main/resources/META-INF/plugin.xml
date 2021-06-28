@@ -50,6 +50,7 @@
 
         <manifestLibraryResolver
                 implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleRuntimeLibraryResolver"/>
+        <buildLibraryResolver implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleCompileOnlyResolver"/>
     </extensions>
 
     <projectListeners>

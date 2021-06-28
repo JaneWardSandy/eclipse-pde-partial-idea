@@ -141,33 +141,37 @@ data class BundleDefinition(
     val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
 
     val bundleSymbolicName: String get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension
-    private val classPaths: Set<VirtualFile>
-        get() = setOf(root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
-            ?.mapNotNull { root.findFileByRelativePath(it) }?.toSet() ?: emptySet())
+    private val classPaths: Map<String, VirtualFile>
+        get() = mapOf("" to root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
+            ?.map { it to root.findFileByRelativePath(it) }?.filterNot { it.second == null }
+            ?.associate { it.first to it.second!! } ?: emptyMap())
 
-    val delegateClassPathFile: Set<VirtualFile>
-        get() = classPaths.map {
-            val rootEntry = JarFileSystem.getInstance().getRootByEntry(it)
-            if (rootEntry != null && rootEntry != it) {
+    val delegateClassPathFile: Map<String, VirtualFile>
+        get() = classPaths.mapValues {
+            val originFile = it.value
+
+            val rootEntry = JarFileSystem.getInstance().getRootByEntry(originFile)
+            if (rootEntry != null && rootEntry != originFile) {
                 val name =
-                    "${PathUtilRt.suggestFileName("${root.name}${it.presentableUrl.substringAfter(rootEntry.presentableUrl)}")}.${it.extension}"
+                    "${PathUtilRt.suggestFileName("${root.name}${originFile.presentableUrl.substringAfter(rootEntry.presentableUrl)}")}.${originFile.extension}"
 
                 WriteAction.computeAndWait<VirtualFile, Exception> {
                     val projectFile = LocalFileSystem.getInstance().findFileByPath(project.presentableUrl!!)!!
                     val outFile = projectFile.findChild("out") ?: projectFile.createChildDirectory(this, "out")
                     val libFile = outFile.findChild("tmp_lib") ?: outFile.createChildDirectory(this, "tmp_lib")
-                    val virtualFile = libFile.findChild(name) ?: libFile.createChildData(this, name)
+                    val virtualFile = libFile.findOrCreateChildData(this, name)
 
-                    virtualFile.getOutputStream(virtualFile).use { ous ->
-                        it.inputStream.use { ins -> ins.copyTo(ous) }
+                    if (virtualFile.modificationStamp != rootEntry.modificationStamp || virtualFile.timeStamp != rootEntry.timeStamp) {
+                        virtualFile.getOutputStream(virtualFile, rootEntry.modificationStamp, rootEntry.timeStamp)
+                            .use { ous -> originFile.inputStream.use { ins -> ins.copyTo(ous) } }
                     }
 
                     virtualFile
                 }
             } else {
-                it
+                originFile
             }
-        }.toSet()
+        }
 
     var sourceBundle: BundleDefinition? = null
 }

@@ -15,6 +15,7 @@ import java.util.jar.*
 import kotlin.io.use
 
 class BundleManifestCacheService(private val project: Project) {
+    private val cachedValuesManager by lazy { CachedValuesManager.getManager(project) }
 
     // Key was manifest file path
     // will maintain key's relation to the same value on CacheValue update
@@ -74,7 +75,7 @@ class BundleManifestCacheService(private val project: Project) {
     private fun getManifest0(
         keyProvider: () -> String, manifestProvider: () -> BundleManifest, dependenciesProvider: () -> Array<Any>
     ): BundleManifest = caches.computeIfAbsent(keyProvider()) {
-        CachedValuesManager.getManager(project).createCachedValue {
+        cachedValuesManager.createCachedValue {
             CachedValueProvider.Result.create(manifestProvider(), dependenciesProvider())
         }
     }.value

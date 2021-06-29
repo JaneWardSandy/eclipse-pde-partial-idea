@@ -10,8 +10,7 @@ class PluginsImplicitUsageProvider : ImplicitUsageProvider {
     override fun isImplicitWrite(element: PsiElement): Boolean = false
 
     override fun isImplicitUsage(element: PsiElement): Boolean = (element as? PsiClass)?.let { clazz ->
-        clazz.module?.project?.let { ExtensionPointManagementService.getInstance(it) }?.epReferenceIdentityMap?.values?.any { name2values ->
-            name2values.any { it.value.contains(clazz.qualifiedName) }
-        }
-    } == true
+        clazz.module?.project?.let { ExtensionPointManagementService.getInstance(it) }
+            ?.isUsageByAnyExtension(clazz.qualifiedName)
+    } ?: false
 }

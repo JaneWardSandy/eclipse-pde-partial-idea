@@ -9,6 +9,6 @@ interface OsgiPlugin : DomElementWithTag {
         const val tagName = "plugin"
     }
 
-    @SubTagList("extension-point") fun extensionPoints(): List<ExtensionPoint>
+    @SubTagList("extension-point") fun getExtensionPoints(): List<ExtensionPoint>
     @SubTagList("extension") fun getExtensions(): List<Extension>
 }

@@ -1,6 +1,7 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.ExtensionPointCacheService"/>
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.PluginXmlCacheService"/>
         <projectService
                 serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.ExtensionPointManagementService"/>
 

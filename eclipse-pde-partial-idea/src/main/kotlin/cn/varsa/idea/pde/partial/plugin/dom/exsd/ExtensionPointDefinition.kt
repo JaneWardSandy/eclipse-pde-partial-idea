@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.exsd
 
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.*
@@ -11,7 +12,7 @@ import org.jdom.input.*
 import org.jdom.xpath.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 
-class ExtensionPointDefinition(val exsd: VirtualFile) {
+class ExtensionPointDefinition(exsd: VirtualFile) {
     companion object {
         const val schemaProtocol = "schema://"
 
@@ -31,7 +32,7 @@ class ExtensionPointDefinition(val exsd: VirtualFile) {
 
     val point: String get() = id.takeIf { it.startsWith(plugin) } ?: "$plugin.$id"
     val includes: List<String>
-    val extension: ElementDefinition
+    val extension: ElementDefinition?
     val elements: List<ElementDefinition>
 
     init {
@@ -42,8 +43,8 @@ class ExtensionPointDefinition(val exsd: VirtualFile) {
             id = it.getAttributeValue("id")
             name = it.getAttributeValue("name")
         }
-        includes = includePath.evaluate(document).map { it.getAttributeValue("schemaLocation") }
-        extension = ElementDefinition(extensionPath.evaluateFirst(document))
+        includes = includePath.evaluate(document).mapNotNull { it.getAttributeValue("schemaLocation") }
+        extension = extensionPath.evaluateFirst(document)?.let(::ElementDefinition)
         elements = elementPath.evaluate(document).map(::ElementDefinition)
     }
 
@@ -53,23 +54,25 @@ class ExtensionPointDefinition(val exsd: VirtualFile) {
         findRefElement(this, ref, project, ExtensionPointCacheService.getInstance(project), hashSetOf())
 
     private fun findRefElement(
-        extensionPointDefinition: ExtensionPointDefinition,
+        definition: ExtensionPointDefinition,
         ref: ElementRefDefinition,
         project: Project,
         cacheService: ExtensionPointCacheService,
         includeVisited: HashSet<ExtensionPointDefinition>
     ): ElementDefinition? {
-        if (!includeVisited.add(extensionPointDefinition)) return null
-        return extensionPointDefinition.elements.firstOrNull { it.name == ref.ref }
-            ?: extensionPointDefinition.includes.mapNotNull { cacheService.loadExtensionPoint(project, it) }
-                .firstNotNullResult { findRefElement(it, ref, project, cacheService, includeVisited) }
+        if (!includeVisited.add(definition)) return null
+        return definition.elements.firstOrNull { it.name == ref.ref }
+            ?: definition.includes.mapNotNull { schemaLocation ->
+                cacheService.loadExtensionPoint(schemaLocation)
+                    .also { if (it == null) thisLogger().warn("Schema not existed: $schemaLocation") } // TODO: 2021/6/29 Add notify balloon
+            }.firstNotNullResult { findRefElement(it, ref, project, cacheService, includeVisited) }
     }
 }
 
 class ElementDefinition(element: Element) {
     companion object {
-        private val elementDeprecatedPath =
-            XPathFactory.instance().compile("annotation/appinfo/meta.element", Filters.element())
+        private val elementDeprecatedPath = XPathFactory.instance()
+            .compile("annotation/appinfo/meta.element | annotation/appInfo/meta.element", Filters.element())
         private val elementRefPath =
             XPathFactory.instance().compile("complexType/descendant::element", Filters.element())
         private val attributePath = XPathFactory.instance().compile("complexType/attribute", Filters.element())
@@ -106,7 +109,8 @@ class ElementRefDefinition(element: Element) {
 
 class AttributeDefinition(element: Element) {
     companion object {
-        private val metaPath = XPathFactory.instance().compile("annotation/appinfo/meta.attribute", Filters.element())
+        private val metaPath = XPathFactory.instance()
+            .compile("annotation/appinfo/meta.attribute | annotation/appInfo/meta.attribute", Filters.element())
         private val simplePath = XPathFactory.instance().compile("simpleType/restriction", Filters.element())
         private val simpleEnumerationPath = XPathFactory.instance().compile("enumeration", Filters.element())
     }

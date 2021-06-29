@@ -47,12 +47,12 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         val managementService = ExtensionPointManagementService.getInstance(configuration.project)
         productField.apply {
             removeAllItems()
-            managementService.products.sorted().forEach(this::addItem)
+            managementService.getProducts().sorted().forEach(this::addItem)
             item = configuration.product
         }
         applicationField.apply {
             removeAllItems()
-            managementService.applications.sorted().forEach(this::addItem)
+            managementService.getApplications().sorted().forEach(this::addItem)
             item = configuration.application
         }
 

@@ -33,7 +33,6 @@ class PDETargetRemoteRunConfiguration(
     private val target by lazy { TargetDefinitionService.getInstance(project) }
     private val compiler by lazy { CompilerProjectExtension.getInstance(project) }
 
-    // FIXME: 2021/4/27 Default application
     var product = "com.teamcenter.rac.aifrcp.product"
     var application = "com.teamcenter.rac.aifrcp.application"
 

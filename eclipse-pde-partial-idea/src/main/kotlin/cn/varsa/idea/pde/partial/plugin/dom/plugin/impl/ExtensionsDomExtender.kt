@@ -25,19 +25,21 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
         val project = extension.module?.project ?: return
         val point = extension.getPoint().stringValue?.takeIf(String::isNotBlank) ?: return
 
+        if (DumbService.isDumb(project)) return
+
         val managementService = ExtensionPointManagementService.getInstance(extension.xmlTag.project)
-        managementService.getExtensionPoint(project, point)
+        managementService.getExtensionPoint(point)
             ?.also { registerElement(it, it.extension, project, registrar, managementService) }
     }
 
     private fun registerElement(
         extension: ExtensionPointDefinition,
-        element: ElementDefinition,
+        element: ElementDefinition?,
         project: Project,
         registrar: DomExtensionsRegistrar,
         managementService: ExtensionPointManagementService
     ) {
-        element.elementRefs.mapNotNull { extension.findRefElement(it, project) }.forEach {
+        element?.elementRefs?.mapNotNull { extension.findRefElement(it, project) }?.forEach {
             if (it.attributes.isEmpty() && it.type == "string") {
                 registrar.registerCollectionChildrenExtension(XmlName(it.name), SimpleTagValue::class.java)
             } else {
@@ -50,7 +52,7 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
             }
         }
 
-        element.attributes.forEach { definition ->
+        element?.attributes?.forEach { definition ->
             val type: Type = when {
                 definition.type == "boolean" -> Boolean::class.java
                 definition.kind == "java" -> PsiClass::class.java
@@ -71,9 +73,9 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
                 childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
                 childExtension.setConverter(PathReferenceConverter.INSTANCE)
             } else if (definition.kind == "identifier") {
-                val references = (definition.basedOn?.split('/')?.takeIf { it.size == 3 }
-                    ?.let { managementService.epReferenceIdentityMap[it[0] to it[1]]?.get(it[2].substringAfter('@')) }
-                    ?.sorted() ?: emptyList())
+                val references = definition.basedOn?.split('/')?.takeIf { it.size == 3 }
+                    ?.let { managementService.getReferenceIdentifies(it[0], it[1], it[2].substringAfter('@')) }
+                    ?.sorted() ?: emptyList()
                 childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
                 childExtension.setConverter(StringListConverter(references))
             }

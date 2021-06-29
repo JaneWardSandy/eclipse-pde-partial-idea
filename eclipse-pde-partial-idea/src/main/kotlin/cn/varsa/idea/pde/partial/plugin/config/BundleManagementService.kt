@@ -15,7 +15,7 @@ class BundleManagementService : BackgroundResolvable {
             project.getService(BundleManagementService::class.java)
     }
 
-    val bundles = ConcurrentHashMap<String, BundleDefinition>()
+    val bundles = hashMapOf<String, BundleDefinition>()
     val libReExportRequiredSymbolName = hashMapOf<String, LinkedHashSet<String>>()
     val jarPathInnerBundle = hashMapOf<String, BundleDefinition>()
 
@@ -94,38 +94,40 @@ class BundleManagementService : BackgroundResolvable {
     }
 
     override fun onFinished(project: Project) {
-        object : BackgroundResolvable {
-            override fun resolve(project: Project, indicator: ProgressIndicator) {
-                indicator.isIndeterminate = false
-                indicator.fraction = 0.0
+        ExtensionPointManagementService.getInstance(project).backgroundResolve(project, onFinished = {
+            object : BackgroundResolvable {
+                override fun resolve(project: Project, indicator: ProgressIndicator) {
+                    indicator.isIndeterminate = false
+                    indicator.fraction = 0.0
 
-                indicator.checkCanceled()
-                indicator.text = "Rebuild project settings"
-
-                indicator.text2 = "Clear bundle cache"
-                BundleManifestCacheService.getInstance(project).clearCache()
-                indicator.fraction = 0.25
-
-                indicator.text2 = "Resolve project library"
-                PdeLibraryResolverRegistry.instance.resolveProject(project, indicator)
-                indicator.fraction = 0.5
-
-                indicator.text2 = "Reset module settings"
-                val allPDEModules = project.allPDEModules()
-
-                val step = 0.5 / (allPDEModules.size + 1)
-                allPDEModules.forEach {
                     indicator.checkCanceled()
+                    indicator.text = "Rebuild project settings"
 
-                    ModuleHelper.resetCompileOutputPath(it)
-                    ModuleHelper.resetCompileArtifact(it)
-                    PdeLibraryResolverRegistry.instance.resolveModule(it, indicator)
+                    indicator.text2 = "Clear bundle cache"
+                    BundleManifestCacheService.getInstance(project).clearCache()
+                    indicator.fraction = 0.25
 
-                    indicator.fraction += step
+                    indicator.text2 = "Resolve project library"
+                    PdeLibraryResolverRegistry.instance.resolveProject(project, indicator)
+                    indicator.fraction = 0.5
+
+                    indicator.text2 = "Reset module settings"
+                    val allPDEModules = project.allPDEModules()
+
+                    val step = 0.5 / (allPDEModules.size + 1)
+                    allPDEModules.forEach {
+                        indicator.checkCanceled()
+
+                        ModuleHelper.resetCompileOutputPath(it)
+                        ModuleHelper.resetCompileArtifact(it)
+                        PdeLibraryResolverRegistry.instance.resolveModule(it, indicator)
+
+                        indicator.fraction += step
+                    }
+                    indicator.fraction = 1.0
                 }
-                indicator.fraction = 1.0
-            }
-        }.backgroundResolve(project)
+            }.backgroundResolve(project)
+        })
     }
 
     private tailrec fun fillDependencies(

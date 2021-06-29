@@ -15,5 +15,7 @@
 
         <implicitUsageProvider
                 implementation="cn.varsa.idea.pde.partial.plugin.inspection.PluginsImplicitUsageProvider"/>
+        <implicitUsageProvider
+                implementation="cn.varsa.idea.pde.partial.plugin.inspection.ActivatorImplicitUsageProvider"/>
     </extensions>
 </idea-plugin>

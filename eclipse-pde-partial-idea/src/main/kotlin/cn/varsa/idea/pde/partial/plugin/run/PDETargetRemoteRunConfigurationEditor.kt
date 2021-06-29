@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.run
 
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import com.intellij.execution.configuration.*
 import com.intellij.execution.configurations.*
@@ -18,8 +19,9 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
 
     private val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false))
 
-    private val productTextField = JBTextField()
-    private val applicationTextField = JBTextField()
+    private val productField = ComboBox<String>()
+    private val applicationField = ComboBox<String>()
+
     private val remoteHostTextField = JBTextField()
     private val rmiPortSpinner = JBIntSpinner(7995, 1, Int.MAX_VALUE)
     private val rmiNameTextField = JBTextField()
@@ -32,9 +34,9 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
 
 
     private val productComponent =
-        LabeledComponent.create(productTextField, message("run.remote.config.tab.wishes.product"), BorderLayout.WEST)
+        LabeledComponent.create(productField, message("run.remote.config.tab.wishes.product"), BorderLayout.WEST)
     private val applicationComponent = LabeledComponent.create(
-        applicationTextField, message("run.remote.config.tab.wishes.application"), BorderLayout.WEST
+        applicationField, message("run.remote.config.tab.wishes.application"), BorderLayout.WEST
     )
 
     private val remoteHostComponent = LabeledComponent.create(
@@ -95,8 +97,17 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
     }
 
     override fun resetEditorFrom(configuration: PDETargetRemoteRunConfiguration) {
-        productTextField.text = configuration.product
-        applicationTextField.text = configuration.application
+        val managementService = ExtensionPointManagementService.getInstance(configuration.project)
+        productField.apply {
+            removeAllItems()
+            managementService.products.sorted().forEach(this::addItem)
+            item = configuration.product
+        }
+        applicationField.apply {
+            removeAllItems()
+            managementService.applications.sorted().forEach(this::addItem)
+            item = configuration.application
+        }
 
         remoteHostTextField.text = configuration.remoteHost
         rmiPortSpinner.number = configuration.rmiPort
@@ -114,8 +125,8 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
     }
 
     override fun applyEditorTo(configuration: PDETargetRemoteRunConfiguration) {
-        configuration.product = productTextField.text
-        configuration.application = applicationTextField.text
+        configuration.product = productField.item
+        configuration.application = applicationField.item
 
         configuration.remoteHost = remoteHostTextField.text
         configuration.rmiPort = rmiPortSpinner.number

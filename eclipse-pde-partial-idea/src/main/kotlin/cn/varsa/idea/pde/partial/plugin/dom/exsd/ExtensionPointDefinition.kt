@@ -1,19 +1,23 @@
 package cn.varsa.idea.pde.partial.plugin.dom.exsd
 
+import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.*
+import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.*
 import org.jdom.*
 import org.jdom.filter2.*
 import org.jdom.input.*
 import org.jdom.xpath.*
+import org.jetbrains.kotlin.utils.addToStdlib.*
 
 class ExtensionPointDefinition(val exsd: VirtualFile) {
     companion object {
         const val schemaProtocol = "schema://"
 
-        private val schemaInfoPath =
-            XPathFactory.instance().compile("/schema/annotation/appinfo/meta.schema", Filters.element())
+        private val schemaInfoPath = XPathFactory.instance().compile(
+            "/schema/annotation/appinfo/meta.schema | /schema/annotation/appInfo/meta.schema", Filters.element()
+        )
         private val includePath = XPathFactory.instance().compile("/schema/include", Filters.element())
         private val extensionPath =
             XPathFactory.instance().compile("/schema/element[@name='extension']", Filters.element())
@@ -41,6 +45,24 @@ class ExtensionPointDefinition(val exsd: VirtualFile) {
         includes = includePath.evaluate(document).map { it.getAttributeValue("schemaLocation") }
         extension = ElementDefinition(extensionPath.evaluateFirst(document))
         elements = elementPath.evaluate(document).map(::ElementDefinition)
+    }
+
+    fun findRefElement(
+        ref: ElementRefDefinition, project: Project
+    ): ElementDefinition? =
+        findRefElement(this, ref, project, ExtensionPointCacheService.getInstance(project), hashSetOf())
+
+    private fun findRefElement(
+        extensionPointDefinition: ExtensionPointDefinition,
+        ref: ElementRefDefinition,
+        project: Project,
+        cacheService: ExtensionPointCacheService,
+        includeVisited: HashSet<ExtensionPointDefinition>
+    ): ElementDefinition? {
+        if (!includeVisited.add(extensionPointDefinition)) return null
+        return extensionPointDefinition.elements.firstOrNull { it.name == ref.ref }
+            ?: extensionPointDefinition.includes.mapNotNull { cacheService.loadExtensionPoint(project, it) }
+                .firstNotNullResult { findRefElement(it, ref, project, cacheService, includeVisited) }
     }
 }
 
@@ -85,7 +107,7 @@ class ElementRefDefinition(element: Element) {
 class AttributeDefinition(element: Element) {
     companion object {
         private val metaPath = XPathFactory.instance().compile("annotation/appinfo/meta.attribute", Filters.element())
-        private val simplePath = XPathFactory.instance().compile("simpleType", Filters.element())
+        private val simplePath = XPathFactory.instance().compile("simpleType/restriction", Filters.element())
         private val simpleEnumerationPath = XPathFactory.instance().compile("enumeration", Filters.element())
     }
 

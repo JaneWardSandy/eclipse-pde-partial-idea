@@ -7,12 +7,35 @@
     <li>Migrate libraries register from ModuleHelper to EP #16
         <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/16" target="_blank">issue</a>
     </li>
+    <li>Required bundle and re-exported bundle was ordered</li>
+    <li>Mark schema <code>.exsd</code> as xml, and valid by schema file</li>
+    <li>Parse <code>plugin.xml</code> file, and support hint, completion #22
+        <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/22" target="_blank">issue</a>
+    </li>
 </ul>
 
 <p><b>Fixed:</b></p>
 <ul>
+    <li>Provide product, application combo #2
+        <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/2" target="_blank">issue</a>
+    </li>
+    <li>Support jars.extra.classpath #13
+        <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/13" target="_blank">issue</a>
+    </li>
     <li>Wrong imported JAR #19
         <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/19" target="_blank">issue</a>
+    </li>
+</ul>
+
+<p><b>Known issues:</b></p>
+<ul>
+    <li><code>plugin.xml</code> not support some rule now, like <code>extendClass</code>, child number limit, ets. #24
+        <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/24" target="_blank">issue</a>
+    </li>
+    <li><code>plugin.xml</code> resolve dynamic by <code>Cached-value</code>, and <code>identify</code> attribute was
+        reference by <code>plugin.xml</code> resolve, PSI modified persist into virtual file was delay, so <code>identify</code>
+        list won't util PSI persist. #25
+        <a href="https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/25" target="_blank">issue</a>
     </li>
 </ul>
 

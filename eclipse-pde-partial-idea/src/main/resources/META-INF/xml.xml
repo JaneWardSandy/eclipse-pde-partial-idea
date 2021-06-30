@@ -1,0 +1,17 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.ExtensionPointCacheService"/>
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.PluginXmlCacheService"/>
+        <projectService
+                serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.ExtensionPointManagementService"/>
+
+        <!-- plugin.xml -->
+        <dom.fileMetaData rootTagName="plugin"
+                          implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.PluginDescriptorDomFileDescription"/>
+        <dom.extender domClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.Extension"
+                      extenderClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionsDomExtender"/>
+
+        <!-- exsd -->
+        <fileTypeDetector implementation="cn.varsa.idea.pde.partial.plugin.dom.exsd.ExsdFileTypeDetector"/>
+    </extensions>
+</idea-plugin>

@@ -3,11 +3,12 @@ package cn.varsa.idea.pde.partial.common.domain
 import cn.varsa.idea.pde.partial.common.support.*
 import org.osgi.framework.*
 import org.osgi.framework.Constants.*
+import java.util.concurrent.*
 import java.util.jar.*
 import kotlin.collections.set
 
 class BundleManifest private constructor(private val map: Map<String, String>) : Map<String, String> by map {
-    private val parametersMap = hashMapOf<String, Parameters?>()
+    private val parametersMap = ConcurrentHashMap<String, Parameters?>()
 
     companion object {
         fun parse(map: Map<String, String>) = BundleManifest(map.toMap())
@@ -42,8 +43,7 @@ class BundleManifest private constructor(private val map: Map<String, String>) :
 }
 
 class Parameters(
-    private val value: String,
-    private val map: MutableMap<String, Attrs> = mutableMapOf(),
+    private val value: String, private val map: MutableMap<String, Attrs> = mutableMapOf()
 ) : Map<String, Attrs> by map {
 
     init {

@@ -36,6 +36,10 @@ Launch application by local eclipse launcher, auto generate runtime file and bun
 
 By using Wishes-Launcher, allow using RMI to connect remote machine and debug by JDWP
 
+### plugin.xml resolve
+
+Tag hint, attribute auto-completion, extension-point valid
+
 ## Running from source
 
 Clone the project and open it in IntelliJ IDEA, Selection the Gradle task `intellij > runIde` to start a sandbox
@@ -87,3 +91,9 @@ Launche RCP | local run/debug, remote debug | x
 ![](https://plugins.jetbrains.com/files/16761/screenshot_099feaaf-20e8-446c-b551-1981f70b030a)
 
 ![](https://plugins.jetbrains.com/files/16761/screenshot_2d06941b-6641-447f-84f2-7b7b17072393)
+
+![](https://plugins.jetbrains.com/files/16761/screenshot_532f0c69-d65d-425d-a9a9-e990b284e89c)
+
+![](https://plugins.jetbrains.com/files/16761/screenshot_6f8c358a-c0a6-424a-8a7f-acf5dcf08154)
+
+![](https://plugins.jetbrains.com/files/16761/screenshot_70882df8-07e4-410e-92ac-2c492883f54e)

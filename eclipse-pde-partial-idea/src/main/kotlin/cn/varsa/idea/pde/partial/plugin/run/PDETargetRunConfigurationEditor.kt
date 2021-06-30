@@ -1,12 +1,12 @@
 package cn.varsa.idea.pde.partial.plugin.run
 
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import com.intellij.execution.ui.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
-import com.intellij.ui.components.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
@@ -16,9 +16,8 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
     private val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false))
 
-    // TODO: 2021/3/14 Combo select existed product & application
-    private val productField = JBTextField()
-    private val applicationField = JBTextField()
+    private val productField = ComboBox<String>()
+    private val applicationField = ComboBox<String>()
 
     private val productComponent =
         LabeledComponent.create(productField, message("run.local.config.tab.configuration.product"), BorderLayout.WEST)
@@ -45,8 +44,17 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         javaParameters.reset(configuration)
         jrePath.setPathOrName(configuration.alternativeJrePath, configuration.isAlternativeJrePathEnabled)
 
-        productField.text = configuration.product
-        applicationField.text = configuration.application
+        val managementService = ExtensionPointManagementService.getInstance(configuration.project)
+        productField.apply {
+            removeAllItems()
+            managementService.getProducts().sorted().forEach(this::addItem)
+            item = configuration.product
+        }
+        applicationField.apply {
+            removeAllItems()
+            managementService.getApplications().sorted().forEach(this::addItem)
+            item = configuration.application
+        }
 
         configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     }
@@ -56,8 +64,8 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         configuration.alternativeJrePath = jrePath.jrePathOrName
         configuration.isAlternativeJrePathEnabled = jrePath.isAlternativeJreSelected
 
-        configuration.product = productField.text
-        configuration.application = applicationField.text
+        configuration.product = productField.item
+        configuration.application = applicationField.item
 
         configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     }

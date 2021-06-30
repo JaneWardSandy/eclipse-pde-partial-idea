@@ -8,7 +8,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.util.*
 import com.jetbrains.rd.util.*
-import com.sun.xml.fastinfoset.stax.factory.*
 import javax.xml.stream.*
 
 class PluginXmlCacheService(private val project: Project) {
@@ -60,7 +59,7 @@ class PluginXmlCacheService(private val project: Project) {
         epPoint2ExsdPath: HashMap<String, VirtualFile>,
         epReferenceIdentityMap: HashMap<Pair<String, String>, HashMap<String, HashSet<String>>>
     ) {
-        val reader = StAXInputFactory.newInstance().createXMLStreamReader(file.inputStream)
+        val reader = XMLInputFactory.newInstance().createXMLStreamReader(file.inputStream)
         try {
             var extensionPoint = ""
 

@@ -131,9 +131,7 @@ class AccessibilityFix private constructor(
     override fun getName(): String = displayName
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         getVerifiedManifestFile(descriptor.psiElement)?.also {
-            WriteAction.run<Exception> {
-                PsiHelper.appendToHeader(it, headerName, headerValue)
-            }
+            writeCompute { PsiHelper.appendToHeader(it, headerName, headerValue) }
         }
     }
 

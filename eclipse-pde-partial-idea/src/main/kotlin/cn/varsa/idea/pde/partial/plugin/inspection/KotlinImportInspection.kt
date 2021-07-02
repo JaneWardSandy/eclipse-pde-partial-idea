@@ -54,7 +54,7 @@ class KotlinRequireBundleFix(version: String? = null) : AbstractOsgiQuickFix() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         getVerifiedManifestFile(descriptor.psiElement)?.also {
-            WriteAction.run<Exception> { PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue) }
+            writeCompute { PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue) }
         }
     }
 }

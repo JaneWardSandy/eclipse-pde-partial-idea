@@ -4,15 +4,12 @@ import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
-import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.*
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.*
@@ -68,16 +65,12 @@ object ModuleHelper {
         if (addBinary.isEmpty() && removeBinary.isEmpty()) return
 
         val cacheService = BundleManifestCacheService.getInstance(module.project)
-        ReadAction.compute<BundleManifest?, Exception> { cacheService.getManifest(module) } ?: return
+        readCompute { cacheService.getManifest(module) } ?: return
 
-        val model = ReadAction.compute<ModifiableArtifactModel, Exception> {
-            ArtifactManager.getInstance(module.project).createModifiableModel()
-        }
+        val model = readCompute { ArtifactManager.getInstance(module.project).createModifiableModel() }
         try {
             if (setCompileArtifact(module, model, addBinary, removeBinary)) {
-                ApplicationManager.getApplication().invokeAndWait {
-                    if (!module.project.isDisposed) WriteAction.run<Exception>(model::commit)
-                }
+                applicationInvokeAndWait { if (!module.project.isDisposed) writeCompute(model::commit) }
             }
         } finally {
             model.dispose()
@@ -91,8 +84,7 @@ object ModuleHelper {
         removeBinary: Set<String> = emptySet()
     ): Boolean {
         val cacheService = BundleManifestCacheService.getInstance(module.project)
-        val manifest =
-            ReadAction.compute<BundleManifest?, Exception> { cacheService.getManifest(module) } ?: return false
+        val manifest = readCompute { cacheService.getManifest(module) } ?: return false
 
         val factory = PackagingElementFactory.getInstance()
 

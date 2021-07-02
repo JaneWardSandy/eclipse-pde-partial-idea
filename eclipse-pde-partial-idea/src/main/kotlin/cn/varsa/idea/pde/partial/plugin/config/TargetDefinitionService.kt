@@ -5,7 +5,6 @@ import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.listener.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
@@ -155,19 +154,25 @@ data class BundleDefinition(
                 val name =
                     "${PathUtilRt.suggestFileName("${root.name}${originFile.presentableUrl.substringAfter(rootEntry.presentableUrl)}")}.${originFile.extension}"
 
-                WriteAction.computeAndWait<VirtualFile, Exception> {
-                    val projectFile = LocalFileSystem.getInstance().findFileByPath(project.presentableUrl!!)!!
-                    val outFile = projectFile.findChild("out") ?: projectFile.createChildDirectory(this, "out")
-                    val libFile = outFile.findChild("tmp_lib") ?: outFile.createChildDirectory(this, "tmp_lib")
-                    val virtualFile = libFile.findOrCreateChildData(this, name)
+                val projectFile = LocalFileSystem.getInstance().findFileByPath(project.presentableUrl!!)!!
+                val outFile = readCompute { projectFile.findChild("out") } ?: writeCompute {
+                    projectFile.createChildDirectory(this, "out")
+                }
+                val libFile = readCompute { outFile.findChild("tmp_lib") } ?: writeCompute {
+                    outFile.createChildDirectory(this, "tmp_lib")
+                }
+                val virtualFile = readCompute { libFile.findChild(name) } ?: writeCompute {
+                    libFile.createChildData(this, name)
+                }
 
-                    if (virtualFile.modificationStamp != rootEntry.modificationStamp || virtualFile.timeStamp != rootEntry.timeStamp) {
+                if (virtualFile.modificationStamp != rootEntry.modificationStamp || virtualFile.timeStamp != rootEntry.timeStamp) {
+                    writeComputeAndWait {
                         virtualFile.getOutputStream(virtualFile, rootEntry.modificationStamp, rootEntry.timeStamp)
                             .use { ous -> originFile.inputStream.use { ins -> ins.copyTo(ous) } }
                     }
-
-                    virtualFile
                 }
+
+                virtualFile
             } else {
                 originFile
             }

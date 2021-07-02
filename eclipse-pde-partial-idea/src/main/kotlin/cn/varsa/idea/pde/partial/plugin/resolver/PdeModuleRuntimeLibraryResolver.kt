@@ -28,8 +28,8 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
         val cacheService = BundleManifestCacheService.getInstance(area.project)
         val managementService = BundleManagementService.getInstance(area.project)
 
-        val classesRoot = readCompute { cacheService.getManifest(area) }?.bundleClassPath?.keys?.filterNot { it == "." }
-            ?.flatMap { binaryName ->
+        val classesRoot =
+            cacheService.getManifest(area)?.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
                 area.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(binaryName) }
             }?.map { it.protocolUrl }?.distinct() ?: emptyList()
 
@@ -58,10 +58,10 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
                 }
             }
 
-            val bundleRequiredOrFromReExportOrderedList = readCompute { area.bundleRequiredOrFromReExportOrderedList }
+            val bundleRequiredOrFromReExportOrderedList = area.bundleRequiredOrFromReExportOrderedList
             applicationInvokeAndWait {
                 area.project.allPDEModules().filterNot { it == area }
-                    .filter { bundleRequiredOrFromReExportOrderedList.contains(readCompute { cacheService.getManifest(it)?.bundleSymbolicName?.key }) }
+                    .filter { bundleRequiredOrFromReExportOrderedList.contains(cacheService.getManifest(it)?.bundleSymbolicName?.key) }
                     .forEach { model.findModuleOrderEntry(it) ?: model.addModuleOrderEntry(it) }
             }
 
@@ -86,7 +86,7 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
 
             val kotlinOrder = orderEntriesMap.filter { it.key.startsWith(KotlinOrderEntryName) }.values
             val runtimeOrder = orderEntriesMap[ModuleLibraryName]
-            val dependencyOrder = readCompute { area.bundleRequiredOrFromReExportOrderedList }.mapNotNull {
+            val dependencyOrder = area.bundleRequiredOrFromReExportOrderedList.mapNotNull {
                 orderEntriesMap[it] ?: orderEntriesMap["$ProjectLibraryNamePrefix$it"]
             }
 

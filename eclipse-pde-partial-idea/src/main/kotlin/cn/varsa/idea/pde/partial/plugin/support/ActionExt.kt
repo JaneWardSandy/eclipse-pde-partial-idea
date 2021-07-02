@@ -4,7 +4,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.util.*
 import com.intellij.util.*
 
-// TODO: 2021/6/29 Reduce the scope of all calls to read and write
 fun <T> readCompute(action: ThrowableComputable<T, out Exception>): T = ReadAction.compute(action)
 fun readRun(action: ThrowableRunnable<out Exception>) = ReadAction.run(action)
 

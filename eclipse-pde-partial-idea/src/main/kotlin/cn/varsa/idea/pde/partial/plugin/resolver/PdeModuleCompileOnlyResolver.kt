@@ -30,8 +30,8 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
         val managementService = BundleManagementService.getInstance(area.project)
 
         val symbolicName2Module = area.project.allPDEModules().filterNot { it == area }
-            .map { readCompute { cacheService.getManifest(it) }?.bundleSymbolicName?.key to it }
-            .filterNot { it.first == null }.associate { it.first!! to it.second }
+            .map { cacheService.getManifest(it)?.bundleSymbolicName?.key to it }.filterNot { it.first == null }
+            .associate { it.first!! to it.second }
 
         val moduleDependency = hashSetOf<Module>()
         val classesRoot = classPaths.mapNotNull { url ->

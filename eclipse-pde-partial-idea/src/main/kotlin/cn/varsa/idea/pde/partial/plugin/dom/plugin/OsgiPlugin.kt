@@ -4,7 +4,7 @@ import cn.varsa.idea.pde.partial.plugin.dom.*
 import com.intellij.util.xml.*
 
 @DefinesXml
-interface OsgiPlugin : DomElementWithTag {
+interface OsgiPlugin : PluginDomElement {
     companion object {
         const val tagName = "plugin"
     }

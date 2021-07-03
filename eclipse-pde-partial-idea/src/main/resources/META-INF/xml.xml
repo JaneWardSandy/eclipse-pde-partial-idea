@@ -13,5 +13,13 @@
 
         <!-- exsd -->
         <fileTypeDetector implementation="cn.varsa.idea.pde.partial.plugin.dom.exsd.ExsdFileTypeDetector"/>
+
+        <!-- plugin.xml validator -->
+        <localInspection enabledByDefault="true" level="ERROR"
+                         bundle="messages.EclipsePDEPartialBundles_locale"
+                         key="inspection.pluginUnresolvedReference"
+                         groupBundle="messages.EclipsePDEPartialBundles_locale"
+                         groupKey="inspection.group"
+                         implementationClass="cn.varsa.idea.pde.partial.plugin.dom.inspection.PluginDomElementsInspection"/>
     </extensions>
 </idea-plugin>

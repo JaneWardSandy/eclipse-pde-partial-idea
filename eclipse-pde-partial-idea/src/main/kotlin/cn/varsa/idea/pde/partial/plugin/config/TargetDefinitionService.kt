@@ -155,13 +155,13 @@ data class BundleDefinition(
                     "${PathUtilRt.suggestFileName("${root.name}${originFile.presentableUrl.substringAfter(rootEntry.presentableUrl)}")}.${originFile.extension}"
 
                 val projectFile = LocalFileSystem.getInstance().findFileByPath(project.presentableUrl!!)!!
-                val outFile = readCompute { projectFile.findChild("out") } ?: writeCompute {
+                val outFile = readCompute { projectFile.findChild("out") } ?: writeComputeAndWait {
                     projectFile.createChildDirectory(this, "out")
                 }
-                val libFile = readCompute { outFile.findChild("tmp_lib") } ?: writeCompute {
+                val libFile = readCompute { outFile.findChild("tmp_lib") } ?: writeComputeAndWait {
                     outFile.createChildDirectory(this, "tmp_lib")
                 }
-                val virtualFile = readCompute { libFile.findChild(name) } ?: writeCompute {
+                val virtualFile = readCompute { libFile.findChild(name) } ?: writeComputeAndWait {
                     libFile.createChildData(this, name)
                 }
 

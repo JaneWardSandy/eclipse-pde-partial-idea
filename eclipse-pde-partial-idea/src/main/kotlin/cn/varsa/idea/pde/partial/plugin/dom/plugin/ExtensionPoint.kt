@@ -3,7 +3,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.plugin
 import cn.varsa.idea.pde.partial.plugin.dom.*
 import com.intellij.util.xml.*
 
-interface ExtensionPoint : DomElementWithTag {
+interface ExtensionPoint : PluginDomElement {
     companion object {
         const val idAttribute = "id"
         const val nameAttribute = "name"

@@ -1,18 +1,21 @@
 package cn.varsa.idea.pde.partial.plugin.dom.plugin.impl
 
 import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.dom.*
 import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.annotation.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.annotation.ExtendClass
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.annotation.Required
 import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.extensions.*
 import com.intellij.openapi.project.*
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*
 import com.intellij.psi.search.*
 import com.intellij.util.xml.*
 import com.intellij.util.xml.converters.*
+import com.intellij.util.xml.highlighting.*
 import com.intellij.util.xml.reflect.*
 import org.jetbrains.annotations.*
 import java.io.*
@@ -28,25 +31,35 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
         if (DumbService.isDumb(project)) return
 
         val managementService = ExtensionPointManagementService.getInstance(extension.xmlTag.project)
-        managementService.getExtensionPoint(point)
-            ?.also { registerElement(it, it.extension, project, registrar, managementService) }
+        managementService.getExtensionPoint(point)?.also {
+            registerElement(it, it.extension, project, registrar, managementService)
+        }?.extension?.also { definition ->
+            definition.elementRefs.map { ExtensionElement.OccursLimit(it.ref, it.minOccurs, it.maxOccurs) }
+                .also { extension.putUserData(ExtensionElement.occursLimitKey, it) }
+        }
     }
 
     private fun registerElement(
-        extension: ExtensionPointDefinition,
+        extensionPoint: ExtensionPointDefinition,
         element: ElementDefinition?,
         project: Project,
         registrar: DomExtensionsRegistrar,
         managementService: ExtensionPointManagementService
     ) {
-        element?.elementRefs?.mapNotNull { extension.findRefElement(it, project) }?.forEach {
-            if (it.attributes.isEmpty() && it.type == "string") {
-                registrar.registerCollectionChildrenExtension(XmlName(it.name), SimpleTagValue::class.java)
+        element?.elementRefs?.mapNotNull { extensionPoint.findRefElement(it, project) }?.forEach { definition ->
+            if (definition.attributes.isEmpty() && definition.type == "string") {
+                registrar.registerCollectionChildrenExtension(XmlName(definition.name), SimpleTagValue::class.java)
             } else {
-                registrar.registerCollectionChildrenExtension(XmlName(it.name), DomElement::class.java)
-                    .addExtender(object : DomExtender<DomElement>() {
-                        override fun registerExtensions(t: DomElement, registrar: DomExtensionsRegistrar) {
-                            registerElement(extension, it, project, registrar, managementService)
+                registrar.registerCollectionChildrenExtension(XmlName(definition.name), ExtensionElement::class.java)
+                    .addExtender(object : DomExtender<ExtensionElement>() {
+                        override fun registerExtensions(
+                            t: ExtensionElement, registrar: DomExtensionsRegistrar
+                        ) {
+                            registerElement(extensionPoint, definition, project, registrar, managementService)
+
+                            definition.elementRefs.map {
+                                ExtensionElement.OccursLimit(it.ref, it.minOccurs, it.maxOccurs)
+                            }.also { t.putUserData(ExtensionElement.occursLimitKey, it) }
                         }
                     })
             }
@@ -66,8 +79,7 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
                 childExtension.setConverter(StringListConverter(definition.simpleEnumeration))
             } else if (definition.kind == "java") {
                 definition.basedOn?.split(':')?.filter(String::isNotBlank)?.takeIf(List<String>::isNotEmpty)
-                    ?.toTypedArray()?.let(::ExtendClass)
-                    ?.also(childExtension::addCustomAnnotation) // FIXME: 2021/6/28 Not work?
+                    ?.toTypedArray()?.let(::ExtendClass)?.also(childExtension::addCustomAnnotation)
                 childExtension.setConverter(ClassConverter)
             } else if (definition.kind == "resource") {
                 childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
@@ -99,8 +111,7 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
             extendClass: com.intellij.util.xml.ExtendClass?
         ): JavaClassReferenceProvider =
             super.createClassReferenceProvider(genericDomValue, context, extendClass).apply {
-                setOption(JavaClassReferenceProvider.JVM_FORMAT, true)
-                setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, true)
+                setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, java.lang.Boolean.TRUE)
             }
     }
 }

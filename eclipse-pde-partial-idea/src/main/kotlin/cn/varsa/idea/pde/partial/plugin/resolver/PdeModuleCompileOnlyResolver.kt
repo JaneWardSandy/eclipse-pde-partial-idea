@@ -7,7 +7,6 @@ import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.roots.*
 import java.util.*
@@ -35,7 +34,6 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
 
         val moduleDependency = hashSetOf<Module>()
         val classesRoot = classPaths.mapNotNull { url ->
-            thisLogger().warn(url)
             val urlFragments = url.split('/')
             if (urlFragments[0] != "platform:") {
                 area.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(url) }.firstOrNull()

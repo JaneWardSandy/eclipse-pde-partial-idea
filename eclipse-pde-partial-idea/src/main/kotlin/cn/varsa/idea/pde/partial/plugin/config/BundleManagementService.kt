@@ -15,9 +15,9 @@ class BundleManagementService : BackgroundResolvable {
             project.getService(BundleManagementService::class.java)
     }
 
-    val bundles = hashMapOf<String, BundleDefinition>()
-    val libReExportRequiredSymbolName = hashMapOf<String, LinkedHashSet<String>>()
-    val jarPathInnerBundle = hashMapOf<String, BundleDefinition>()
+    val bundles = ConcurrentHashMap<String, BundleDefinition>()
+    val libReExportRequiredSymbolName = ConcurrentHashMap<String, LinkedHashSet<String>>()
+    val jarPathInnerBundle = ConcurrentHashMap<String, BundleDefinition>()
 
     private fun clear() {
         bundles.clear()

@@ -20,8 +20,8 @@ class ExtensionPointManagementService(private val project: Project) : Background
 
     private val applications = hashSetOf<String>()
     private val products = hashSetOf<String>()
-    private val epPoint2ExsdPath = hashMapOf<String, VirtualFile>()
-    private val epReferenceIdentityMap = hashMapOf<Pair<String, String>, HashMap<String, HashSet<String>>>()
+    private val epPoint2ExsdPath = ConcurrentHashMap<String, VirtualFile>()
+    private val epReferenceIdentityMap = ConcurrentHashMap<Pair<String, String>, HashMap<String, HashSet<String>>>()
 
     override fun resolve(project: Project, indicator: ProgressIndicator) {
         val managementService = BundleManagementService.getInstance(project)

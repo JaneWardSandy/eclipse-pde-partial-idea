@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.exsd
 
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.*
+import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*

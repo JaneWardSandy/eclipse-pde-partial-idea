@@ -1,7 +1,8 @@
-package cn.varsa.idea.pde.partial.plugin.inspection
+package cn.varsa.idea.pde.partial.plugin.java.inspection
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
+import cn.varsa.idea.pde.partial.plugin.inspection.*
 import com.intellij.codeInsight.daemon.impl.analysis.*
 import com.intellij.openapi.module.*
 import com.intellij.psi.*

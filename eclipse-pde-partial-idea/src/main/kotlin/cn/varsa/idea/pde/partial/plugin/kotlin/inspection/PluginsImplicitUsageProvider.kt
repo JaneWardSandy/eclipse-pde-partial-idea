@@ -1,6 +1,7 @@
-package cn.varsa.idea.pde.partial.plugin.inspection
+package cn.varsa.idea.pde.partial.plugin.kotlin.inspection
 
 import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.codeInsight.daemon.*
 import com.intellij.psi.*

@@ -1,9 +1,11 @@
-package cn.varsa.idea.pde.partial.plugin.cache
+package cn.varsa.idea.pde.partial.plugin.dom.cache
 
 import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.dom.domain.*
+import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.util.*
@@ -106,11 +108,4 @@ class PluginXmlCacheService(private val project: Project) {
             reader.close()
         }
     }
-
-    data class XmlInfo(
-        val applications: Set<String>,
-        val products: Set<String>,
-        val epPoint2ExsdPath: Map<String, VirtualFile>,
-        val epReferenceIdentityMap: Map<Pair<String, String>, Map<String, Set<String>>>
-    )
 }

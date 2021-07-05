@@ -1,10 +1,11 @@
-package cn.varsa.idea.pde.partial.plugin.inspection
+package cn.varsa.idea.pde.partial.plugin.java.inspection
 
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
+import cn.varsa.idea.pde.partial.plugin.inspection.*
 import cn.varsa.idea.pde.partial.plugin.manifest.psi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.codeInspection.*

@@ -1,11 +1,13 @@
-package cn.varsa.idea.pde.partial.plugin.config
+package cn.varsa.idea.pde.partial.plugin.dom.config
 
-import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
+import com.jetbrains.rd.util.*
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 

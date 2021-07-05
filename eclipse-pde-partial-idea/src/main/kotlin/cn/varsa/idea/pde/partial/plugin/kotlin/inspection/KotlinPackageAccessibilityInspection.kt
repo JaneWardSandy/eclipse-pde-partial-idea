@@ -1,7 +1,8 @@
-package cn.varsa.idea.pde.partial.plugin.inspection
+package cn.varsa.idea.pde.partial.plugin.kotlin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
+import cn.varsa.idea.pde.partial.plugin.inspection.*
 import com.intellij.openapi.module.*
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.quickfix.*

@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.listener.*
 import com.intellij.icons.*
@@ -493,13 +494,14 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
 
         fun getNewLevel(): Pair<String, Int> = Pair(nameTextField.text, levelSpinner.number)
     }
-}
 
-private data class BundleVersionRow(val symbolicName: String) {
-    var checked: Boolean = true
-    var version: String = ""
-    var sourceVersion: String = ""
+    private data class BundleVersionRow(val symbolicName: String) {
+        var checked: Boolean = true
+        var version: String = ""
+        var sourceVersion: String = ""
 
-    val availableVersions = hashSetOf<String>()
-    val availableSourceVersions = hashSetOf<String>()
+        val availableVersions = hashSetOf<String>()
+        val availableSourceVersions = hashSetOf<String>()
+    }
+
 }

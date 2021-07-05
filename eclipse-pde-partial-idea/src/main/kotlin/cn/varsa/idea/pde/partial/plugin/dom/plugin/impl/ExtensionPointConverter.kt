@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.dom.plugin.impl
 
 import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import com.intellij.util.xml.*
 
 class ExtensionPointConverter : ResolvingConverter<String>() {

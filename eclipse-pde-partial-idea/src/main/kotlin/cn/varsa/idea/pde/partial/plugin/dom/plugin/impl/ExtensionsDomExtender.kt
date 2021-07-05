@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.plugin.impl
 
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.*
+import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.annotation.*

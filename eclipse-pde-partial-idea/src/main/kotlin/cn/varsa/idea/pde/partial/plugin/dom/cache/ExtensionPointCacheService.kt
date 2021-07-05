@@ -1,5 +1,6 @@
-package cn.varsa.idea.pde.partial.plugin.cache
+package cn.varsa.idea.pde.partial.plugin.dom.cache
 
+import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
 import cn.varsa.idea.pde.partial.plugin.support.*

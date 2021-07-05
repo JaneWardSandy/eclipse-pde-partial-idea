@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.run
 
 import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import com.intellij.execution.ui.*
 import com.intellij.openapi.options.*

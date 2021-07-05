@@ -1,4 +1,4 @@
-package cn.varsa.idea.pde.partial.plugin.inspection
+package cn.varsa.idea.pde.partial.plugin.kotlin.inspection
 
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.support.*

@@ -16,6 +16,7 @@
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService"/>
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.TargetDefinitionService"/>
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"/>
+        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.openapi.PdeNotifier"/>
 
         <projectConfigurable id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable" parentId="language"
                              instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
@@ -33,6 +34,11 @@
                 implementation="cn.varsa.idea.pde.partial.plugin.manifest.lang.ManifestHeaderParserProvider"/>
         <completion.contributor language="Manifest"
                                 implementationClass="cn.varsa.idea.pde.partial.plugin.manifest.completion.OsgiManifestCompletionContributor"/>
+
+        <notificationGroup displayType="STICKY_BALLOON" id="PDE-Important" isLogByDefault="true"
+                           bundle="messages.EclipsePDEPartialBundles_locale" key="notification.group.important"/>
+        <notificationGroup displayType="BALLOON" id="PDE-Information" isLogByDefault="true"
+                           bundle="messages.EclipsePDEPartialBundles_locale" key="notification.group.standard"/>
     </extensions>
 
     <extensionPoints>

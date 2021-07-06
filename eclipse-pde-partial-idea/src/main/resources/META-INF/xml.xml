@@ -5,6 +5,9 @@
         <projectService
                 serviceImplementation="cn.varsa.idea.pde.partial.plugin.dom.config.ExtensionPointManagementService"/>
 
+        <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.dom.indexes.PluginXmlIndex"/>
+        <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.dom.indexes.ExtensionPointIndex"/>
+
         <!-- plugin.xml -->
         <dom.fileMetaData rootTagName="plugin"
                           implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.PluginDescriptorDomFileDescription"/>

@@ -7,17 +7,16 @@ import java.util.concurrent.*
 import java.util.jar.*
 import kotlin.collections.set
 
-class BundleManifest private constructor(private val map: Map<String, String>) : Map<String, String> by map {
+class BundleManifest private constructor(private val map: HashMap<String, String>) : Map<String, String> by map {
     private val parametersMap = ConcurrentHashMap<String, Parameters?>()
 
     companion object {
-        fun parse(map: Map<String, String>) = BundleManifest(map.toMap())
+        fun parse(map: Map<String, String>) = BundleManifest(map.toMap(hashMapOf()))
         fun parse(manifest: Manifest) =
-            BundleManifest(manifest.mainAttributes.entries.associate { it.key.toString() to it.value.toString() })
+            manifest.mainAttributes.entries.associate { it.key.toString() to it.value.toString() }.let { parse(it) }
     }
 
     fun getParameters(key: String): Parameters? = parametersMap.computeIfAbsent(key) { get(key)?.let(::Parameters) }
-    override fun toString(): String = "BundleManifest(map=$map)"
 
     val requireBundle by lazy { getParameters(REQUIRE_BUNDLE) }
     val importPackage by lazy { getParameters(IMPORT_PACKAGE) }
@@ -40,6 +39,23 @@ class BundleManifest private constructor(private val map: Map<String, String>) :
     val bundleNativeCode by lazy { get(BUNDLE_NATIVECODE) }
 
     val eclipseSourceBundle by lazy { getParameters("Eclipse-SourceBundle")?.entries?.firstOrNull() }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BundleManifest
+
+        if (map != other.map) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return map.hashCode()
+    }
+
+    override fun toString(): String = "BundleManifest(map=$map)"
 }
 
 class Parameters(

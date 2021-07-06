@@ -14,6 +14,8 @@
                 serviceImplementation="cn.varsa.idea.pde.partial.plugin.openapi.PdeLibraryResolverRegistry"/>
 
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService"/>
+        <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.indexes.BundleManifestIndex"/>
+
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.TargetDefinitionService"/>
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"/>
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.openapi.PdeNotifier"/>

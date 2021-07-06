@@ -10,6 +10,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
+import com.jetbrains.rd.util.*
 import org.jetbrains.kotlin.idea.core.util.*
 import java.io.*
 
@@ -18,7 +19,7 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
         val id = ID.create<Int, XmlInfo>("cn.varsa.idea.pde.partial.plugin.dom.indexes.PluginXmlIndex")
 
         fun readXmlInfo(project: Project, pluginXml: VirtualFile): XmlInfo? =
-            FileBasedIndex.getInstance().getSingleEntryIndexData(id, pluginXml, project)
+            FileBasedIndex.getInstance().getFileData(id, pluginXml, project).firstOrNull()?.value
     }
 
     override fun getName(): ID<Int, XmlInfo> = id

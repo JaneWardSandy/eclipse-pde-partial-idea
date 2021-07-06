@@ -7,6 +7,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
+import com.jetbrains.rd.util.*
 import org.jetbrains.lang.manifest.*
 import java.io.*
 
@@ -15,7 +16,7 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
         val id = ID.create<Int, BundleManifest>("cn.varsa.idea.pde.partial.plugin.indexes.BundleManifestIndex")
 
         fun readBundleManifest(project: Project, mfFile: VirtualFile): BundleManifest? =
-            FileBasedIndex.getInstance().getSingleEntryIndexData(id, mfFile, project)
+            FileBasedIndex.getInstance().getFileData(id, mfFile, project).firstOrNull()?.value
     }
 
     override fun getName(): ID<Int, BundleManifest> = id

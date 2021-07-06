@@ -7,6 +7,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
+import com.jetbrains.rd.util.*
 import java.io.*
 
 class ExtensionPointIndex : SingleEntryFileBasedIndexExtension<ExtensionPointDefinition>() {
@@ -15,7 +16,7 @@ class ExtensionPointIndex : SingleEntryFileBasedIndexExtension<ExtensionPointDef
             ID.create<Int, ExtensionPointDefinition>("cn.varsa.idea.pde.partial.plugin.dom.indexes.ExtensionPointIndex")
 
         fun readEPDefinition(project: Project, exsdFile: VirtualFile): ExtensionPointDefinition? =
-            FileBasedIndex.getInstance().getSingleEntryIndexData(id, exsdFile, project)
+            FileBasedIndex.getInstance().getFileData(id, exsdFile, project).firstOrNull()?.value
     }
 
     override fun getName(): ID<Int, ExtensionPointDefinition> = id

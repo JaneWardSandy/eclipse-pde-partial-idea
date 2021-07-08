@@ -2,7 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.config
 
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
-import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
+import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*

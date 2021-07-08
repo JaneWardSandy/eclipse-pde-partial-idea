@@ -26,18 +26,14 @@ class PluginXmlCacheService(private val project: Project) {
     companion object {
         fun getInstance(project: Project): PluginXmlCacheService = project.getService(PluginXmlCacheService::class.java)
 
-        fun resolvePluginXml(
-            bundleSymbolicName: String, file: VirtualFile, stream: InputStream = file.inputStream
-        ): XmlInfo? {
+        fun resolvePluginXml(file: VirtualFile, stream: InputStream = file.inputStream): XmlInfo? {
             val applications = hashSetOf<String>()
             val products = hashSetOf<String>()
             val epPoint2ExsdPath = hashMapOf<String, VirtualFile>()
             val epReferenceIdentityMap = hashMapOf<Pair<String, String>, HashMap<String, HashSet<String>>>()
 
             return try {
-                resolvePluginXml(
-                    bundleSymbolicName, file, stream, applications, products, epPoint2ExsdPath, epReferenceIdentityMap
-                )
+                resolvePluginXml(file, stream, applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
 
                 XmlInfo(applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
             } catch (e: Exception) {
@@ -47,7 +43,6 @@ class PluginXmlCacheService(private val project: Project) {
         }
 
         private fun resolvePluginXml(
-            bundleSymbolicName: String,
             file: VirtualFile,
             stream: InputStream,
             applications: HashSet<String>,
@@ -67,17 +62,16 @@ class PluginXmlCacheService(private val project: Project) {
                                     val id = reader.getAttributeValue("", "id") ?: continue@loop
                                     val schema = reader.getAttributeValue("", "schema") ?: continue@loop
 
-                                    val point = if (id.startsWith(bundleSymbolicName)) id else "$bundleSymbolicName.$id"
-                                    file.parent.findFileByRelativePath(schema)?.also { epPoint2ExsdPath[point] = it }
+                                    file.parent.findFileByRelativePath(schema)?.also { epPoint2ExsdPath[id] = it }
                                 }
                                 "extension" -> {
                                     extensionPoint = reader.getAttributeValue("", "point") ?: continue@loop
                                     val id = reader.getAttributeValue("", "id") ?: continue@loop
 
                                     if (extensionPoint == "org.eclipse.core.runtime.applications") {
-                                        applications += if (id.startsWith(bundleSymbolicName)) id else "$bundleSymbolicName.$id"
+                                        applications += id
                                     } else if (extensionPoint == "org.eclipse.core.runtime.products") {
-                                        products += if (id.startsWith(bundleSymbolicName)) id else "$bundleSymbolicName.$id"
+                                        products += id
                                     }
                                 }
                                 else -> if (extensionPoint.isNotBlank()) {
@@ -119,10 +113,20 @@ class PluginXmlCacheService(private val project: Project) {
 
     private fun getXmlInfo(bundleSymbolicName: String, file: VirtualFile): XmlInfo? =
         DumbService.isDumb(project).ifFalse { PluginXmlIndex.readXmlInfo(project, file) }
-            ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
-        ?: caches.computeIfAbsent(file.presentableUrl) {
-            cachedValuesManager.createCachedValue {
-                CachedValueProvider.Result.create(resolvePluginXml(bundleSymbolicName, file), file)
-            }
-        }.value
+            ?.updateIdNames(bundleSymbolicName)?.also { lastIndexed[file.presentableUrl] = it }
+            ?: lastIndexed[file.presentableUrl] ?: caches.computeIfAbsent(file.presentableUrl) {
+                cachedValuesManager.createCachedValue {
+                    CachedValueProvider.Result.create(
+                        resolvePluginXml(file)?.updateIdNames(bundleSymbolicName), file
+                    )
+                }
+            }.value
+
+    private fun XmlInfo.updateIdNames(bundleSymbolicName: String): XmlInfo =
+        XmlInfo(applications.map { if (it.startsWith(bundleSymbolicName)) it else "$bundleSymbolicName.$it" }
+                    .toHashSet(),
+                products.map { if (it.startsWith(bundleSymbolicName)) it else "$bundleSymbolicName.$it" }.toHashSet(),
+                epPoint2ExsdPath.mapKeys { if (it.key.startsWith(bundleSymbolicName)) it.key else "$bundleSymbolicName.${it.key}" }
+                    .toMap(hashMapOf()),
+                epReferenceIdentityMap)
 }

@@ -1,7 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.dom.indexes
 
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
-import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
+import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import com.intellij.ide.highlighter.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*

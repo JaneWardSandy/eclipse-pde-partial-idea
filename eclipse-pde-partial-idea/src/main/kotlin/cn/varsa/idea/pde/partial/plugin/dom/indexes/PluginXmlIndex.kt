@@ -1,8 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.dom.indexes
 
 import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.common.support.*
-import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import com.intellij.ide.highlighter.*
@@ -31,15 +29,8 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
     }
 
     private object PluginXmlIndexer : SingleEntryIndexer<XmlInfo>(false) {
-        override fun computeValue(inputData: FileContent): XmlInfo? {
-            val project = inputData.project
-            val bundleSymbolicName = BundleManifestCacheService.getInstance(project)
-                .getManifest(inputData.file.parent)?.bundleSymbolicName?.key ?: return null
-
-            return PluginXmlCacheService.resolvePluginXml(
-                bundleSymbolicName, inputData.file, inputData.content.inputStream()
-            )
-        }
+        override fun computeValue(inputData: FileContent): XmlInfo? =
+            PluginXmlCacheService.resolvePluginXml(inputData.file, inputData.content.inputStream())
     }
 
     private object PluginXmlExternalizer : DataExternalizer<XmlInfo> {
@@ -50,7 +41,8 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
             out.writeInt(value.epPoint2ExsdPath.size)
             value.epPoint2ExsdPath.forEach { (point, file) ->
                 out.writeUTF(point)
-                out.writeUTF(file.presentableUrl)
+                out.writeUTF(file.fileSystem.protocol)
+                out.writeUTF(file.path)
             }
 
             out.writeInt(value.epReferenceIdentityMap.size)
@@ -70,7 +62,8 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
             val applications = input.readStringList().toHashSet()
             val products = input.readStringList().toHashSet()
             val epPoint2ExsdPath = (0 until input.readInt()).map {
-                input.readUTF() to VfsUtil.findFileByIoFile(input.readUTF().toFile(), true)
+                input.readUTF() to VirtualFileManager.getInstance().getFileSystem(input.readUTF())
+                    .findFileByPath(input.readUTF())
             }.filterNot { it.second == null }.associate { it.first to it.second!! }.toMap(hashMapOf())
             val epReferenceIdentityMap = (0 until input.readInt()).associate {
                 input.readUTF() to input.readUTF() to (0 until input.readInt()).associate {

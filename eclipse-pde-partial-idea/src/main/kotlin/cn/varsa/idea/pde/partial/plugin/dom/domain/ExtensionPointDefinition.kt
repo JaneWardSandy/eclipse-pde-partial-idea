@@ -1,8 +1,10 @@
-package cn.varsa.idea.pde.partial.plugin.dom.exsd
+package cn.varsa.idea.pde.partial.plugin.dom.domain
 
 import cn.varsa.idea.pde.partial.plugin.dom.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
+import cn.varsa.idea.pde.partial.plugin.dom.plugin.ExtensionElement.OccursLimit.Companion.unbounded
 import cn.varsa.idea.pde.partial.plugin.openapi.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.project.*
 import com.intellij.util.*
 import org.jdom.*
@@ -208,9 +210,22 @@ class ElementRefDefinition {
     val maxOccurs: Int
 
     constructor(element: Element) {
+        var min = element.getAttributeValue("minOccurs")?.toIntOrNull() ?: 1
+        var max = element.getAttributeValue("maxOccurs")?.run { toIntOrNull() ?: unbounded } ?: 1
+
+        // HACK: choice, sequence logical?
+        var parent: Element? = element.parentElement
+        while (parent != null && parent.name.equalAny("choice", "sequence")) {
+            parent.getAttributeValue("minOccurs")?.toIntOrNull()?.takeIf { min > it }?.also { min = it }
+            parent.getAttributeValue("maxOccurs")?.run { toIntOrNull() ?: unbounded }
+                ?.takeIf { (max in 0 until it) || (it == unbounded && max > it) }?.also { max = it }
+
+            parent = parent.parentElement
+        }
+
         ref = element.getAttributeValue("ref")
-        minOccurs = element.getAttributeValue("minOccurs")?.toIntOrNull() ?: 1
-        maxOccurs = element.getAttributeValue("maxOccurs")?.run { toIntOrNull() ?: -1 } ?: 1
+        minOccurs = min
+        maxOccurs = max
     }
 
     constructor(input: DataInput) {

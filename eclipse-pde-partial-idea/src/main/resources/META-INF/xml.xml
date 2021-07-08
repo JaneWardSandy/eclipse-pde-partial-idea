@@ -24,5 +24,8 @@
                          groupBundle="messages.EclipsePDEPartialBundles_locale"
                          groupKey="inspection.group"
                          implementationClass="cn.varsa.idea.pde.partial.plugin.dom.inspection.PluginDomElementsInspection"/>
+
+        <completion.contributor language="XML"
+                                implementationClass="cn.varsa.idea.pde.partial.plugin.dom.completion.MenuContributionURICompletionContributor"/>
     </extensions>
 </idea-plugin>

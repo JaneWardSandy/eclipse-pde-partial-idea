@@ -2,7 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.cache
 
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
-import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
+import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
@@ -54,7 +54,7 @@ class ExtensionPointCacheService(private val project: Project) {
     private fun loadExtensionPoint(root: VirtualFile, schema: String): ExtensionPointDefinition? =
         root.findFileByRelativePath(schema)?.let(this::getExtensionPoint)
 
-    fun getExtensionPoint(file: VirtualFile): ExtensionPointDefinition? =
+    fun getExtensionPoint(file: VirtualFile): ExtensionPointDefinition? = readCompute {
         DumbService.isDumb(project).ifFalse { ExtensionPointIndex.readEPDefinition(project, file) }
             ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
         ?: caches.computeIfAbsent(file.presentableUrl) {
@@ -62,4 +62,5 @@ class ExtensionPointCacheService(private val project: Project) {
                 CachedValueProvider.Result.create(resolveExtensionPoint(file, file.inputStream), file)
             }
         }.value
+    }
 }

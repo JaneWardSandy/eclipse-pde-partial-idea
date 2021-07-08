@@ -3,6 +3,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.plugin.impl
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.*
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
+import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.exsd.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.annotation.*
@@ -76,8 +77,13 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
 
             if (definition.use == "required") childExtension.addCustomAnnotation(Required.INSTANCE)
 
-            if (definition.simpleBaseType == "string" && !definition.simpleEnumeration.isNullOrEmpty()) {
-                childExtension.setConverter(StringListConverter(definition.simpleEnumeration))
+            if (definition.kind == "identifier" || definition.simpleBaseType == "string") {
+                val references = (definition.simpleEnumeration ?: emptyList()) + (definition.basedOn?.split(',')
+                    ?.map { it.split('/') }?.filter { it.size == 3 }
+                    ?.flatMap { managementService.getReferenceIdentifies(it[0], it[1], it[2].substringAfter('@')) }
+                    ?.sorted() ?: emptyList())
+                childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
+                childExtension.setConverter(StringListConverter(references))
             } else if (definition.kind == "java") {
                 definition.basedOn?.split(':')?.filter(String::isNotBlank)?.takeIf(List<String>::isNotEmpty)
                     ?.toTypedArray()?.let(::ExtendClass)?.also(childExtension::addCustomAnnotation)
@@ -85,21 +91,13 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
             } else if (definition.kind == "resource") {
                 childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
                 childExtension.setConverter(PathReferenceConverter.INSTANCE)
-            } else if (definition.kind == "identifier") {
-                val references = definition.basedOn?.split('/')?.takeIf { it.size == 3 }
-                    ?.let { managementService.getReferenceIdentifies(it[0], it[1], it[2].substringAfter('@')) }
-                    ?.sorted() ?: emptyList()
-                childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
-                childExtension.setConverter(StringListConverter(references))
             }
         }
     }
 
     interface SimpleTagValue : GenericDomValue<String>
 
-    class StringListConverter(private val values: Collection<String>) : ResolvingConverter<String>() {
-        override fun toString(t: String?, context: ConvertContext?): String? = t?.takeIf(values::contains)
-        override fun fromString(s: String?, context: ConvertContext?): String? = s?.takeIf(values::contains)
+    class StringListConverter(private val values: Collection<String>) : ResolvingConverter.StringConverter() {
         override fun getVariants(context: ConvertContext?): Collection<String> = values
     }
 

@@ -19,9 +19,7 @@ interface BackgroundResolvable {
         onFinished: () -> Unit = {},
         taskOP: Task.() -> Unit = {}
     ) {
-        object : Task.Backgroundable(
-            project, EclipsePDEPartialBundles.message("config.target.service.resolving"), true, DEAF
-        ) {
+        object : Task.Backgroundable(project, EclipsePDEPartialBundles.message("config.target.service.resolving")) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.checkCanceled()
                 resolve(project, indicator)

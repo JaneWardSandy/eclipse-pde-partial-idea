@@ -111,7 +111,7 @@ class PluginXmlCacheService(private val project: Project) {
             getXmlInfo(cacheService.getManifest(module)?.bundleSymbolicName?.key ?: module.name, it)
         }
 
-    private fun getXmlInfo(bundleSymbolicName: String, file: VirtualFile): XmlInfo? =
+    private fun getXmlInfo(bundleSymbolicName: String, file: VirtualFile): XmlInfo? = readCompute {
         DumbService.isDumb(project).ifFalse { PluginXmlIndex.readXmlInfo(project, file) }
             ?.updateIdNames(bundleSymbolicName)?.also { lastIndexed[file.presentableUrl] = it }
             ?: lastIndexed[file.presentableUrl] ?: caches.computeIfAbsent(file.presentableUrl) {
@@ -121,6 +121,7 @@ class PluginXmlCacheService(private val project: Project) {
                     )
                 }
             }.value
+    }
 
     private fun XmlInfo.updateIdNames(bundleSymbolicName: String): XmlInfo =
         XmlInfo(applications.map { if (it.startsWith(bundleSymbolicName)) it else "$bundleSymbolicName.$it" }

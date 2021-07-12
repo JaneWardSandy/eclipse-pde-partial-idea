@@ -67,7 +67,8 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
 
             area.project.libraryTable().libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }
                 .forEach { depLibrary ->
-                    managementService.bundles[depLibrary.name?.substringAfter(ProjectLibraryNamePrefix)]?.dependencyScope?.also {
+                    depLibrary.name?.substringAfter(ProjectLibraryNamePrefix)
+                        ?.let { managementService.bundles[it] }?.dependencyScope?.also {
                         (model.findLibraryOrderEntry(depLibrary) ?: model.addLibraryEntry(depLibrary)).apply {
                             scope = it
                             isExported = false

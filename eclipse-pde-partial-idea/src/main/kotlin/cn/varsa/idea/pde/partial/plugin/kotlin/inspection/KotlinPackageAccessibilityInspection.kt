@@ -3,9 +3,9 @@ package cn.varsa.idea.pde.partial.plugin.kotlin.inspection
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.inspection.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.module.*
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*

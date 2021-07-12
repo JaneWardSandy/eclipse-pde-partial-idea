@@ -75,9 +75,8 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
 
             // In bundle class path?
             val jarFile = index.getClassRootForFile(item.virtualFile)
-            val containerBundle =
-                managementService.jarPathInnerBundle[jarFile?.presentableUrl]?.manifest ?: project.allPDEModules()
-                    .filterNot { requesterModule == it }.firstOrNull { module ->
+            val containerBundle = jarFile?.presentableUrl?.let { managementService.jarPathInnerBundle[it]?.manifest }
+                ?: project.allPDEModules().filterNot { requesterModule == it }.firstOrNull { module ->
                         jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
                             ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
                             ?.any { jarFile?.presentableUrl == it } == true

@@ -1,7 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.listener.*
 import com.intellij.icons.*
@@ -184,12 +183,9 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 .disableUpDownActions().addExtraActions(object : AnActionButton(
                     message("config.target.reload"), AllIcons.Actions.Refresh
                 ) {
-                    override fun actionPerformed(e: AnActionEvent) = reloadContentList(
-                        locationModel.elements().toList().flatMap { it.bundles }, service.bundleVersionSelection
-                    )
+                    override fun actionPerformed(e: AnActionEvent) = reloadContentList()
                 }, object : AnActionButton(message("config.content.reload"), AllIcons.Actions.ForceRefresh) {
-                    override fun actionPerformed(e: AnActionEvent) =
-                        reloadContentList(locationModel.elements().toList().flatMap { it.bundles }, hashMapOf())
+                    override fun actionPerformed(e: AnActionEvent) = reloadContentListByDefaultRule()
                 }).createPanel()
         )
 
@@ -278,35 +274,55 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         service.startupLevels.forEach { startupModel.addElement(it.toPair()) }
 
         updateComboBox()
-        reloadContentList(service.locations.flatMap { it.bundles }, service.bundleVersionSelection)
+        reloadContentList()
     }
 
-    private fun reloadContentList(bundles: List<BundleDefinition>, versionMap: HashMap<String, String>) {
-        val map = ConcurrentHashMap<String, BundleVersionRow>(bundles.size)
-        bundles.forEach { bundle ->
-            bundle.manifest?.also { manifest ->
-                val eclipseSourceBundle = manifest.eclipseSourceBundle
-                if (eclipseSourceBundle != null) {
-                    map.computeIfAbsent(eclipseSourceBundle.key) {
-                        BundleVersionRow(it).apply {
-                            checked =
-                                versionMap.isEmpty() || versionMap.containsKey(it) || versionMap.containsKey("$it$BundleSymbolNameSourcePostFix")
-                        }
-                    }.apply {
-                        manifest.bundleVersion?.toString()?.also {
-                            sourceVersion.isBlank().ifTrue {
-                                sourceVersion = versionMap["$symbolicName$BundleSymbolNameSourcePostFix"] ?: it
+    private fun reloadContentList(defaultCheckLocations: Set<TargetLocationDefinition> = emptySet()) {
+        doReloadContentList(locationModel.elements().toList(), service.bundleVersionSelection, defaultCheckLocations)
+    }
+
+    private fun reloadContentListByDefaultRule(defaultCheckLocations: Set<TargetLocationDefinition> = emptySet()) {
+        doReloadContentList(locationModel.elements().toList(), defaultCheckLocations = defaultCheckLocations)
+    }
+
+    private fun doReloadContentList(
+        locations: List<TargetLocationDefinition>,
+        versionMap: HashMap<String, String> = hashMapOf(),
+        defaultCheckLocations: Set<TargetLocationDefinition> = emptySet()
+    ) {
+        val map = ConcurrentHashMap<String, BundleVersionRow>(locations.sumBy { it.bundles.size })
+        locations.forEach { location ->
+            val defaultChecked = defaultCheckLocations.contains(location)
+
+            location.bundles.forEach { bundle ->
+                bundle.manifest?.also { manifest ->
+                    val eclipseSourceBundle = manifest.eclipseSourceBundle
+                    if (eclipseSourceBundle != null) {
+                        map.computeIfAbsent(eclipseSourceBundle.key) {
+                            BundleVersionRow(it).apply {
+                                checked =
+                                    defaultChecked || versionMap.isEmpty() || versionMap.containsKey(it) || versionMap.containsKey(
+                                        "$it$BundleSymbolNameSourcePostFix"
+                                    )
                             }
-                            availableSourceVersions += it
+                        }.apply {
+                            manifest.bundleVersion?.toString()?.also {
+                                sourceVersion.isBlank().ifTrue {
+                                    sourceVersion = versionMap["$symbolicName$BundleSymbolNameSourcePostFix"] ?: it
+                                }
+                                availableSourceVersions += it
+                            }
                         }
-                    }
-                } else {
-                    map.computeIfAbsent(bundle.bundleSymbolicName) {
-                        BundleVersionRow(it).apply { checked = versionMap.isEmpty() || versionMap.containsKey(it) }
-                    }.apply {
-                        manifest.bundleVersion?.toString()?.also {
-                            version.isBlank().ifTrue { version = versionMap[bundle.bundleSymbolicName] ?: it }
-                            availableVersions += it
+                    } else {
+                        map.computeIfAbsent(bundle.bundleSymbolicName) {
+                            BundleVersionRow(it).apply {
+                                checked = defaultChecked || versionMap.isEmpty() || versionMap.containsKey(it)
+                            }
+                        }.apply {
+                            manifest.bundleVersion?.toString()?.also {
+                                version.isBlank().ifTrue { version = versionMap[bundle.bundleSymbolicName] ?: it }
+                                availableVersions += it
+                            }
                         }
                     }
                 }
@@ -341,7 +357,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             locationList.setSelectedValue(location, true)
             locationModified += Pair(null, location)
 
-            location.backgroundResolve(project, onFinished = { updateComboBox() })
+            location.backgroundResolve(project, onFinished = {
+                updateComboBox()
+                reloadContentList(locationModified.mapNotNull { it.second }.toHashSet())
+            })
         }
     }
 
@@ -352,6 +371,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             locationModified += Pair(location, null)
 
             updateComboBox()
+            reloadContentList(locationModified.mapNotNull { it.second }.toHashSet())
         }
     }
 
@@ -368,7 +388,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 locationList.setSelectedValue(location, true)
                 locationModified += Pair(value, location)
 
-                location.backgroundResolve(project, onFinished = { updateComboBox() })
+                location.backgroundResolve(project, onFinished = {
+                    updateComboBox()
+                    reloadContentList(locationModified.mapNotNull { it.second }.toHashSet())
+                })
             }
         }
     }

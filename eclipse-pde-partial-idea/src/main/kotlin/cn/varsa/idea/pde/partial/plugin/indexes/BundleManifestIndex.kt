@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
 import com.jetbrains.rd.util.*
+import org.jetbrains.kotlin.idea.core.util.*
 import org.jetbrains.lang.manifest.*
 import java.io.*
 
@@ -36,12 +37,12 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
         override fun save(out: DataOutput, value: BundleManifest) {
             out.writeInt(value.size)
             value.forEach { (key, value) ->
-                out.writeUTF(key)
-                out.writeUTF(value)
+                out.writeString(key)
+                out.writeString(value)
             }
         }
 
         override fun read(input: DataInput): BundleManifest =
-            BundleManifest.parse((0 until input.readInt()).associate { input.readUTF() to input.readUTF() })
+            BundleManifest.parse((0 until input.readInt()).associate { input.readString() to input.readString() })
     }
 }

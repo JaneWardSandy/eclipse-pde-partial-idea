@@ -40,19 +40,19 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
 
             out.writeInt(value.epPoint2ExsdPath.size)
             value.epPoint2ExsdPath.forEach { (point, file) ->
-                out.writeUTF(point)
-                out.writeUTF(file.fileSystem.protocol)
-                out.writeUTF(file.path)
+                out.writeString(point)
+                out.writeString(file.fileSystem.protocol)
+                out.writeString(file.path)
             }
 
             out.writeInt(value.epReferenceIdentityMap.size)
             value.epReferenceIdentityMap.forEach { (key, attributes) ->
-                out.writeUTF(key.first)
-                out.writeUTF(key.second)
+                out.writeString(key.first)
+                out.writeString(key.second)
 
                 out.writeInt(attributes.size)
                 attributes.forEach { (attribute, values) ->
-                    out.writeUTF(attribute)
+                    out.writeString(attribute)
                     out.writeStringList(values)
                 }
             }
@@ -62,12 +62,12 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
             val applications = input.readStringList().toHashSet()
             val products = input.readStringList().toHashSet()
             val epPoint2ExsdPath = (0 until input.readInt()).map {
-                input.readUTF() to VirtualFileManager.getInstance().getFileSystem(input.readUTF())
-                    .findFileByPath(input.readUTF())
+                input.readString() to VirtualFileManager.getInstance().getFileSystem(input.readString())
+                    .findFileByPath(input.readString())
             }.filterNot { it.second == null }.associate { it.first to it.second!! }.toMap(hashMapOf())
             val epReferenceIdentityMap = (0 until input.readInt()).associate {
-                input.readUTF() to input.readUTF() to (0 until input.readInt()).associate {
-                    input.readUTF() to input.readStringList().toHashSet()
+                input.readString() to input.readString() to (0 until input.readInt()).associate {
+                    input.readString() to input.readStringList().toHashSet()
                 }.toMap(hashMapOf())
             }.toMap(hashMapOf())
 

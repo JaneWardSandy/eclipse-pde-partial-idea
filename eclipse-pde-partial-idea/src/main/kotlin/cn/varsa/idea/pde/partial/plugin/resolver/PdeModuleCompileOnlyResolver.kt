@@ -77,7 +77,7 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
 
                 libraryModel.getUrls(OrderRootType.CLASSES)
                     .forEach { libraryModel.removeRoot(it, OrderRootType.CLASSES) }
-                classesRoot.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+                classesRoot.map { it.protocolUrl }.forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
 
                 writeRun {
                     libraryModel.commit()

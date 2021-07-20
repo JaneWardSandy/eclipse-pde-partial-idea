@@ -51,9 +51,9 @@ class ExtensionPointDefinition {
     }
 
     constructor(input: DataInput) {
-        plugin = input.readUTF()
-        id = input.readUTF()
-        name = input.readUTF()
+        plugin = input.readString()
+        id = input.readString()
+        name = input.readString()
 
         includes = input.readStringList()
         extension = input.readNullable { ElementDefinition(input) }
@@ -62,9 +62,9 @@ class ExtensionPointDefinition {
     }
 
     fun save(out: DataOutput) {
-        out.writeUTF(plugin)
-        out.writeUTF(id)
-        out.writeUTF(name)
+        out.writeString(plugin)
+        out.writeString(id)
+        out.writeString(name)
 
         out.writeStringList(includes)
         out.writeNullable(extension) { it.save(out) }
@@ -154,8 +154,8 @@ class ElementDefinition {
     }
 
     constructor(input: DataInput) {
-        name = input.readUTF()
-        type = input.readNullable { readUTF() }
+        name = input.readString()
+        type = input.readNullable { readString() }
         deprecated = input.readBoolean()
 
         elementRefs = (0 until input.readInt()).map { ElementRefDefinition(input) }
@@ -164,8 +164,8 @@ class ElementDefinition {
     }
 
     fun save(out: DataOutput) {
-        out.writeUTF(name)
-        out.writeNullable(type) { out.writeUTF(it) }
+        out.writeString(name)
+        out.writeNullable(type) { out.writeString(it) }
         out.writeBoolean(deprecated)
 
         out.writeInt(elementRefs.size)
@@ -229,13 +229,13 @@ class ElementRefDefinition {
     }
 
     constructor(input: DataInput) {
-        ref = input.readUTF()
+        ref = input.readString()
         minOccurs = input.readInt()
         maxOccurs = input.readInt()
     }
 
     fun save(out: DataOutput) {
-        out.writeUTF(ref)
+        out.writeString(ref)
         out.writeInt(minOccurs)
         out.writeInt(maxOccurs)
     }
@@ -302,30 +302,30 @@ class AttributeDefinition {
     }
 
     constructor(input: DataInput) {
-        name = input.readUTF()
-        type = input.readNullable { readUTF() }
-        use = input.readNullable { readUTF() }
-        value = input.readNullable { readUTF() }
+        name = input.readString()
+        type = input.readNullable { readString() }
+        use = input.readNullable { readString() }
+        value = input.readNullable { readString() }
 
-        kind = input.readNullable { readUTF() }
-        basedOn = input.readNullable { readUTF() }
+        kind = input.readNullable { readString() }
+        basedOn = input.readNullable { readString() }
         deprecated = input.readBoolean()
 
-        simpleBaseType = input.readNullable { readUTF() }
+        simpleBaseType = input.readNullable { readString() }
         simpleEnumeration = input.readNullable { readStringList() }
     }
 
     fun save(out: DataOutput) {
-        out.writeUTF(name)
-        out.writeNullable(type) { out.writeUTF(it) }
-        out.writeNullable(use) { out.writeUTF(it) }
-        out.writeNullable(value) { out.writeUTF(it) }
+        out.writeString(name)
+        out.writeNullable(type) { out.writeString(it) }
+        out.writeNullable(use) { out.writeString(it) }
+        out.writeNullable(value) { out.writeString(it) }
 
-        out.writeNullable(kind) { out.writeUTF(it) }
-        out.writeNullable(basedOn) { out.writeUTF(it) }
+        out.writeNullable(kind) { out.writeString(it) }
+        out.writeNullable(basedOn) { out.writeString(it) }
         out.writeBoolean(deprecated)
 
-        out.writeNullable(simpleBaseType) { out.writeUTF(it) }
+        out.writeNullable(simpleBaseType) { out.writeString(it) }
         out.writeNullable(simpleEnumeration) { out.writeStringList(it) }
     }
 

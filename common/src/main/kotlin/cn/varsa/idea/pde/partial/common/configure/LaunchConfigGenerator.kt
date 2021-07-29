@@ -41,21 +41,21 @@ object LaunchConfigGenerator {
             configService.libraries.firstOrNull { it.name == name || configService.getManifest(it)?.bundleSymbolicName?.key == name }?.protocolUrl
         }
 
-        stripPathInformation(properties.getProperty("osgi.framework"), configService).substringBefore('@')
-            .let(bundleUrlPath)?.also { properties["osgi.framework"] = it }
+        properties.getProperty("osgi.framework")?.let { stripPathInformation(it, configService) }?.substringBefore('@')
+            ?.let(bundleUrlPath)?.also { properties["osgi.framework"] = it }
 
-        stripPathInformation(properties.getProperty("osgi.splashPath"), configService).substringBefore('@')
-            .let(bundleUrlPath)?.also { properties["osgi.splashPath"] = it }
+        properties.getProperty("osgi.splashPath")?.let { stripPathInformation(it, configService) }?.substringBefore('@')
+            ?.let(bundleUrlPath)?.also { properties["osgi.splashPath"] = it }
 
         properties.getProperty("osgi.framework.extensions")?.splitToSequence(',')
             ?.map { stripPathInformation(it, configService) }?.map { it.substringBefore('@') }
             ?.mapNotNull(bundleUrlPath)?.joinToString(",")?.also { properties["osgi.framework.extensions"] = it }
 
-        properties.getProperty("osgi.bundles").splitToSequence(',').map { stripPathInformation(it, configService) }
-            .mapNotNull {
+        properties.getProperty("osgi.bundles")?.splitToSequence(',')?.map { stripPathInformation(it, configService) }
+            ?.mapNotNull {
                 val name = it.substringBefore('@')
                 bundleUrlPath(name)?.run { it.replace(name, this) }
-            }.joinToString(",").also { properties["osgi.bundles"] = it }
+            }?.joinToString(",")?.also { properties["osgi.bundles"] = it }
 
         configService.configIniFile.touchFile().outputStream().use { properties.store(it, "Configuration File") }
     }

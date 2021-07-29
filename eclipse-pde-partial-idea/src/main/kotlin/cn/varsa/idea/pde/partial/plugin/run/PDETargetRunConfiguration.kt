@@ -36,8 +36,8 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     private val cache by lazy { BundleManifestCacheService.getInstance(project) }
     private val compiler by lazy { CompilerProjectExtension.getInstance(project) }
 
-    var product = "com.teamcenter.rac.aifrcp.product"
-    var application = "com.teamcenter.rac.aifrcp.application"
+    var product: String? = "com.teamcenter.rac.aifrcp.product"
+    var application: String? = "com.teamcenter.rac.aifrcp.application"
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
         SettingsEditorGroup<PDETargetRunConfiguration>().apply {
@@ -54,7 +54,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         if (compiler == null) throw RuntimeConfigurationWarning(message("run.local.config.noCompiler", project.name))
         if (target.launcher == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncher"))
         if (target.launcherJar == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncherJar"))
-        if (product.isBlank() && application.isBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
+        if (product.isNullOrBlank() || application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
     }
 
     override fun writeExternal(element: Element) {
@@ -96,11 +96,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
                 parameters.programParametersList.addAll("-name", "Teamcenter")
                 parameters.programParametersList.addAll("-showsplash", "600")
 
-                if (product.isNotBlank()) {
-                    parameters.programParametersList.addAll("-product", product)
-                } else if (application.isNotBlank()) {
-                    parameters.programParametersList.addAll("-application", application)
-                }
+                parameters.programParametersList.addAll("-application", application)
 
                 val properties =
                     target.locations.map { File(it.location, "configuration/config.ini") }.firstOrNull(File::exists)
@@ -126,8 +122,8 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     }
 
     private val configServiceDelegate = object : ConfigService {
-        override val product: String get() = this@PDETargetRunConfiguration.product
-        override val application: String get() = this@PDETargetRunConfiguration.application
+        override val product: String get() = this@PDETargetRunConfiguration.product ?: ""
+        override val application: String get() = this@PDETargetRunConfiguration.application ?: ""
 
         override val dataPath: File get() = File(compiler!!.compilerOutputPointer.presentableUrl, "partial-runtime")
         override val installArea: File get() = target.launcher!!.toFile().parentFile

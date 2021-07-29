@@ -33,8 +33,8 @@ class PDETargetRemoteRunConfiguration(
     private val target by lazy { TargetDefinitionService.getInstance(project) }
     private val compiler by lazy { CompilerProjectExtension.getInstance(project) }
 
-    var product = "com.teamcenter.rac.aifrcp.product"
-    var application = "com.teamcenter.rac.aifrcp.application"
+    var product: String? = "com.teamcenter.rac.aifrcp.product"
+    var application: String? = "com.teamcenter.rac.aifrcp.application"
 
     var remoteHost = "localhost"
 
@@ -65,7 +65,7 @@ class PDETargetRemoteRunConfiguration(
         super<LocatableConfigurationBase>.checkConfiguration()
 
         if (compiler == null) throw RuntimeConfigurationWarning(message("run.remote.config.noCompiler", project.name))
-        if (product.isBlank() || application.isBlank()) throw RuntimeConfigurationWarning(message("run.remote.config.noTargetApplication"))
+        if (product.isNullOrBlank() || application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.remote.config.noTargetApplication"))
         if (remoteHost.isBlank() || rmiName.isBlank()) throw RuntimeConfigurationWarning(message("run.remote.config.noRMI"))
     }
 
@@ -199,7 +199,7 @@ class PDETargetRemoteRunConfiguration(
         private fun makeWishesReady(wishesService: WishesService) {
             val devModels = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
 
-            wishesService.setupTargetProgram(product, application)
+            wishesService.setupTargetProgram(product!!, application!!)
             wishesService.setupStartupLevels(target.startupLevels)
             wishesService.setupModules(devModels)
 
@@ -215,11 +215,7 @@ class PDETargetRemoteRunConfiguration(
                 programParameters.addAll("-name", "Teamcenter")
                 programParameters.addAll("-showsplash", "600")
 
-                if (product.isNotBlank()) {
-                    programParameters.addAll("-product", product)
-                } else if (application.isNotBlank()) {
-                    programParameters.addAll("-application", application)
-                }
+                programParameters.addAll("-application", application!!)
 
                 programParameters.addAll(*ParametersListUtil.parseToArray(this@PDETargetRemoteRunConfiguration.programParameters))
                 programParameters.add("-consoleLog")

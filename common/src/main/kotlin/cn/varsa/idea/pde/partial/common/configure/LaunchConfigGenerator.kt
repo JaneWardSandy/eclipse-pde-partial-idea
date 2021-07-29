@@ -23,18 +23,18 @@ object LaunchConfigGenerator {
 
         if (configService.product != properties["eclipse.product"] && configService.application != properties["eclipse.application"]) properties.clear()
 
-        properties.putIfAbsent("eclipse.product", configService.product)
-        properties.putIfAbsent("eclipse.application", configService.application)
-        properties.putIfAbsent("osgi.install.area", configService.installArea.protocolUrl)
-        properties.putIfAbsent("osgi.instance.area.default", configService.instanceArea.protocolUrl)
-        properties.putIfAbsent("osgi.configuration.cascaded", false.toString())
-        properties.putIfAbsent("osgi.framework", "org.eclipse.osgi")
-        properties.putIfAbsent("osgi.bundles.defaultStartLevel", "4")
-
+        properties["eclipse.product"] = configService.product
+        properties["eclipse.application"] = configService.application
+        properties["osgi.install.area"] = configService.installArea.protocolUrl
+        properties["osgi.instance.area.default"] = configService.instanceArea.protocolUrl
+        properties["osgi.configuration.cascaded"] = false.toString()
         properties["org.eclipse.equinox.simpleconfigurator.configUrl"] = configService.bundlesInfoFile.protocolUrl
         properties["eclipse.p2.data.area"] = "@config.dir/.p2"
         properties["osgi.bundles"] = "org.eclipse.equinox.simpleconfigurator@1:start"
         properties["org.eclipse.update.reconcile"] = "false"
+
+        properties.putIfAbsent("osgi.framework", "org.eclipse.osgi")
+        properties.putIfAbsent("osgi.bundles.defaultStartLevel", "4")
 
 
         val bundleUrlPath = { name: String ->

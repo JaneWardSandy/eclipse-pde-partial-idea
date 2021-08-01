@@ -23,6 +23,7 @@
                          key="inspection.pluginUnresolvedReference"
                          groupBundle="messages.EclipsePDEPartialBundles_locale"
                          groupKey="inspection.group"
+                         shortName="PDEPluginDomElements"
                          implementationClass="cn.varsa.idea.pde.partial.plugin.dom.inspection.PluginDomElementsInspection"/>
 
         <completion.contributor language="XML"

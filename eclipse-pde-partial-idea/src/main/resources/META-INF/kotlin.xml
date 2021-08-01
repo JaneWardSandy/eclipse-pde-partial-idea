@@ -5,12 +5,14 @@
                          key="inspection.kotlinPackageAccessibility"
                          groupBundle="messages.EclipsePDEPartialBundles_locale"
                          groupKey="inspection.group"
+                         shortName="PDEKotlinPackageAccessibility"
                          implementationClass="cn.varsa.idea.pde.partial.plugin.kotlin.inspection.KotlinPackageAccessibilityInspection"/>
         <localInspection enabledByDefault="true" level="ERROR"
                          bundle="messages.EclipsePDEPartialBundles_locale"
                          key="inspection.kotlinImport"
                          groupBundle="messages.EclipsePDEPartialBundles_locale"
                          groupKey="inspection.group"
+                         shortName="PDEKotlinImport"
                          implementationClass="cn.varsa.idea.pde.partial.plugin.kotlin.inspection.KotlinImportInspection"/>
 
         <implicitUsageProvider

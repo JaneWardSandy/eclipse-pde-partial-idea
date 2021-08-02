@@ -1,7 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.support
 
 import cn.varsa.idea.pde.partial.common.domain.*
-import com.intellij.psi.*
 import org.osgi.framework.Constants.*
 
 val BundleManifest.reExportRequiredBundleSymbolNames: Set<String>

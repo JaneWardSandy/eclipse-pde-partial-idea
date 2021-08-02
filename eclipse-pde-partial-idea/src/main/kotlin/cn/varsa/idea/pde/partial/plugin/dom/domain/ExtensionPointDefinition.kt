@@ -11,7 +11,6 @@ import org.jdom.*
 import org.jdom.filter2.*
 import org.jdom.input.*
 import org.jdom.xpath.*
-import org.jetbrains.kotlin.idea.core.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 import java.io.*
 

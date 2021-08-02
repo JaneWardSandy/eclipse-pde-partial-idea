@@ -6,7 +6,7 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends config-file="java.xml">com.intellij.modules.java</depends>
-    <depends config-file="kotlin.xml">org.jetbrains.kotlin</depends>
+    <depends config-file="kotlin.xml" optional="true">org.jetbrains.kotlin</depends>
     <depends config-file="xml.xml">com.intellij.modules.xml</depends>
 
     <extensions defaultExtensionNs="com.intellij">

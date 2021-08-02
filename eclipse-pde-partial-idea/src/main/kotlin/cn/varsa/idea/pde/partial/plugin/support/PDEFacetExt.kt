@@ -5,7 +5,6 @@ import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import com.intellij.openapi.roots.*
-import cn.varsa.idea.pde.partial.plugin.support.*
 
 fun PDEFacet.toDevModule() = DevModule(
     module.getModuleDir().toFile().toRelativeString(module.project.presentableUrl!!.toFile()),

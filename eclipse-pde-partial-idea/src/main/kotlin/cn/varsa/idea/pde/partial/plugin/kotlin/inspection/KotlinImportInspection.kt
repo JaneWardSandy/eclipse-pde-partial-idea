@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.kotlin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
@@ -11,7 +12,6 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.psi.*
 import org.osgi.framework.Constants.*
 

@@ -17,7 +17,7 @@ intellij {
 
 tasks {
     patchPluginXml {
-        sinceBuild("203")
+        sinceBuild("211")
         untilBuild("")
 
         val projectPath = rootProject.projectDir.path

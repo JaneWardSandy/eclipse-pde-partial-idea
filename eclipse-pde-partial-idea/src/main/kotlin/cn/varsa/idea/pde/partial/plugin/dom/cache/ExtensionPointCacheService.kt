@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.dom.cache
 
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
@@ -10,7 +11,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.util.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 import java.io.*
 
@@ -55,7 +55,7 @@ class ExtensionPointCacheService(private val project: Project) {
         root.findFileByRelativePath(schema)?.let(this::getExtensionPoint)
 
     fun getExtensionPoint(file: VirtualFile): ExtensionPointDefinition? = readCompute {
-        DumbService.isDumb(project).ifFalse { ExtensionPointIndex.readEPDefinition(project, file) }
+        DumbService.isDumb(project).runFalse { ExtensionPointIndex.readEPDefinition(project, file) }
             ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
         ?: caches.computeIfAbsent(file.presentableUrl) {
             cachedValuesManager.createCachedValue {

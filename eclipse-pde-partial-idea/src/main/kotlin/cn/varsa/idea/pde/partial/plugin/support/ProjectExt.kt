@@ -17,3 +17,6 @@ fun Project.allPDEModulesSymbolicName(vararg exclude: Module? = emptyArray()): S
         .mapNotNull { it.bundleSymbolicName?.key }.toHashSet()
 
 fun Project.libraryTable(): LibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(this)
+
+fun Project.allModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
+fun Module.getModuleDir(): String = guessModuleDir()?.presentableUrl!!

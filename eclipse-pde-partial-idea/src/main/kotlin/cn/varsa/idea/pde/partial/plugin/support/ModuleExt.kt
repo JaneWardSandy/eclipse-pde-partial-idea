@@ -1,17 +1,25 @@
 package cn.varsa.idea.pde.partial.plugin.support
 
 import cn.varsa.idea.pde.partial.common.domain.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import com.intellij.openapi.module.*
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.libraries.*
+import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
 import com.intellij.util.*
-import org.jetbrains.kotlin.idea.util.*
 
 val Module.psiManager: PsiManager get() = project.psiManager
 val Module.moduleRootManager: ModuleRootManager get() = ModuleRootManager.getInstance(this)
 fun Module.updateModel(task: Consumer<in ModifiableRootModel>) = ModuleRootModificationUtil.updateModel(this, task)
+fun VirtualFile.findModule(project: Project) = ModuleUtilCore.findModuleForFile(this, project)
+
+fun Module.findLibrary(predicate: (Library) -> Boolean): Library? =
+    ModuleRootManager.getInstance(this).orderEntries.mapNotNull { it as? LibraryOrderEntry }.mapNotNull { it.library }
+        .firstOrNull(predicate)
 
 fun Module.isBundleRequiredOrFromReExport(symbolName: String): Boolean {
     val cacheService = BundleManifestCacheService.getInstance(project)

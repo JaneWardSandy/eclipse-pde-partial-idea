@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.dom.config
 
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
@@ -8,7 +9,6 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 
 class ExtensionPointManagementService(private val project: Project) : BackgroundResolvable {
@@ -23,7 +23,8 @@ class ExtensionPointManagementService(private val project: Project) : Background
     private val applications = hashSetOf<String>()
     private val products = hashSetOf<String>()
     private val epPoint2ExsdPath = ConcurrentHashMap<String, VirtualFile>()
-    private val epReferenceIdentityMap = ConcurrentHashMap<Pair<String, String>, ConcurrentHashMap<String, HashSet<String>>>()
+    private val epReferenceIdentityMap =
+        ConcurrentHashMap<Pair<String, String>, ConcurrentHashMap<String, HashSet<String>>>()
 
     override fun resolve(project: Project, indicator: ProgressIndicator) {
         val managementService = BundleManagementService.getInstance(project)
@@ -90,6 +91,6 @@ class ExtensionPointManagementService(private val project: Project) : Background
 
     fun getReferenceIdentifies(point: String, extension: String, attribute: String): Set<String> =
         (epReferenceIdentityMap[point to extension]?.get(attribute) ?: emptySet()) + project.allPDEModules()
-            .asSequence().mapNotNull { xmlCacheService.getXmlInfo(it) }.mapNotNull { it.epReferenceIdentityMap }
+            .asSequence().mapNotNull { xmlCacheService.getXmlInfo(it) }.map { it.epReferenceIdentityMap }
             .mapNotNull { it[point to extension] }.mapNotNull { it[attribute] }.flatten()
 }

@@ -8,29 +8,16 @@ import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
-import cn.varsa.idea.pde.partial.plugin.support.getModuleDir
-import com.intellij.codeInsight.daemon.impl.analysis.*
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.*
-import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.*
+import com.intellij.ide.projectView.impl.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.packageDependencies.*
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.quickfix.*
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
-import org.jetbrains.kotlin.idea.refactoring.fqName.*
-import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.util.projectStructure.*
-import org.jetbrains.kotlin.nj2k.postProcessing.*
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
 import org.osgi.framework.Constants.*
-import java.lang.annotation.*
 
 abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
 
@@ -77,10 +64,10 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
             val jarFile = index.getClassRootForFile(item.virtualFile)
             val containerBundle = jarFile?.presentableUrl?.let { managementService.jarPathInnerBundle[it]?.manifest }
                 ?: project.allPDEModules().filterNot { requesterModule == it }.firstOrNull { module ->
-                        jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
-                            ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
-                            ?.any { jarFile?.presentableUrl == it } == true
-                    }?.let { cacheService.getManifest(it) }
+                    jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
+                        ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+                        ?.any { jarFile?.presentableUrl == it } == true
+                }?.let { cacheService.getManifest(it) }
 
 
             val exporter = containerBundle ?: cacheService.getManifest(item)

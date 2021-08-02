@@ -9,7 +9,6 @@ import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
-import org.jetbrains.kotlin.idea.util.*
 
 class ResolveManifestAction : AnAction() {
 

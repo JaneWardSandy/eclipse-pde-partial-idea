@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.listener.*
 import com.intellij.icons.*
@@ -17,7 +18,6 @@ import com.intellij.ui.table.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.util.*
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*

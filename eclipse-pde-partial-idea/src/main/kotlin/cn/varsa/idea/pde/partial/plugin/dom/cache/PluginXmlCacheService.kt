@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.dom.cache
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.util.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.util.*
 import java.io.*
 import javax.xml.stream.*
 
@@ -112,7 +112,7 @@ class PluginXmlCacheService(private val project: Project) {
         }
 
     private fun getXmlInfo(bundleSymbolicName: String, file: VirtualFile): XmlInfo? = readCompute {
-        DumbService.isDumb(project).ifFalse { PluginXmlIndex.readXmlInfo(project, file) }
+        DumbService.isDumb(project).runFalse { PluginXmlIndex.readXmlInfo(project, file) }
             ?.updateIdNames(bundleSymbolicName)?.also { lastIndexed[file.presentableUrl] = it }
             ?: lastIndexed[file.presentableUrl] ?: caches.computeIfAbsent(file.presentableUrl) {
                 cachedValuesManager.createCachedValue {

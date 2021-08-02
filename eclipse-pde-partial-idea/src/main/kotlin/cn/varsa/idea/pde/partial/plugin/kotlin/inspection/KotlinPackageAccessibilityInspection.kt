@@ -3,7 +3,7 @@ package cn.varsa.idea.pde.partial.plugin.kotlin.inspection
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.inspection.*
-import cn.varsa.idea.pde.partial.plugin.support.*
+import cn.varsa.idea.pde.partial.plugin.kotlin.support.*
 import com.intellij.openapi.module.*
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
@@ -29,8 +29,7 @@ class KotlinPackageAccessibilityInspection : PackageAccessibilityInspection() {
 
     companion object {
         fun checkAccessibility(namedDeclaration: KtNamedDeclaration, facet: PDEFacet): Problem? {
-            val targetFile = namedDeclaration.containingFile
-            if (targetFile !is KtFile) return null
+            val targetFile = namedDeclaration.containingKtFile
 
             val packageName = targetFile.packageFqName.asString()
             if (packageName.isBlank() || packageName.startsWith(Kotlin)) return null

@@ -1,9 +1,9 @@
 package cn.varsa.idea.pde.partial.plugin.inspection
 
 import cn.varsa.idea.pde.partial.plugin.facet.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.codeInspection.*
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.util.*
 
 abstract class AbstractOsgiVisitor : LocalInspectionTool() {
     abstract fun buildVisitor(facet: PDEFacet, holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor

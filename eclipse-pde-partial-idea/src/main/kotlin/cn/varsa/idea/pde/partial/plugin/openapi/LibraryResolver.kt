@@ -1,7 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.openapi
 
 import com.intellij.openapi.extensions.*
-import com.intellij.openapi.progress.*
 import org.jetbrains.annotations.*
 
 interface LibraryResolver<AREA : AreaInstance> {

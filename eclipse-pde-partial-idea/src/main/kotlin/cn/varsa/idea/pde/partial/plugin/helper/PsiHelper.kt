@@ -9,7 +9,6 @@ import com.intellij.psi.util.*
 import com.intellij.util.*
 import org.jetbrains.lang.manifest.*
 import org.jetbrains.lang.manifest.psi.*
-import org.osgi.framework.*
 
 object PsiHelper {
     fun getActivatorClass(project: Project): PsiClass? =

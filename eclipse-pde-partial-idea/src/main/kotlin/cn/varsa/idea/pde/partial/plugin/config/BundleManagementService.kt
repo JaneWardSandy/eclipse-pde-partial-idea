@@ -9,6 +9,7 @@ import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.vfs.*
 import com.jetbrains.rd.util.*
 
 class BundleManagementService : BackgroundResolvable {
@@ -18,11 +19,13 @@ class BundleManagementService : BackgroundResolvable {
     }
 
     val bundles = ConcurrentHashMap<String, BundleDefinition>()
+    val bundlePath2Bundle = ConcurrentHashMap<VirtualFile, BundleDefinition>()
     val libReExportRequiredSymbolName = ConcurrentHashMap<String, LinkedHashSet<String>>()
     val jarPathInnerBundle = ConcurrentHashMap<String, BundleDefinition>()
 
     private fun clear() {
         bundles.clear()
+        bundlePath2Bundle.clear()
         libReExportRequiredSymbolName.clear()
         jarPathInnerBundle.clear()
     }
@@ -53,6 +56,7 @@ class BundleManagementService : BackgroundResolvable {
                     }
                 } else if (bundleVersionSelection[bundle.bundleSymbolicName] == manifest.bundleVersion?.toString()) {
                     bundles[bundle.bundleSymbolicName] = bundle
+                    bundlePath2Bundle[bundle.root] = bundle
                     bundle.delegateClassPathFile.values.map { it.presentableUrl }
                         .forEach { jarPathInnerBundle[it] = bundle }
                 }

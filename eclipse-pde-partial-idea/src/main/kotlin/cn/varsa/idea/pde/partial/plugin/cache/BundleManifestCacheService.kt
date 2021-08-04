@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.cache
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.indexes.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
@@ -12,7 +13,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
 import com.intellij.psi.util.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.util.*
 import java.io.*
 import java.util.jar.*
 import kotlin.io.use
@@ -75,7 +75,7 @@ class BundleManifestCacheService(private val project: Project) {
         }?.findFileByRelativePath(ManifestPath)
 
     private fun getManifest0(manifestFile: VirtualFile): BundleManifest? =
-        DumbService.isDumb(project).ifFalse { BundleManifestIndex.readBundleManifest(project, manifestFile) }
+        DumbService.isDumb(project).runFalse { BundleManifestIndex.readBundleManifest(project, manifestFile) }
             ?.also { lastIndexed[manifestFile.presentableUrl] = it } ?: lastIndexed[manifestFile.presentableUrl]
         ?: caches.computeIfAbsent(manifestFile.presentableUrl) {
             cachedValuesManager.createCachedValue {

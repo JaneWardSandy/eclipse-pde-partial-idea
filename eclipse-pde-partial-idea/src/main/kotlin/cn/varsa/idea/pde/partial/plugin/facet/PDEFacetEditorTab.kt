@@ -3,16 +3,16 @@ package cn.varsa.idea.pde.partial.plugin.facet
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.listener.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.facet.ui.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.*
-import org.jetbrains.kotlin.idea.core.util.*
-import cn.varsa.idea.pde.partial.plugin.support.*
 import java.awt.*
 import javax.swing.*
+import javax.swing.event.*
 
 class PDEFacetEditorTab(
     private val configuration: PDEFacetConfiguration,
@@ -130,7 +130,11 @@ class PDEFacetEditorTab(
     }
 
     private fun JTextField.validateOnChange() {
-        onTextChange { doValidate() }
+        document.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                doValidate()
+            }
+        })
     }
 
     private fun CheckBoxList<String>.checkedItems() =

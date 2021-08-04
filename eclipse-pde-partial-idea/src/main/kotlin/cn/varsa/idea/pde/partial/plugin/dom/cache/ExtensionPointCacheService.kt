@@ -1,16 +1,16 @@
 package cn.varsa.idea.pde.partial.plugin.dom.cache
 
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
+import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.util.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 import java.io.*
 
@@ -26,10 +26,12 @@ class ExtensionPointCacheService(private val project: Project) {
         fun getInstance(project: Project): ExtensionPointCacheService =
             project.getService(ExtensionPointCacheService::class.java)
 
-        fun resolveExtensionPoint(file: VirtualFile, stream: InputStream): ExtensionPointDefinition? = try {
+        fun resolveExtensionPoint(
+            project: Project, schemaFile: VirtualFile, stream: InputStream = schemaFile.inputStream
+        ): ExtensionPointDefinition? = try {
             ExtensionPointDefinition(stream)
         } catch (e: Exception) {
-            thisLogger().warn("EXSD file not valid: $file : $e")
+            PdeNotifier.getInstance(project).important("Schema invalid", "EXSD file not valid: $schemaFile : $e")
             null
         }
     }
@@ -55,11 +57,11 @@ class ExtensionPointCacheService(private val project: Project) {
         root.findFileByRelativePath(schema)?.let(this::getExtensionPoint)
 
     fun getExtensionPoint(file: VirtualFile): ExtensionPointDefinition? = readCompute {
-        DumbService.isDumb(project).ifFalse { ExtensionPointIndex.readEPDefinition(project, file) }
+        DumbService.isDumb(project).runFalse { ExtensionPointIndex.readEPDefinition(project, file) }
             ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
         ?: caches.computeIfAbsent(file.presentableUrl) {
             cachedValuesManager.createCachedValue {
-                CachedValueProvider.Result.create(resolveExtensionPoint(file, file.inputStream), file)
+                CachedValueProvider.Result.create(resolveExtensionPoint(project, file), file)
             }
         }.value
     }

@@ -3,12 +3,12 @@ package cn.varsa.idea.pde.partial.plugin.indexes
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.core.util.*
 import org.jetbrains.lang.manifest.*
 import java.io.*
 

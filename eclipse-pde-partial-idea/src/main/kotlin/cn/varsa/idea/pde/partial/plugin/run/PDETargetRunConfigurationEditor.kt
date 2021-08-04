@@ -1,6 +1,5 @@
 package cn.varsa.idea.pde.partial.plugin.run
 
-import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import com.intellij.execution.ui.*
@@ -39,6 +38,9 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         panel.updateUI()
 
         myAnchor = UIUtil.mergeComponentsWithAnchor(productComponent, applicationComponent, jrePath, javaParameters)
+
+        ComboboxSpeedSearch(productField).setClearSearchOnNavigateNoMatch(true)
+        ComboboxSpeedSearch(applicationField).setClearSearchOnNavigateNoMatch(true)
     }
 
     override fun resetEditorFrom(configuration: PDETargetRunConfiguration) {

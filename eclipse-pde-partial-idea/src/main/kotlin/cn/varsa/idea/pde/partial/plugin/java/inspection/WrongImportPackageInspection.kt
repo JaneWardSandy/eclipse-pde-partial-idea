@@ -34,7 +34,7 @@ class WrongImportPackageInspection : AbstractOsgiVisitor() {
 
                                 if (project.allPDEModules().filterNot { facet.module == it }
                                         .mapNotNull { cacheService.getManifest(it) }
-                                        .any { it.getExportedPackage(packageName) != null }) {
+                                        .any { it.getExportedPackageName(packageName) != null }) {
                                     continue@nextValue
                                 }
 
@@ -46,7 +46,7 @@ class WrongImportPackageInspection : AbstractOsgiVisitor() {
                                     val containerBundle =
                                         jarFile?.presentableUrl?.let { managementService.jarPathInnerBundle[it] }
 
-                                    if (containerBundle?.manifest?.getExportedPackage(packageName) != null) {
+                                    if (containerBundle?.manifest?.getExportedPackageName(packageName) != null) {
                                         continue@nextValue
                                     }
                                 }

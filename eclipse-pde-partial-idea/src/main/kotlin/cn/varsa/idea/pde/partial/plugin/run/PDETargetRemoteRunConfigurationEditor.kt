@@ -1,6 +1,5 @@
 package cn.varsa.idea.pde.partial.plugin.run
 
-import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import com.intellij.execution.configuration.*
@@ -95,6 +94,10 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
             programParametersComponent,
             envVariablesComponent
         )
+
+        ComboboxSpeedSearch(productField).setClearSearchOnNavigateNoMatch(true)
+        ComboboxSpeedSearch(applicationField).setClearSearchOnNavigateNoMatch(true)
+        ComboboxSpeedSearch(jdkVersion).setClearSearchOnNavigateNoMatch(true)
     }
 
     override fun resetEditorFrom(configuration: PDETargetRemoteRunConfiguration) {

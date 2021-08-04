@@ -1,15 +1,16 @@
 package cn.varsa.idea.pde.partial.plugin.dom.indexes
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.ide.highlighter.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.idea.core.util.*
 import java.io.*
 
 class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
@@ -29,8 +30,13 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
     }
 
     private object PluginXmlIndexer : SingleEntryIndexer<XmlInfo>(false) {
-        override fun computeValue(inputData: FileContent): XmlInfo? =
-            PluginXmlCacheService.resolvePluginXml(inputData.file, inputData.content.inputStream())
+        override fun computeValue(inputData: FileContent): XmlInfo? = PluginXmlCacheService.resolvePluginXml(
+            inputData.project,
+            inputData.file.parent,
+            BundleManagementService.getInstance(inputData.project).bundlePath2Bundle[inputData.file.parent]?.sourceBundle?.root,
+            inputData.file,
+            inputData.content.inputStream()
+        )
     }
 
     private object PluginXmlExternalizer : DataExternalizer<XmlInfo> {

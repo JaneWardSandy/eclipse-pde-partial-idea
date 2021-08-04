@@ -29,7 +29,7 @@ class ExtensionPointIndex : SingleEntryFileBasedIndexExtension<ExtensionPointDef
 
     private object ExtensionPointIndexer : SingleEntryIndexer<ExtensionPointDefinition>(false) {
         override fun computeValue(inputData: FileContent): ExtensionPointDefinition? =
-            ExtensionPointCacheService.resolveExtensionPoint(inputData.file, inputData.content.inputStream())
+            ExtensionPointCacheService.resolveExtensionPoint(inputData.project, inputData.file, inputData.content.inputStream())
     }
 
     private object ExtensionPointExternalizer : DataExternalizer<ExtensionPointDefinition> {

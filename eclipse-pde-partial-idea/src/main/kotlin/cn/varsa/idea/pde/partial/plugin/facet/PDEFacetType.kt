@@ -2,7 +2,6 @@ package cn.varsa.idea.pde.partial.plugin.facet
 
 import com.intellij.facet.*
 import com.intellij.icons.*
-import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import javax.swing.*
 

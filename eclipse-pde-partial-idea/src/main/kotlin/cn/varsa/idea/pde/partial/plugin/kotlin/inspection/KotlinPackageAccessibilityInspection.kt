@@ -17,26 +17,26 @@ class KotlinPackageAccessibilityInspection : PackageAccessibilityInspection() {
     ) {
         when (dependency) {
             is KtNamedDeclaration -> {
-                checkAccessibility(dependency, facet)?.also { occurProblem(it, place) }
+                checkAccessibility(dependency, facet).forEach { occurProblem(it, place) }
 
                 dependency.getValueParameters().mapNotNull { it.typeReference?.classForRefactor() }
-                    .forEach { clazz -> checkAccessibility(clazz, facet)?.also { occurProblem(it, place) } }
+                    .forEach { clazz -> checkAccessibility(clazz, facet).forEach { occurProblem(it, place) } }
                 dependency.takeIf { it is KtCallableDeclaration || it is KtClassOrObject }?.getReturnTypeReference()
-                    ?.classForRefactor()?.let { checkAccessibility(it, facet) }?.also { occurProblem(it, place) }
+                    ?.classForRefactor()?.let { checkAccessibility(it, facet) }?.forEach { occurProblem(it, place) }
             }
         }
     }
 
     companion object {
-        fun checkAccessibility(namedDeclaration: KtNamedDeclaration, facet: PDEFacet): Problem? {
+        fun checkAccessibility(namedDeclaration: KtNamedDeclaration, facet: PDEFacet): List<Problem> {
             val targetFile = namedDeclaration.containingKtFile
 
             val packageName = targetFile.packageFqName.asString()
-            if (packageName.isBlank() || packageName.startsWith(Kotlin)) return null
+            if (packageName.isBlank() || packageName.startsWith(Kotlin)) return emptyList()
 
-            val qualifiedName = namedDeclaration.fqName?.asString() ?: return null
+            val qualifiedName = namedDeclaration.fqName?.asString() ?: return emptyList()
 
-            if (facet.module == ModuleUtilCore.findModuleForPsiElement(namedDeclaration)) return null
+            if (facet.module == ModuleUtilCore.findModuleForPsiElement(namedDeclaration)) return emptyList()
 
             return checkAccessibility(targetFile, packageName, qualifiedName, facet.module)
         }

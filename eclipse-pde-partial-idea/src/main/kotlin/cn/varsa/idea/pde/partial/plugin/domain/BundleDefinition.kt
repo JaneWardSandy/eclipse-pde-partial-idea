@@ -17,7 +17,7 @@ data class BundleDefinition(
     val bundleSymbolicName: String get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension
     private val classPaths: Map<String, VirtualFile>
         get() = mapOf("" to root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
-            ?.map { it to root.findFileByRelativePath(it) }?.filterNot { it.second == null }
+            ?.map { it to root.findFileByRelativePath(it) }?.filterNot { it.second == null || it.second!!.isDirectory }
             ?.associate { it.first to it.second!! } ?: emptyMap())
 
     val delegateClassPathFile: Map<String, VirtualFile>
@@ -40,9 +40,9 @@ data class BundleDefinition(
                     libFile.createChildData(this, name)
                 }
 
-                if (virtualFile.modificationStamp != rootEntry.modificationStamp || virtualFile.timeStamp != rootEntry.timeStamp) {
+                if ((virtualFile.modificationStamp != originFile.modificationStamp || virtualFile.timeStamp != originFile.timeStamp) && virtualFile.length != originFile.length) {
                     writeComputeAndWait {
-                        virtualFile.getOutputStream(virtualFile, rootEntry.modificationStamp, rootEntry.timeStamp)
+                        virtualFile.getOutputStream(virtualFile, originFile.modificationStamp, originFile.timeStamp)
                             .use { ous -> originFile.inputStream.use { ins -> ins.copyTo(ous) } }
                     }
                 }

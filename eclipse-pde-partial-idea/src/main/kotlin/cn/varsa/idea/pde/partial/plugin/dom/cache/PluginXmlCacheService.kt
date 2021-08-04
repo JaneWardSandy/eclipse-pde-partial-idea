@@ -6,8 +6,8 @@ import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
+import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
@@ -26,24 +26,40 @@ class PluginXmlCacheService(private val project: Project) {
     companion object {
         fun getInstance(project: Project): PluginXmlCacheService = project.getService(PluginXmlCacheService::class.java)
 
-        fun resolvePluginXml(file: VirtualFile, stream: InputStream = file.inputStream): XmlInfo? {
+        fun resolvePluginXml(
+            project: Project,
+            bundleRoot: VirtualFile,
+            bundleSourceRoot: VirtualFile?,
+            pluginXmlFile: VirtualFile,
+            stream: InputStream = pluginXmlFile.inputStream
+        ): XmlInfo? {
             val applications = hashSetOf<String>()
             val products = hashSetOf<String>()
             val epPoint2ExsdPath = hashMapOf<String, VirtualFile>()
             val epReferenceIdentityMap = hashMapOf<Pair<String, String>, HashMap<String, HashSet<String>>>()
 
             return try {
-                resolvePluginXml(file, stream, applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
+                resolvePluginXml(
+                    bundleRoot,
+                    bundleSourceRoot,
+                    stream,
+                    applications,
+                    products,
+                    epPoint2ExsdPath,
+                    epReferenceIdentityMap
+                )
 
                 XmlInfo(applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
             } catch (e: Exception) {
-                thisLogger().warn("$PluginsXml file not valid: $file : $e")
+                PdeNotifier.getInstance(project)
+                    .important("Plugin XLM invalid", "$PluginsXml file not valid: $pluginXmlFile : $e")
                 null
             }
         }
 
         private fun resolvePluginXml(
-            file: VirtualFile,
+            bundleRoot: VirtualFile,
+            bundleSourceRoot: VirtualFile?,
             stream: InputStream,
             applications: HashSet<String>,
             products: HashSet<String>,
@@ -62,7 +78,10 @@ class PluginXmlCacheService(private val project: Project) {
                                     val id = reader.getAttributeValue("", "id") ?: continue@loop
                                     val schema = reader.getAttributeValue("", "schema") ?: continue@loop
 
-                                    file.parent.findFileByRelativePath(schema)?.also { epPoint2ExsdPath[id] = it }
+                                    (bundleRoot.findFileByRelativePath(schema)
+                                        ?: bundleSourceRoot?.findFileByRelativePath(schema))?.also {
+                                        epPoint2ExsdPath[id] = it
+                                    }
                                 }
                                 "extension" -> {
                                     extensionPoint = reader.getAttributeValue("", "point") ?: continue@loop
@@ -103,31 +122,39 @@ class PluginXmlCacheService(private val project: Project) {
         lastIndexed.clear()
     }
 
-    fun getXmlInfo(bundle: BundleDefinition): XmlInfo? =
-        bundle.root.findChild(PluginsXml)?.let { getXmlInfo(bundle.bundleSymbolicName, it) }
+    fun getXmlInfo(bundle: BundleDefinition): XmlInfo? = bundle.root.findChild(PluginsXml)
+        ?.let { getXmlInfo(bundle.bundleSymbolicName, it, bundle.root, bundle.sourceBundle?.root) }
 
     fun getXmlInfo(module: Module): XmlInfo? =
         module.moduleRootManager.contentRoots.mapNotNull { it.findChild(PluginsXml) }.firstOrNull()?.let {
-            getXmlInfo(cacheService.getManifest(module)?.bundleSymbolicName?.key ?: module.name, it)
+            getXmlInfo(cacheService.getManifest(module)?.bundleSymbolicName?.key ?: module.name, it, it.parent)
         }
 
-    private fun getXmlInfo(bundleSymbolicName: String, file: VirtualFile): XmlInfo? = readCompute {
-        DumbService.isDumb(project).runFalse { PluginXmlIndex.readXmlInfo(project, file) }
-            ?.updateIdNames(bundleSymbolicName)?.also { lastIndexed[file.presentableUrl] = it }
-            ?: lastIndexed[file.presentableUrl] ?: caches.computeIfAbsent(file.presentableUrl) {
+    private fun getXmlInfo(
+        bundleSymbolicName: String,
+        pluginXmlFile: VirtualFile,
+        bundleRoot: VirtualFile,
+        bundleSourceRoot: VirtualFile? = null
+    ): XmlInfo? = readCompute {
+        DumbService.isDumb(project).runFalse { PluginXmlIndex.readXmlInfo(project, pluginXmlFile) }
+            ?.updateIdNames(bundleSymbolicName)?.also { lastIndexed[pluginXmlFile.presentableUrl] = it }
+            ?: lastIndexed[pluginXmlFile.presentableUrl] ?: caches.computeIfAbsent(pluginXmlFile.presentableUrl) {
                 cachedValuesManager.createCachedValue {
                     CachedValueProvider.Result.create(
-                        resolvePluginXml(file)?.updateIdNames(bundleSymbolicName), file
+                        resolvePluginXml(
+                            project, bundleRoot, bundleSourceRoot, pluginXmlFile
+                        )?.updateIdNames(bundleSymbolicName), pluginXmlFile
                     )
                 }
             }.value
     }
 
     private fun XmlInfo.updateIdNames(bundleSymbolicName: String): XmlInfo =
-        XmlInfo(applications.map { if (it.startsWith(bundleSymbolicName)) it else "$bundleSymbolicName.$it" }
+        XmlInfo(applications.map { if (it.startsWith(bundleSymbolicName) || it.contains('.')) it else "$bundleSymbolicName.$it" }
                     .toHashSet(),
-                products.map { if (it.startsWith(bundleSymbolicName)) it else "$bundleSymbolicName.$it" }.toHashSet(),
-                epPoint2ExsdPath.mapKeys { if (it.key.startsWith(bundleSymbolicName)) it.key else "$bundleSymbolicName.${it.key}" }
+                products.map { if (it.startsWith(bundleSymbolicName) || it.contains('.')) it else "$bundleSymbolicName.$it" }
+                    .toHashSet(),
+                epPoint2ExsdPath.mapKeys { if (it.key.startsWith(bundleSymbolicName) || it.key.contains('.')) it.key else "$bundleSymbolicName.${it.key}" }
                     .toMap(hashMapOf()),
                 epReferenceIdentityMap)
 }

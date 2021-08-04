@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.inspection
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
@@ -50,10 +51,10 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
     companion object {
         fun checkAccessibility(
             item: PsiFileSystemItem, packageName: String, qualifiedName: String, requesterModule: Module
-        ): Problem? {
+        ): List<Problem> {
             // In bundleClassPath
             val library = requesterModule.findLibrary { it.name == ModuleLibraryName }
-            if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return null
+            if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return emptyList()
 
             val project = requesterModule.project
             val cacheService = BundleManifestCacheService.getInstance(project)
@@ -61,42 +62,59 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
             val index = ProjectFileIndex.getInstance(project)
 
             // In bundle class path?
+            val containers = arrayListOf<BundleManifest>()
+
+            cacheService.getManifest(item)?.also { containers += it }
             val jarFile = index.getClassRootForFile(item.virtualFile)
-            val containerBundle = jarFile?.presentableUrl?.let { managementService.jarPathInnerBundle[it]?.manifest }
-                ?: project.allPDEModules().filterNot { requesterModule == it }.firstOrNull { module ->
-                    jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
-                        ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
-                        ?.any { jarFile?.presentableUrl == it } == true
-                }?.let { cacheService.getManifest(it) }
+            jarFile?.presentableUrl?.let { managementService.jarPathInnerBundle[it]?.manifest }
+                ?.also { containers += it }
+            containers += project.allPDEModules().filterNot { requesterModule == it }.filter { module ->
+                jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
+                    ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+                    ?.any { jarFile?.presentableUrl == it } == true
+            }.mapNotNull { cacheService.getManifest(it) }
 
 
-            val exporter = containerBundle ?: cacheService.getManifest(item)
-            val exporterSymbolic = exporter?.bundleSymbolicName
-            if (exporter == null || exporterSymbolic == null) {
-                return Problem.weak(message("inspection.hint.nonBundle", packageName))
+            val problems = arrayListOf<Problem>()
+            if (containers.isEmpty()) problems += Problem.weak(message("inspection.hint.nonBundle", packageName))
+            containers.forEach { exporter ->
+                val exporterSymbolic = exporter.bundleSymbolicName
+                if (exporterSymbolic == null) {
+                    problems += Problem.weak(message("inspection.hint.nonBundle", packageName))
+                    return@forEach
+                }
+
+                val exporterSymbolicName = exporter.fragmentHost?.key ?: exporterSymbolic.key
+
+                val exporterExportedPackage = exporter.getExportedPackageName(packageName)
+                    ?: managementService.bundles[exporterSymbolicName]?.manifest?.getExportedPackageName(packageName)
+                    ?: kotlin.run {
+                        problems += Problem.error(
+                            message(
+                                "inspection.hint.packageNoExport", packageName, exporterSymbolicName
+                            )
+                        )
+                        return@forEach
+                    }
+
+                val importer = cacheService.getManifest(requesterModule)
+                if (importer != null) {
+                    if (importer.isPackageImported(packageName)) return emptyList()
+                    if (importer.isBundleRequired(exporterSymbolicName)) return emptyList()
+                    if (requesterModule.isBundleRequiredOrFromReExport(exporterSymbolicName)) return emptyList()
+                }
+
+                val requiredFixes = managementService.bundles[exporterSymbolicName]?.manifest?.bundleVersion?.toString()
+                    ?.let { arrayOf(AccessibilityFix.requireBundleFix(exporterSymbolicName, it)) } ?: emptyArray()
+
+                problems += Problem.error(
+                    message("inspection.hint.packageAccessibility", packageName, exporterSymbolicName),
+                    AccessibilityFix.importPackageFix(exporterExportedPackage),
+                    *requiredFixes + AccessibilityFix.requireBundleFix(exporterSymbolicName)
+                )
             }
 
-            val exporterSymbolicName = exporter.fragmentHost?.key ?: exporterSymbolic.key
-
-            val exporterExportedPackage = exporter.getExportedPackage(packageName)
-                ?: managementService.bundles[exporterSymbolicName]?.manifest?.getExportedPackage(packageName)
-                ?: return Problem.error(message("inspection.hint.packageNoExport", packageName, exporterSymbolicName))
-
-            val importer = cacheService.getManifest(requesterModule)
-            if (importer != null) {
-                if (importer.isPackageImported(packageName)) return null
-                if (importer.isBundleRequired(exporterSymbolicName)) return null
-                if (requesterModule.isBundleRequiredOrFromReExport(exporterSymbolicName)) return null
-            }
-
-            val requiredFixes = managementService.bundles[exporterSymbolicName]?.manifest?.bundleVersion?.toString()
-                ?.let { arrayOf(AccessibilityFix.requireBundleFix(exporterSymbolicName, it)) } ?: emptyArray()
-
-            return Problem.error(
-                message("inspection.hint.packageAccessibility", packageName, exporterSymbolicName),
-                AccessibilityFix.importPackageFix(exporterExportedPackage),
-                *requiredFixes + AccessibilityFix.requireBundleFix(exporterSymbolicName)
-            )
+            return problems
         }
     }
 }

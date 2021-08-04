@@ -160,6 +160,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                           .addExtraAction(reloadActionButton).createPanel()).addToBottom(launcherPanel)
 
         panel.addTab(message("config.target.tab"), locationsPanel)
+        ListSpeedSearch(locationList).setClearSearchOnNavigateNoMatch(true)
 
 
         // Startup tab
@@ -171,6 +172,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                           .setRemoveAction { removeStartup() }.setEditAction { editStartup() }.createPanel())
 
         panel.addTab(message("config.startup.tab"), startupPanel)
+        ListSpeedSearch(startupList).setClearSearchOnNavigateNoMatch(true)
 
 
         // Content tab
@@ -190,6 +192,9 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         )
 
         panel.addTab(message("config.content.tab"), contentPanel)
+        object : TableViewSpeedSearch<BundleVersionRow>(contentTable) {
+            override fun getItemText(element: BundleVersionRow): String = element.symbolicName
+        }.setClearSearchOnNavigateNoMatch(true)
 
 
         // Anchor

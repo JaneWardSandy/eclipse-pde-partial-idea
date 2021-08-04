@@ -94,6 +94,10 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
             programParametersComponent,
             envVariablesComponent
         )
+
+        ComboboxSpeedSearch(productField).setClearSearchOnNavigateNoMatch(true)
+        ComboboxSpeedSearch(applicationField).setClearSearchOnNavigateNoMatch(true)
+        ComboboxSpeedSearch(jdkVersion).setClearSearchOnNavigateNoMatch(true)
     }
 
     override fun resetEditorFrom(configuration: PDETargetRemoteRunConfiguration) {

@@ -38,6 +38,9 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         panel.updateUI()
 
         myAnchor = UIUtil.mergeComponentsWithAnchor(productComponent, applicationComponent, jrePath, javaParameters)
+
+        ComboboxSpeedSearch(productField).setClearSearchOnNavigateNoMatch(true)
+        ComboboxSpeedSearch(applicationField).setClearSearchOnNavigateNoMatch(true)
     }
 
     override fun resetEditorFrom(configuration: PDETargetRunConfiguration) {

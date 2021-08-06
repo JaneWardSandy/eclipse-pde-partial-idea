@@ -33,6 +33,11 @@ class ExtensionPointManagementService(private val project: Project) : Background
         val cacheService = PluginXmlCacheService.getInstance(project)
         cacheService.clearCache()
 
+        applications.clear()
+        products.clear()
+        epPoint2ExsdPath.clear()
+        epReferenceIdentityMap.clear()
+
         indicator.checkCanceled()
         indicator.text = "Resolving extension point management"
         indicator.isIndeterminate = false

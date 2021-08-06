@@ -1,6 +1,5 @@
 package cn.varsa.idea.pde.partial.plugin.run
 
-import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.configure.*
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.common.service.*
@@ -21,7 +20,6 @@ import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.search.*
@@ -130,10 +128,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 
         override val libraries: List<File>
-            get() = LibraryTablesRegistrar.getInstance()
-                .getLibraryTable(project).libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }
-                .mapNotNull { it.getFiles(OrderRootType.CLASSES) }.flatMap { it.toList() }
-                .map { it.presentableUrl.toFile() }
+            get() = BundleManagementService.getInstance(project).bundles.values.map { it.file }
 
         override val devModules: List<DevModule>
             get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)

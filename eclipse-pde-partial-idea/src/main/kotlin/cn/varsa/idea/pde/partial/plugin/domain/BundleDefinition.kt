@@ -7,6 +7,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.*
+import org.osgi.framework.*
 import java.io.*
 
 data class BundleDefinition(
@@ -15,6 +16,8 @@ data class BundleDefinition(
     val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
 
     val bundleSymbolicName: String get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension
+    val bundleVersion: Version get() = manifest?.bundleVersion ?: Version.emptyVersion
+
     private val classPaths: Map<String, VirtualFile>
         get() = mapOf("" to root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
             ?.map { it to root.findFileByRelativePath(it) }?.filterNot { it.second == null || it.second!!.isDirectory }

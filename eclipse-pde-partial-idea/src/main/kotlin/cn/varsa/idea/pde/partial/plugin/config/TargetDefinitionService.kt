@@ -2,7 +2,6 @@ package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
-import cn.varsa.idea.pde.partial.plugin.listener.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
@@ -39,6 +38,7 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
         "org.eclipse.equinox.console" to 4
     )
 
+    // TODO: 2021/8/6 remove
     @XMap(entryTagName = "bundleVersion", keyAttributeName = "bundleSymbolicName", valueAttributeName = "version")
     val bundleVersionSelection = hashMapOf<String, String>()
 
@@ -59,11 +59,21 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
             indicator.fraction += step
         }
 
+        val sourceVersions =
+            locations.flatMap { it.bundles }.groupBy { it.manifest?.eclipseSourceBundle?.key }.filterKeys { it != null }
+                .mapValues { it.value.distinct().toHashSet() }
+        locations.forEach { location ->
+            location.bundles.forEach { bundle ->
+                bundle.sourceBundle =
+                    sourceVersions[bundle.bundleSymbolicName]?.firstOrNull { location.bundleVersionSelection[bundle.canonicalName] == it.bundleVersion.toString() }
+            }
+        }
+
         indicator.fraction = 1.0
     }
 
     override fun onFinished(project: Project) {
-        TargetDefinitionChangeListener.notifyLocationsChanged(project)
+        //TargetDefinitionChangeListener.notifyLocationsChanged(project)
     }
 
     override fun getState(): TargetDefinitionService = this
@@ -81,7 +91,16 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
     @Attribute var launcher: String? = null
     @Attribute var dependency = DependencyScope.COMPILE.displayName
 
+    @Attribute var alias: String? = null
+
+    @XCollection(elementName = "unSelectedBundles") val bundleUnSelected = mutableListOf<String>()
+
+    @XMap(entryTagName = "sourceVersion", keyAttributeName = "canonicalName", valueAttributeName = "version")
+    val bundleVersionSelection = hashMapOf<String, String>()
+
     private val _bundles = mutableListOf<BundleDefinition>()
+
+    val identifier: String get() = alias?.takeIf(String::isNotBlank) ?: location
     val bundles: List<BundleDefinition> = _bundles
 
     init {

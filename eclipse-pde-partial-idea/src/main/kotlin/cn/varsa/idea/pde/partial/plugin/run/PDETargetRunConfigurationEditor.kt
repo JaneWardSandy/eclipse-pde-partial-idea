@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.run
 
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.execution.ui.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
@@ -16,8 +17,14 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
     private val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false))
 
-    private val productField = ComboBox<String>()
-    private val applicationField = ComboBox<String>()
+    private val productField = ComboBox<String>().apply {
+        renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
+        ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    }
+    private val applicationField = ComboBox<String>().apply {
+        renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
+        ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    }
 
     private val productComponent =
         LabeledComponent.create(productField, message("run.local.config.tab.configuration.product"), BorderLayout.WEST)
@@ -38,9 +45,6 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         panel.updateUI()
 
         myAnchor = UIUtil.mergeComponentsWithAnchor(productComponent, applicationComponent, jrePath, javaParameters)
-
-        ComboboxSpeedSearch(productField).setClearSearchOnNavigateNoMatch(true)
-        ComboboxSpeedSearch(applicationField).setClearSearchOnNavigateNoMatch(true)
     }
 
     override fun resetEditorFrom(configuration: PDETargetRunConfiguration) {

@@ -57,4 +57,7 @@ data class BundleDefinition(
         }
 
     var sourceBundle: BundleDefinition? = null
+
+    val canonicalName: String get() = "$bundleSymbolicName-$bundleVersion"
+    override fun toString(): String = canonicalName
 }

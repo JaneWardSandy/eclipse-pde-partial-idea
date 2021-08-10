@@ -18,7 +18,7 @@ class ManifestHeaderParserProvider : HeaderParserProvider {
         parsers[BUNDLE_REQUIREDEXECUTIONENVIRONMENT] = RequiredExecutionEnvironmentParser
         parsers[BUNDLE_ACTIVATIONPOLICY] = BundleActivationPolicyParser
         parsers[BUNDLE_CLASSPATH] = BundleClasspathParser
-        parsers[IMPORT_PACKAGE] = BasePackageParser
+        parsers[IMPORT_PACKAGE] = ImportPackageParser
         parsers[EXPORT_PACKAGE] = ExportPackageParser
     }
 }

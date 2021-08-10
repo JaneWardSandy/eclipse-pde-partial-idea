@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.resolver
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
@@ -38,7 +39,7 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
             if (urlFragments[0] != "platform:") {
                 area.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(url) }.firstOrNull()
             } else if (urlFragments.size > 2 && urlFragments[1].equalAny("plugin", "fragment", ignoreCase = true)) {
-                managementService.bundles[urlFragments[2]]?.let { definition ->
+                managementService.getBundlesByBSN(urlFragments[2])?.values?.firstOrNull()?.let { definition ->
                     if (urlFragments.size == 3) {
                         definition.root
                     } else {

@@ -1,6 +1,5 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
-import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
@@ -10,7 +9,10 @@ import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
-import com.jetbrains.rd.util.*
+import org.osgi.framework.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 class BundleManagementService : BackgroundResolvable {
     companion object {
@@ -18,13 +20,15 @@ class BundleManagementService : BackgroundResolvable {
             project.getService(BundleManagementService::class.java)
     }
 
-    val bundles = ConcurrentHashMap<String, BundleDefinition>()
-    val bundlePath2Bundle = ConcurrentHashMap<VirtualFile, BundleDefinition>()
-    val libReExportRequiredSymbolName = ConcurrentHashMap<String, LinkedHashSet<String>>()
-    val jarPathInnerBundle = ConcurrentHashMap<String, BundleDefinition>()
+    private val bundles = hashMapOf<String, HashMap<Version, BundleDefinition>>()
+    private val bcn2Bundle = hashMapOf<String, BundleDefinition>()
+    private val bundlePath2Bundle = hashMapOf<VirtualFile, BundleDefinition>()
+    private val libReExportRequiredSymbolName = hashMapOf<String, HashMap<Version, HashMap<String, VersionRange>>>()
+    private val jarPathInnerBundle = hashMapOf<String, BundleDefinition>()
 
     private fun clear() {
         bundles.clear()
+        bcn2Bundle.clear()
         bundlePath2Bundle.clear()
         libReExportRequiredSymbolName.clear()
         jarPathInnerBundle.clear()
@@ -38,43 +42,40 @@ class BundleManagementService : BackgroundResolvable {
         indicator.fraction = 0.0
 
         val definitionService = TargetDefinitionService.getInstance(project)
-        val bundleVersionSelection = definitionService.bundleVersionSelection
-        val localBundles = definitionService.locations.flatMap { it.bundles }
 
-        val bundleStep = 0.45 / (localBundles.size + 1)
-        val name2Source = hashMapOf<String, BundleDefinition>()
-        localBundles.forEach { bundle ->
-            indicator.checkCanceled()
-            indicator.text2 = "Resolving bundle ${bundle.file}"
+        val bundleStep = 0.45 / (definitionService.locations.sumBy { it.bundles.size } + 1)
+        val sourceVersions = hashMapOf<String, HashSet<BundleDefinition>>()
 
-            bundle.manifest?.also { manifest ->
-                val eclipseSourceBundle = manifest.eclipseSourceBundle
-                if (eclipseSourceBundle != null) {
-                    val symbolName = eclipseSourceBundle.key
-                    if (bundleVersionSelection["$symbolName$BundleSymbolNameSourcePostFix"] == manifest.bundleVersion?.toString()) {
-                        name2Source[symbolName] = bundle
+        definitionService.locations.forEach { location ->
+            location.bundles.forEach { bundle ->
+                indicator.checkCanceled()
+                indicator.text2 = "Resolving bundle ${bundle.file}"
+
+                bundle.manifest?.also { manifest ->
+                    val eclipseSourceBundle = manifest.eclipseSourceBundle
+                    if (eclipseSourceBundle == null && !location.bundleUnSelected.contains(bundle.canonicalName)) {
+                        bundles.computeIfAbsent(bundle.bundleSymbolicName) { hashMapOf() } += bundle.bundleVersion to bundle
+                        bcn2Bundle[bundle.canonicalName] = bundle
+                        bundlePath2Bundle[bundle.root] = bundle
+                        bundle.delegateClassPathFile.values.map { it.presentableUrl }
+                            .forEach { jarPathInnerBundle[it] = bundle }
+                    } else if (location.bundleVersionSelection.isEmpty() && eclipseSourceBundle != null) {
+                        sourceVersions.computeIfAbsent(eclipseSourceBundle.key) { hashSetOf() } += bundle
                     }
-                } else if (bundleVersionSelection[bundle.bundleSymbolicName] == manifest.bundleVersion?.toString()) {
-                    bundles[bundle.bundleSymbolicName] = bundle
-                    bundlePath2Bundle[bundle.root] = bundle
-                    bundle.delegateClassPathFile.values.map { it.presentableUrl }
-                        .forEach { jarPathInnerBundle[it] = bundle }
                 }
             }
             indicator.fraction += bundleStep
         }
 
-        val sourceStep = 0.45 / (name2Source.size + 1)
-        name2Source.forEach { (symbolName, source) ->
+        val sourceStep = 0.45 / (sourceVersions.size + 1)
+        sourceVersions.forEach { (symbolName, sources) ->
             indicator.checkCanceled()
-            indicator.text2 = "Resolving source ${source.file}"
+            indicator.text2 = "Resolving source $symbolName"
 
-            val bundle = bundles[symbolName]
-            if (bundle != null) {
-                bundle.sourceBundle = source
-            } else {
-                bundles["$symbolName$BundleSymbolNameSourcePostFix"] = source.apply { sourceBundle = this }
-            }
+            bundles[symbolName]?.filter { it.value.sourceBundle == null && it.value.location.bundleVersionSelection.isEmpty() }
+                ?.forEach { (version, bundle) ->
+                    bundle.sourceBundle = sources.firstOrNull { it.bundleVersion == version }
+                }
 
             indicator.fraction += sourceStep
         }
@@ -83,16 +84,20 @@ class BundleManagementService : BackgroundResolvable {
         indicator.text2 = "Resolving dependency tree"
         indicator.fraction = 0.9
 
-        bundles.mapValues { (_, definition) ->
-            definition.manifest?.reExportRequiredBundleSymbolNames ?: emptySet()
+        bundles.mapValues { (_, versionedDefinition) ->
+            versionedDefinition.mapValues { (_, bundle) ->
+                bundle.manifest?.reexportRequiredBundleAndVersion() ?: emptyMap()
+            }
         }.also { l1ReExport ->
             l1ReExport.forEach { (symbolName, exported) ->
-                val export = linkedSetOf<String>()
+                val export = hashMapOf<Version, HashMap<String, VersionRange>>()
                 libReExportRequiredSymbolName[symbolName] = export
 
-                exported.forEach {
-                    export += it
-                    fillDependencies(symbolName, export, setOf(it), l1ReExport)
+                exported.forEach { (version, bsn2ver) ->
+                    val map = hashMapOf<String, VersionRange>()
+                    export[version] = map
+                    map += bsn2ver
+                    fillDependencies(symbolName, map, bsn2ver, l1ReExport)
                 }
             }
         }
@@ -138,9 +143,36 @@ class BundleManagementService : BackgroundResolvable {
     }
 
     private tailrec fun fillDependencies(
-        symbolName: String, reExport: HashSet<String>, next: Set<String>, libPair: Map<String, Set<String>>
+        symbolName: String,
+        reExport: HashMap<String, VersionRange>,
+        next: Map<String, VersionRange>,
+        libPair: Map<String, Map<Version, Map<String, VersionRange>>>
     ) {
-        val nextSet = next.filterNot { it == symbolName }.mapNotNull { libPair[it] }.flatten().toSet()
-        if (reExport.addAll(nextSet)) fillDependencies(symbolName, reExport, nextSet, libPair)
+        val nextSet = next.filterKeys { it != symbolName }
+            .mapNotNull { (nextBsn, range) -> libPair[nextBsn]?.filterKeys { range.includes(it) }?.values }.flatten()
+            .flatMap { it.entries }.associate { it.key to it.value }
+
+        if (!reExport.keys.containsAll(nextSet.keys)) {
+            reExport.putAll(nextSet)
+            fillDependencies(symbolName, reExport, nextSet, libPair)
+        }
     }
+
+    fun getLibReExportRequired(bsn2Rage: Map<String, VersionRange>) =
+        bsn2Rage.mapNotNull { (bsn, range) -> getLibReExportRequired(bsn, range) }.flatMap { it.entries }
+            .associate { it.key to it.value }
+
+    fun getBundleByBCN(bcn: String) = bcn2Bundle[bcn]
+    fun getBundlesByBSN(bsn: String) = bundles[bsn]?.toMap()
+    fun getBundlesByBSN(bsn: String, version: Version) = bundles[bsn]?.get(version)
+    fun getBundlesByBSN(bsn: String, range: VersionRange) =
+        bundles[bsn]?.filterKeys { range.includes(it) }?.maxByOrNull { it.key }?.value
+
+    fun getBundles() = bundles.values.flatMap { it.values }
+    fun getBundleByInnerJarPath(presentableUrl: String) = jarPathInnerBundle[presentableUrl]
+    fun getBundleByBundleFile(bundleRoot: VirtualFile) = bundlePath2Bundle[bundleRoot]
+
+    fun getLibReExportRequired(bsn: String, version: Version) = libReExportRequiredSymbolName[bsn]?.get(version)
+    fun getLibReExportRequired(bsn: String, range: VersionRange) =
+        libReExportRequiredSymbolName[bsn]?.filterKeys { range.includes(it) }?.maxByOrNull { it.key }?.value
 }

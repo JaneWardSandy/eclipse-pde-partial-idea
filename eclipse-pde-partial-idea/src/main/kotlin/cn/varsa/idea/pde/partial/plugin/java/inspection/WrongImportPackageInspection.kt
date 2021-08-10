@@ -44,7 +44,7 @@ class WrongImportPackageInspection : AbstractOsgiVisitor() {
                                 for (directory in directories) {
                                     val jarFile = index.getClassRootForFile(directory.virtualFile)
                                     val containerBundle =
-                                        jarFile?.presentableUrl?.let { managementService.jarPathInnerBundle[it] }
+                                        jarFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it) }
 
                                     if (containerBundle?.manifest?.getExportedPackageName(packageName) != null) {
                                         continue@nextValue

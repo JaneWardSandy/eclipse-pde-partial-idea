@@ -45,7 +45,7 @@ class ExtensionPointCacheService(private val project: Project) {
         val urlFragments = schemaLocation.substringAfter(ExtensionPointDefinition.schemaProtocol).split('/')
 
         val entry = urlFragments.subList(1, urlFragments.size).joinToString("/")
-        return bundleManagementService.bundles[urlFragments[0]]?.let { bundle ->
+        return bundleManagementService.getBundlesByBSN(urlFragments[0])?.values?.firstNotNullOrNull { bundle ->
             loadExtensionPoint(bundle.root, entry) ?: bundle.sourceBundle?.let { loadExtensionPoint(it.root, entry) }
         } ?: project.allPDEModules()
             .firstOrNull { cacheService.getManifest(it)?.bundleSymbolicName?.key == urlFragments[0] }?.moduleRootManager?.contentRoots?.firstNotNullResult {

@@ -66,7 +66,7 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
 
             cacheService.getManifest(item)?.also { containers += it }
             val jarFile = index.getClassRootForFile(item.virtualFile)
-            jarFile?.presentableUrl?.let { managementService.jarPathInnerBundle[it]?.manifest }
+            jarFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it)?.manifest }
                 ?.also { containers += it }
             containers += project.allPDEModules().filterNot { requesterModule == it }.filter { module ->
                 jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
@@ -84,33 +84,42 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
                     return@forEach
                 }
 
-                val exporterSymbolicName = exporter.fragmentHost?.key ?: exporterSymbolic.key
+                val exporterBSN = exporter.fragmentHost?.key ?: exporterSymbolic.key
+                val exporterVersions = hashSetOf(exporter.bundleVersion)
 
-                val exporterExportedPackage = exporter.getExportedPackageName(packageName)
-                    ?: managementService.bundles[exporterSymbolicName]?.manifest?.getExportedPackageName(packageName)
-                    ?: kotlin.run {
-                        problems += Problem.error(
-                            message(
-                                "inspection.hint.packageNoExport", packageName, exporterSymbolicName
-                            )
-                        )
-                        return@forEach
+                val exporterExportedPackageVersions = exporter.exportedPackageAndVersion(packageName).values.toHashSet()
+                managementService.getBundlesByBSN(exporterBSN)?.mapValues { it.value.manifest }
+                    ?.mapValues { it.value?.exportedPackageAndVersion(packageName)?.values }?.also { map ->
+                        exporterVersions += map.filterValues { it?.isNotEmpty() == true }.keys
+                        exporterExportedPackageVersions += map.values.filterNotNull().flatten()
                     }
+                if (exporterExportedPackageVersions.isEmpty()) {
+                    problems += Problem.error(
+                        message(
+                            "inspection.hint.packageNoExport", packageName, exporterBSN
+                        )
+                    )
+                    return@forEach
+                }
 
                 val importer = cacheService.getManifest(requesterModule)
                 if (importer != null) {
-                    if (importer.isPackageImported(packageName)) return emptyList()
-                    if (importer.isBundleRequired(exporterSymbolicName)) return emptyList()
-                    if (requesterModule.isBundleRequiredOrFromReExport(exporterSymbolicName)) return emptyList()
+                    if (importer.isPackageImported(packageName, exporterExportedPackageVersions)) return emptyList()
+                    if (importer.isBundleRequired(exporterBSN, exporterVersions)) return emptyList()
+                    if (requesterModule.isBundleRequiredOrFromReExport(
+                            exporterBSN, exporterVersions
+                        )
+                    ) return emptyList()
                 }
 
-                val requiredFixes = managementService.bundles[exporterSymbolicName]?.manifest?.bundleVersion?.toString()
-                    ?.let { arrayOf(AccessibilityFix.requireBundleFix(exporterSymbolicName, it)) } ?: emptyArray()
+                val requiredFixes =
+                    exporterVersions.map { it.toString() }.map { AccessibilityFix.requireBundleFix(exporterBSN, it) }
+                        .toTypedArray()
 
                 problems += Problem.error(
-                    message("inspection.hint.packageAccessibility", packageName, exporterSymbolicName),
-                    AccessibilityFix.importPackageFix(exporterExportedPackage),
-                    *requiredFixes + AccessibilityFix.requireBundleFix(exporterSymbolicName)
+                    message("inspection.hint.packageAccessibility", packageName, exporterBSN),
+                    AccessibilityFix.importPackageFix(packageName),
+                    *requiredFixes + AccessibilityFix.requireBundleFix(exporterBSN)
                 )
             }
 

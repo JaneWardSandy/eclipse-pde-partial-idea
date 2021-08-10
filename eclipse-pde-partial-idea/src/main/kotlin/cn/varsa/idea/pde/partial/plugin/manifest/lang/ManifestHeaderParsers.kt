@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.manifest.lang
 
 import cn.varsa.idea.pde.partial.common.domain.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
@@ -267,6 +268,19 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
 
         header.headerValues.mapNotNull { it as? Clause }.forEach { clause ->
             val text = clause.getValue()?.unwrappedText
+
+            val rangeText = clause.getAttributes().firstOrNull { it.name == BUNDLE_VERSION_ATTRIBUTE }?.getValue()
+            val range = try {
+                if (rangeText?.startsWith('\"') == false || rangeText?.endsWith('\"') == false) {
+                    throw IllegalArgumentException("$rangeText: invalid format, should be quoted")
+                }
+                rangeText.parseVersionRange()
+            } catch (e: Exception) {
+                holder.createError(message("manifest.lang.invalidRange", e.message ?: "Unknown"), clause.textRange)
+                annotated = true
+                VersionRangeAny
+            }
+
             if (text.isNullOrBlank()) {
                 holder.createError(message("manifest.lang.invalidBlank"), clause.textRange)
                 annotated = true
@@ -277,7 +291,8 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
                 if (header.module?.let { cacheService.getManifest(it) }?.bundleSymbolicName?.key == text) {
                     holder.createError(message("manifest.lang.invalidValue", text), clause.textRange)
                     annotated = true
-                } else if (BundleManagementService.getInstance(project).bundles[text] == null && project.allPDEModules()
+                } else if (BundleManagementService.getInstance(project)
+                        .getBundlesByBSN(text, range) == null && project.allPDEModules()
                         .mapNotNull { cacheService.getManifest(it) }.mapNotNull { it.bundleSymbolicName?.key }
                         .none { it == text }
                 ) {

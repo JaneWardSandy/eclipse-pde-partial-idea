@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.domain
 
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
@@ -11,7 +12,11 @@ import org.osgi.framework.*
 import java.io.*
 
 data class BundleDefinition(
-    val root: VirtualFile, val file: File, val project: Project, val dependencyScope: DependencyScope
+    val root: VirtualFile,
+    val file: File,
+    val location: TargetLocationDefinition,
+    val project: Project,
+    val dependencyScope: DependencyScope
 ) {
     val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
 
@@ -61,3 +66,5 @@ data class BundleDefinition(
     val canonicalName: String get() = "$bundleSymbolicName-$bundleVersion"
     override fun toString(): String = canonicalName
 }
+
+val Pair<String, Version>.asCanonicalName: String get() = "$first-$second"

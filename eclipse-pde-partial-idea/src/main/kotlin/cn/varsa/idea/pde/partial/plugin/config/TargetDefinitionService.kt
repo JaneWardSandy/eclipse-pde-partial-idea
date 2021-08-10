@@ -1,7 +1,9 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
+import cn.varsa.idea.pde.partial.plugin.listener.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
@@ -38,10 +40,6 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
         "org.eclipse.equinox.console" to 4
     )
 
-    // TODO: 2021/8/6 remove
-    @XMap(entryTagName = "bundleVersion", keyAttributeName = "bundleSymbolicName", valueAttributeName = "version")
-    val bundleVersionSelection = hashMapOf<String, String>()
-
     companion object {
         fun getInstance(project: Project): TargetDefinitionService =
             project.getService(TargetDefinitionService::class.java)
@@ -73,7 +71,7 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
     }
 
     override fun onFinished(project: Project) {
-        //TargetDefinitionChangeListener.notifyLocationsChanged(project)
+        TargetDefinitionChangeListener.notifyLocationsChanged(project)
     }
 
     override fun getState(): TargetDefinitionService = this
@@ -139,10 +137,10 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
                 }
 
                 JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)?.also { jarFile ->
-                    _bundles += BundleDefinition(jarFile, file, project, scope)
+                    _bundles += BundleDefinition(jarFile, file, this, project, scope)
                 }
             } else if (file.isDirectory && File(file, ManifestPath).exists()) {
-                _bundles += BundleDefinition(virtualFile, file, project, scope)
+                _bundles += BundleDefinition(virtualFile, file, this, project, scope)
             }
         }
     }

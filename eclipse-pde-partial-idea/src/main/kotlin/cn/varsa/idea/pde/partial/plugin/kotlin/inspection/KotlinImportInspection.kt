@@ -30,8 +30,9 @@ class KotlinImportInspection : AbstractBaseJavaLocalInspectionTool() {
         module.isBundleRequiredOrFromReExport(KotlinBundleSymbolName).ifTrue { return null }
 
         val managementService = BundleManagementService.getInstance(project)
-        val fixes = managementService.bundles[KotlinBundleSymbolName]?.manifest?.bundleVersion?.toString()
-            ?.let { arrayOf(KotlinRequireBundleFix(it)) } ?: emptyArray()
+        val fixes =
+            managementService.getBundlesByBSN(KotlinBundleSymbolName)?.keys?.map { KotlinRequireBundleFix(it.toString()) }
+                ?.toTypedArray() ?: emptyArray()
 
         return arrayOf(
             manager.createProblemDescriptor(

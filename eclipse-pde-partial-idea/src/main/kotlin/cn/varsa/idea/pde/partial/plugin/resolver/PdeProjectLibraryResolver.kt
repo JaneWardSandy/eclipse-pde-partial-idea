@@ -16,14 +16,14 @@ class PdeProjectLibraryResolver : TargetPlatformLibraryResolver {
     override fun preResolve(area: Project) {
         if (area.allPDEModules().isEmpty()) return
 
-        val symbolicName2Bundle = BundleManagementService.getInstance(area).bundles
+        val bcn = BundleManagementService.getInstance(area).getBundles().map { it.canonicalName }
         val moduleNames = area.allPDEModulesSymbolicName()
 
         area.libraryTable().modifiableModel.also { model ->
             model.libraries.filter { library ->
                 library.name?.let { name ->
                     name.substringAfter(ProjectLibraryNamePrefix, name).let {
-                        it != name && (moduleNames.contains(it) || !symbolicName2Bundle.containsKey(it))
+                        it != name && (moduleNames.contains(it) || !bcn.contains(it))
                     }
                 } == true
             }.forEach { model.removeLibrary(it) }
@@ -37,48 +37,49 @@ class PdeProjectLibraryResolver : TargetPlatformLibraryResolver {
         if (pdeModules.isEmpty()) return
 
         val moduleNames = area.allPDEModulesSymbolicName()
-        BundleManagementService.getInstance(area).bundles.filterKeys { !moduleNames.contains(it) }.values.also { bundles ->
-            val model = LibraryTablesRegistrar.getInstance().getLibraryTable(area).modifiableModel
-            val map = hashMapOf<BundleDefinition, Library>()
+        BundleManagementService.getInstance(area).getBundles().filterNot { moduleNames.contains(it.bundleSymbolicName) }
+            .also { bundles ->
+                val model = LibraryTablesRegistrar.getInstance().getLibraryTable(area).modifiableModel
+                val map = hashMapOf<BundleDefinition, Library>()
 
-            applicationInvokeAndWait {
-                bundles.forEach { bundle ->
-                    val libraryName = "$ProjectLibraryNamePrefix${bundle.bundleSymbolicName}"
-                    map[bundle] =
-                        model.getLibraryByName(libraryName) ?: writeCompute { model.createLibrary(libraryName) }
+                applicationInvokeAndWait {
+                    bundles.forEach { bundle ->
+                        val libraryName = "$ProjectLibraryNamePrefix${bundle.canonicalName}"
+                        map[bundle] =
+                            model.getLibraryByName(libraryName) ?: writeCompute { model.createLibrary(libraryName) }
+                    }
                 }
-            }
 
-            map.map { (bundle, library) ->
-                val libraryModel = library.modifiableModel
+                map.map { (bundle, library) ->
+                    val libraryModel = library.modifiableModel
 
-                libraryModel.getUrls(OrderRootType.CLASSES)
-                    .forEach { libraryModel.removeRoot(it, OrderRootType.CLASSES) }
-                libraryModel.getUrls(OrderRootType.SOURCES)
-                    .forEach { libraryModel.removeRoot(it, OrderRootType.SOURCES) }
+                    libraryModel.getUrls(OrderRootType.CLASSES)
+                        .forEach { libraryModel.removeRoot(it, OrderRootType.CLASSES) }
+                    libraryModel.getUrls(OrderRootType.SOURCES)
+                        .forEach { libraryModel.removeRoot(it, OrderRootType.SOURCES) }
 
-                bundle.delegateClassPathFile.values.map { it.protocolUrl }
-                    .forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
-                bundle.sourceBundle?.delegateClassPathFile?.values?.map { it.protocolUrl }
-                    ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
+                    bundle.delegateClassPathFile.values.map { it.protocolUrl }
+                        .forEach { libraryModel.addRoot(it, OrderRootType.CLASSES) }
+                    bundle.sourceBundle?.delegateClassPathFile?.values?.map { it.protocolUrl }
+                        ?.forEach { libraryModel.addRoot(it, OrderRootType.SOURCES) }
 
-                libraryModel
-            }.also { list ->
-                applicationInvokeAndWait { writeRun { list.forEach { it.commit() } } }
-            }
+                    libraryModel
+                }.also { list ->
+                    applicationInvokeAndWait { writeRun { list.forEach { it.commit() } } }
+                }
 
-            applicationInvokeAndWait { writeRun { model.commit() } }
+                applicationInvokeAndWait { writeRun { model.commit() } }
 
-            pdeModules.forEach { module ->
-                module.updateModel { model ->
-                    map.forEach { (bundle, library) ->
-                        (model.findLibraryOrderEntry(library) ?: model.addLibraryEntry(library)).apply {
-                            scope = bundle.dependencyScope
-                            isExported = false
+                pdeModules.forEach { module ->
+                    module.updateModel { model ->
+                        map.forEach { (bundle, library) ->
+                            (model.findLibraryOrderEntry(library) ?: model.addLibraryEntry(library)).apply {
+                                scope = bundle.dependencyScope
+                                isExported = false
+                            }
                         }
                     }
                 }
             }
-        }
     }
 }

@@ -128,7 +128,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 
         override val libraries: List<File>
-            get() = BundleManagementService.getInstance(project).bundles.values.map { it.file }
+            get() = BundleManagementService.getInstance(project).getBundles().map { it.file }
 
         override val devModules: List<DevModule>
             get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)

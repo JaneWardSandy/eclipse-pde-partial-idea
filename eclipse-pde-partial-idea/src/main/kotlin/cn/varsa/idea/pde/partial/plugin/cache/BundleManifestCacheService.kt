@@ -68,11 +68,15 @@ class BundleManifestCacheService(private val project: Project) {
         module.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(ManifestPath) }.firstOrNull()
 
     private fun getManifestFile(root: VirtualFile): VirtualFile? =
-        if (root.extension?.toLowerCase() == "jar" && root.fileSystem != JarFileSystem.getInstance()) {
-            JarFileSystem.getInstance().getJarRootForLocalFile(root)
+        if (!root.isValid) {
+            null
         } else {
-            root
-        }?.findFileByRelativePath(ManifestPath)
+            if (root.extension?.toLowerCase() == "jar" && root.fileSystem != JarFileSystem.getInstance()) {
+                JarFileSystem.getInstance().getJarRootForLocalFile(root)
+            } else {
+                root
+            }?.findFileByRelativePath(ManifestPath)
+        }
 
     private fun getManifest0(manifestFile: VirtualFile): BundleManifest? =
         DumbService.isDumb(project).runFalse { BundleManifestIndex.readBundleManifest(project, manifestFile) }

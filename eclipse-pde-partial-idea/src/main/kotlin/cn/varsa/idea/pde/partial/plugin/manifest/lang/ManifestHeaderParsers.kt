@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.manifest.lang
 
 import cn.varsa.idea.pde.partial.common.domain.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
@@ -9,6 +10,7 @@ import cn.varsa.idea.pde.partial.plugin.manifest.psi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.lang.*
 import com.intellij.lang.annotation.*
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
@@ -267,6 +269,21 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
 
         header.headerValues.mapNotNull { it as? Clause }.forEach { clause ->
             val text = clause.getValue()?.unwrappedText
+
+            val versionAttr = clause.getAttributes().firstOrNull { it.name == BUNDLE_VERSION_ATTRIBUTE }
+            val rangeText = versionAttr?.getValue()
+            val range = try {
+                if (rangeText?.surroundingWith('\"') == false) throw IllegalArgumentException("$rangeText: invalid format, should be quoted")
+                rangeText.parseVersionRange()
+            } catch (e: Exception) {
+                holder.createError(
+                    message("manifest.lang.invalidRange", e.message ?: "Unknown"),
+                    if (versionAttr != null) versionAttr.textRange else clause.textRange
+                )
+                annotated = true
+                VersionRangeAny
+            }
+
             if (text.isNullOrBlank()) {
                 holder.createError(message("manifest.lang.invalidBlank"), clause.textRange)
                 annotated = true
@@ -277,10 +294,21 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
                 if (header.module?.let { cacheService.getManifest(it) }?.bundleSymbolicName?.key == text) {
                     holder.createError(message("manifest.lang.invalidValue", text), clause.textRange)
                     annotated = true
-                } else if (BundleManagementService.getInstance(project).bundles[text] == null && project.allPDEModules()
-                        .mapNotNull { cacheService.getManifest(it) }.mapNotNull { it.bundleSymbolicName?.key }
-                        .none { it == text }
+                } else if (BundleManagementService.getInstance(project)
+                        .getBundlesByBSN(text, range) == null && project.allPDEModules()
+                        .mapNotNull { cacheService.getManifest(it) }
+                        .none { it.bundleSymbolicName?.key == text && range.includes(it.bundleVersion) }
                 ) {
+                    val versions = BundleManagementService.getInstance(project).getBundlesByBSN(text)?.keys?.toHashSet()
+                        ?: hashSetOf()
+                    versions += project.allPDEModules().mapNotNull { cacheService.getManifest(it) }
+                        .filter { it.bundleSymbolicName?.key == text }.map { it.bundleVersion }
+
+                    holder.createError(
+                        message(
+                            "manifest.lang.notExistVersionInRange", range, versions.sorted().joinToString()
+                        ), if (versionAttr != null) versionAttr.textRange else clause.textRange
+                    )
                     holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
                     annotated = true
                 }
@@ -337,8 +365,6 @@ object BundleClasspathParser : HeaderParser by OsgiHeaderParser {
     override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
         var annotated = false
 
-        val moduleFile = header.module?.let { LocalFileSystem.getInstance().findFileByPath(it.getModuleDir()) }
-
         header.headerValues.mapNotNull { it as? Clause }.run {
             if (none { it.getValue()?.unwrappedText == "." }) {
                 holder.createError(message("manifest.lang.classpathMustConDot"), header.textRange)
@@ -352,11 +378,86 @@ object BundleClasspathParser : HeaderParser by OsgiHeaderParser {
                         message("manifest.lang.invalidBlank"), valuePart?.highlightingRange ?: clause.textRange
                     )
                     annotated = true
-                } else if (moduleFile?.findFileByRelativePath(valuePart.unwrappedText)?.exists() != true) {
+                } else {
+                    val path = valuePart.unwrappedText
+
+                    header.module?.moduleRootManager?.contentRoots?.any {
+                        it.findFileByRelativePath(path)?.exists() == true
+                    }?.ifTrue { return@forEach }
+
+                    header.containingFile.virtualFile?.let { JarFileSystem.getInstance().getRootByEntry(it) }
+                        ?.findFileByRelativePath(path)?.exists()?.ifTrue { return@forEach }
+
                     holder.createError(
-                        message("manifest.lang.notExist", valuePart.unwrappedText), valuePart.highlightingRange
+                        message("manifest.lang.notExist", path), valuePart.highlightingRange
                     )
                     annotated = true
+                }
+            }
+        }
+
+        return annotated
+    }
+}
+
+object ImportPackageParser : HeaderParser by BasePackageParser {
+    override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
+        var annotated = BasePackageParser.annotate(header, holder)
+
+        val managementService = BundleManagementService.getInstance(header.project)
+        val cacheService = BundleManifestCacheService.getInstance(header.project)
+        val index = ProjectFileIndex.getInstance(header.project)
+
+        header.headerValues.mapNotNull { it as? Clause }.forEach { clause ->
+            val versionAttr = clause.getAttributes().firstOrNull { it.name == VERSION_ATTRIBUTE }
+            val versionText = versionAttr?.getValue()
+            val versionRange = try {
+                if (versionText?.surroundingWith('\"') == false) throw IllegalArgumentException("$versionText: invalid format, should be quoted")
+                versionText.parseVersionRange()
+            } catch (e: Exception) {
+                holder.createError(
+                    message("manifest.lang.invalidRange", e.message ?: "Unknown"),
+                    if (versionAttr != null) versionAttr.textRange else clause.textRange
+                )
+                annotated = true
+                VersionRangeAny
+            }
+
+            clause.getValue()?.also { valuePart ->
+                valuePart.unwrappedText.substringBeforeLast(".*").takeIf(String::isNotBlank)?.also { packageName ->
+                    val directories = PsiHelper.resolvePackage(header, packageName)
+
+                    val modelsMap = header.project.allPDEModules().map { module ->
+                        val manifest = cacheService.getManifest(module)
+                        Triple(module,
+                               manifest,
+                               manifest?.bundleClassPath?.keys?.filterNot { it == "." }
+                                   ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath })
+                    }
+
+                    val containers = hashSetOf<BundleManifest>()
+                    containers += directories.mapNotNull { index.getModuleForFile(it.virtualFile) }
+                        .mapNotNull { cacheService.getManifest(it) }
+                    directories.mapNotNull { index.getClassRootForFile(it.virtualFile) }.map { it.presentableUrl }
+                        .forEach { jarFile ->
+                            containers += modelsMap.filter { (module, _, classPaths) ->
+                                jarFile == module.getModuleDir() || classPaths?.contains(jarFile) == true
+                            }.mapNotNull { it.second }
+
+                            managementService.getBundleByInnerJarPath(jarFile)?.manifest?.also { containers += it }
+                        }
+
+                    containers.map { it.exportedPackageAndVersion(packageName) }.flatMap { it.values }.distinct()
+                        .sorted().also { versions ->
+                            versions.none { versionRange.includes(it) }.ifTrue {
+                                holder.createError(
+                                    message(
+                                        "manifest.lang.notExistVersionInRange", versionRange, versions.joinToString()
+                                    ), if (versionAttr != null) versionAttr.textRange else clause.textRange
+                                )
+                                annotated = true
+                            }
+                        }
                 }
             }
         }
@@ -369,12 +470,22 @@ object ExportPackageParser : HeaderParser by BasePackageParser {
     private val tokenFilter = TokenSet.create(ManifestTokenType.HEADER_VALUE_PART)
 
     override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
-        if (BasePackageParser.annotate(header, holder)) return true
+        var annotated = BasePackageParser.annotate(header, holder)
 
-        var annotated = false
-
-        header.headerValues.mapNotNull { it as? Clause }
-            .mapNotNull { it.getDirectives().firstOrNull { directive -> USES_DIRECTIVE == directive.name } }
+        header.headerValues.mapNotNull { it as? Clause }.onEach { clause ->
+            val versionAttr = clause.getAttributes().firstOrNull { it.name == VERSION_ATTRIBUTE }
+            val versionText = versionAttr?.getValue()
+            try {
+                if (versionText?.surroundingWith('\"') == false) throw IllegalArgumentException("$versionText: invalid format, should be quoted")
+                versionText.parseVersion()
+            } catch (e: Exception) {
+                holder.createError(
+                    message("manifest.lang.invalidRange", e.message ?: "Unknown"),
+                    if (versionAttr != null) versionAttr.textRange else clause.textRange
+                )
+                annotated = true
+            }
+        }.mapNotNull { it.getDirectives().firstOrNull { directive -> USES_DIRECTIVE == directive.name } }
             .mapNotNull { it.getValueElement() }.forEach { valuePart ->
                 val text = valuePart.unwrappedText
                 var start = if (text.startsWith('"')) 1 else 0

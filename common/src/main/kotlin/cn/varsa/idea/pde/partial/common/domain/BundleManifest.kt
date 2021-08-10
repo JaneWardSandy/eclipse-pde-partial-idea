@@ -26,7 +26,7 @@ class BundleManifest private constructor(private val map: HashMap<String, String
     val bundleRequiredExecutionEnvironment by lazy { getParameters(BUNDLE_REQUIREDEXECUTIONENVIRONMENT) }
     val bundleSymbolicName by lazy { getParameters(BUNDLE_SYMBOLICNAME)?.entries?.firstOrNull() }
     val fragmentHost by lazy { getParameters(FRAGMENT_HOST)?.entries?.firstOrNull() }
-    val bundleVersion by lazy { get(BUNDLE_VERSION)?.let { Version.parseVersion(it) } }
+    val bundleVersion: Version by lazy { get(BUNDLE_VERSION).parseVersion() }
     val requireCapability by lazy { getParameters(REQUIRE_CAPABILITY) }
     val provideCapability by lazy { getParameters(PROVIDE_CAPABILITY) }
     val bundleName by lazy { get(BUNDLE_NAME) }

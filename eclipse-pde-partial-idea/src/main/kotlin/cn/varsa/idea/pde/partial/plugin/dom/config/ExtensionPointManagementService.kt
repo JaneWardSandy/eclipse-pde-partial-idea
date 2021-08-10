@@ -8,7 +8,6 @@ import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
-import com.jetbrains.rd.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 
 class ExtensionPointManagementService(private val project: Project) : BackgroundResolvable {
@@ -22,9 +21,8 @@ class ExtensionPointManagementService(private val project: Project) : Background
 
     private val applications = hashSetOf<String>()
     private val products = hashSetOf<String>()
-    private val epPoint2ExsdPath = ConcurrentHashMap<String, VirtualFile>()
-    private val epReferenceIdentityMap =
-        ConcurrentHashMap<Pair<String, String>, ConcurrentHashMap<String, HashSet<String>>>()
+    private val epPoint2ExsdPath = hashMapOf<String, VirtualFile>()
+    private val epReferenceIdentityMap = hashMapOf<Pair<String, String>, HashMap<String, HashSet<String>>>()
 
     override fun resolve(project: Project, indicator: ProgressIndicator) {
         val managementService = BundleManagementService.getInstance(project)
@@ -43,7 +41,7 @@ class ExtensionPointManagementService(private val project: Project) : Background
         indicator.isIndeterminate = false
         indicator.fraction = 0.0
 
-        val bundles = managementService.bundles.values
+        val bundles = managementService.getBundles()
         val bundleStep = 1 / (bundles.size + 1)
         bundles.forEach { bundle ->
             indicator.checkCanceled()
@@ -54,7 +52,7 @@ class ExtensionPointManagementService(private val project: Project) : Background
                 products += info.products
                 epPoint2ExsdPath += info.epPoint2ExsdPath
                 info.epReferenceIdentityMap.forEach { (key, attributes) ->
-                    epReferenceIdentityMap.computeIfAbsent(key) { ConcurrentHashMap() }.also {
+                    epReferenceIdentityMap.computeIfAbsent(key) { hashMapOf() }.also {
                         attributes.forEach { (name, values) -> it.computeIfAbsent(name) { hashSetOf() } += values }
                     }
                 }

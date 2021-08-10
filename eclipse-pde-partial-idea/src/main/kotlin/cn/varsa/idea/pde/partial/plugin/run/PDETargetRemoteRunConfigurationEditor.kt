@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.run
 
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.execution.configuration.*
 import com.intellij.execution.configurations.*
 import com.intellij.openapi.options.*
@@ -19,14 +20,23 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
 
     private val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false))
 
-    private val productField = ComboBox<String>()
-    private val applicationField = ComboBox<String>()
+    private val productField = ComboBox<String>().apply {
+        renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
+        ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    }
+    private val applicationField = ComboBox<String>().apply {
+        renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
+        ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    }
 
     private val remoteHostTextField = JBTextField()
     private val rmiPortSpinner = JBIntSpinner(7995, 1, Int.MAX_VALUE)
     private val rmiNameTextField = JBTextField()
     private val remotePortSpinner = JBIntSpinner(5005, 1, Int.MAX_VALUE)
-    private val jdkVersion = ComboBox(JDKVersionItem.values())
+    private val jdkVersion = ComboBox(JDKVersionItem.values()).apply {
+        renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
+        ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    }
     private val vmParametersEditor = RawCommandLineEditor()
     private val programParametersEditor = RawCommandLineEditor()
     private val listeningTearDown = JBCheckBox(message("run.remote.config.tab.wishes.listenTearDown"))
@@ -94,10 +104,6 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
             programParametersComponent,
             envVariablesComponent
         )
-
-        ComboboxSpeedSearch(productField).setClearSearchOnNavigateNoMatch(true)
-        ComboboxSpeedSearch(applicationField).setClearSearchOnNavigateNoMatch(true)
-        ComboboxSpeedSearch(jdkVersion).setClearSearchOnNavigateNoMatch(true)
     }
 
     override fun resetEditorFrom(configuration: PDETargetRemoteRunConfiguration) {

@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.manifest.psi
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import com.intellij.codeInsight.daemon.*
@@ -27,6 +28,14 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
 
             if (text.isNotBlank() && refElement.isValid) {
                 ModuleUtilCore.findModuleForPsiElement(refElement)?.let { module ->
+                    val rangeText = (refElement.parent as Clause).getAttributes()
+                        .firstOrNull { it.name == BUNDLE_VERSION_ATTRIBUTE }?.getValue()
+                    val range = try {
+                        rangeText.parseVersionRange()
+                    } catch (e: Exception) {
+                        VersionRangeAny
+                    }
+
                     val result = Ref.create<PsiElement>()
                     val refText = text.replace("\\s".toRegex(), "")
 
@@ -34,7 +43,8 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
 
                     ModuleRootManager.getInstance(module).run {
                         orderEntries().forEachModule { orderModule ->
-                            cacheService.getManifest(orderModule)?.bundleSymbolicName?.key?.takeIf { it == refText }
+                            cacheService.getManifest(orderModule)
+                                ?.takeIf { it.bundleSymbolicName?.key == refText && range.includes(it.bundleVersion) }
                                 ?.let { orderModule.rootManager.contentRoots }
                                 ?.mapNotNull { root -> root.findFileByRelativePath(ManifestPath) }?.firstOrNull()
                                 ?.let { PsiManager.getInstance(orderModule.project).findFile(it) }
@@ -44,9 +54,10 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
 
                         if (result.isNull) {
                             orderEntries().forEachLibrary { orderLib ->
-                                orderLib.getFiles(OrderRootType.CLASSES)
-                                    .firstOrNull { cacheService.getManifest(it)?.bundleSymbolicName?.key == refText }
-                                    ?.findFileByRelativePath(ManifestPath)
+                                orderLib.getFiles(OrderRootType.CLASSES).firstOrNull { file ->
+                                    cacheService.getManifest(file)
+                                        ?.let { it.bundleSymbolicName?.key == refText && range.includes(it.bundleVersion) } == true
+                                }?.findFileByRelativePath(ManifestPath)
                                     ?.let { PsiManager.getInstance(module.project).findFile(it) }
                                     ?.let { it as? ManifestFile }?.let { it.getHeader(BUNDLE_SYMBOLICNAME) ?: it }
                                     ?.also(result::set) == null

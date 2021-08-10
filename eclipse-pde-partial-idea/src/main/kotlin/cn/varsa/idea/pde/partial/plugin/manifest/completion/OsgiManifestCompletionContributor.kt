@@ -125,7 +125,8 @@ class BundleNameProvider : CompletionProvider<CompletionParameters>() {
         parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet
     ) {
         parameters.editor.project?.let {
-            it.allPDEModulesSymbolicName(parameters.originalFile.module) + BundleManagementService.getInstance(it).bundles.keys
+            it.allPDEModulesSymbolicName(parameters.originalFile.module) + BundleManagementService.getInstance(it)
+                .getBundles().map { it.bundleSymbolicName }
         }?.distinct()?.sorted()?.forEach {
             result.addElement(LookupElementBuilder.create(it).withCaseSensitivity(false))
         }

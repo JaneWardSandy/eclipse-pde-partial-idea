@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.listener.*
 import cn.varsa.idea.pde.partial.plugin.support.*
@@ -39,9 +40,6 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
         "org.eclipse.equinox.console" to 4
     )
 
-    @XMap(entryTagName = "bundleVersion", keyAttributeName = "bundleSymbolicName", valueAttributeName = "version")
-    val bundleVersionSelection = hashMapOf<String, String>()
-
     companion object {
         fun getInstance(project: Project): TargetDefinitionService =
             project.getService(TargetDefinitionService::class.java)
@@ -57,6 +55,16 @@ class TargetDefinitionService : PersistentStateComponent<TargetDefinitionService
             indicator.checkCanceled()
             it.resolve(project, indicator)
             indicator.fraction += step
+        }
+
+        val sourceVersions =
+            locations.flatMap { it.bundles }.groupBy { it.manifest?.eclipseSourceBundle?.key }.filterKeys { it != null }
+                .mapValues { it.value.distinct().toHashSet() }
+        locations.forEach { location ->
+            location.bundles.forEach { bundle ->
+                bundle.sourceBundle =
+                    sourceVersions[bundle.bundleSymbolicName]?.firstOrNull { location.bundleVersionSelection[bundle.canonicalName] == it.bundleVersion.toString() }
+            }
         }
 
         indicator.fraction = 1.0
@@ -81,7 +89,16 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
     @Attribute var launcher: String? = null
     @Attribute var dependency = DependencyScope.COMPILE.displayName
 
+    @Attribute var alias: String? = null
+
+    @XCollection(elementName = "unSelectedBundles") val bundleUnSelected = mutableListOf<String>()
+
+    @XMap(entryTagName = "sourceVersion", keyAttributeName = "canonicalName", valueAttributeName = "version")
+    val bundleVersionSelection = hashMapOf<String, String>()
+
     private val _bundles = mutableListOf<BundleDefinition>()
+
+    val identifier: String get() = alias?.takeIf(String::isNotBlank) ?: location
     val bundles: List<BundleDefinition> = _bundles
 
     init {
@@ -120,10 +137,10 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
                 }
 
                 JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)?.also { jarFile ->
-                    _bundles += BundleDefinition(jarFile, file, project, scope)
+                    _bundles += BundleDefinition(jarFile, file, this, project, scope)
                 }
             } else if (file.isDirectory && File(file, ManifestPath).exists()) {
-                _bundles += BundleDefinition(virtualFile, file, project, scope)
+                _bundles += BundleDefinition(virtualFile, file, this, project, scope)
             }
         }
     }

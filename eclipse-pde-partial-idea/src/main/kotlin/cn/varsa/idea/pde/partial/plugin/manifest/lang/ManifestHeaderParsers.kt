@@ -10,6 +10,7 @@ import cn.varsa.idea.pde.partial.plugin.manifest.psi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.lang.*
 import com.intellij.lang.annotation.*
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
@@ -403,7 +404,10 @@ object ImportPackageParser : HeaderParser by BasePackageParser {
     override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
         var annotated = BasePackageParser.annotate(header, holder)
 
+        val managementService = BundleManagementService.getInstance(header.project)
         val cacheService = BundleManifestCacheService.getInstance(header.project)
+        val index = ProjectFileIndex.getInstance(header.project)
+
         header.headerValues.mapNotNull { it as? Clause }.forEach { clause ->
             val versionAttr = clause.getAttributes().firstOrNull { it.name == VERSION_ATTRIBUTE }
             val versionText = versionAttr?.getValue()
@@ -421,9 +425,30 @@ object ImportPackageParser : HeaderParser by BasePackageParser {
 
             clause.getValue()?.also { valuePart ->
                 valuePart.unwrappedText.substringBeforeLast(".*").takeIf(String::isNotBlank)?.also { packageName ->
-                    PsiHelper.resolvePackage(header, packageName).mapNotNull { cacheService.getManifest(it) }
-                        .map { it.exportedPackageAndVersion(packageName) }.flatMap { it.values }.distinct().sorted()
-                        .also { versions ->
+                    val directories = PsiHelper.resolvePackage(header, packageName)
+
+                    val modelsMap = header.project.allPDEModules().map { module ->
+                        val manifest = cacheService.getManifest(module)
+                        Triple(module,
+                               manifest,
+                               manifest?.bundleClassPath?.keys?.filterNot { it == "." }
+                                   ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath })
+                    }
+
+                    val containers = hashSetOf<BundleManifest>()
+                    containers += directories.mapNotNull { index.getModuleForFile(it.virtualFile) }
+                        .mapNotNull { cacheService.getManifest(it) }
+                    directories.mapNotNull { index.getClassRootForFile(it.virtualFile) }.map { it.presentableUrl }
+                        .forEach { jarFile ->
+                            containers += modelsMap.filter { (module, _, classPaths) ->
+                                jarFile == module.getModuleDir() || classPaths?.contains(jarFile) == true
+                            }.mapNotNull { it.second }
+
+                            managementService.getBundleByInnerJarPath(jarFile)?.manifest?.also { containers += it }
+                        }
+
+                    containers.map { it.exportedPackageAndVersion(packageName) }.flatMap { it.values }.distinct()
+                        .sorted().also { versions ->
                             versions.none { versionRange.includes(it) }.ifTrue {
                                 holder.createError(
                                     message(

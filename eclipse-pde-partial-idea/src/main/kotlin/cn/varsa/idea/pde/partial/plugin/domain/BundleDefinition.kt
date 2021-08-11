@@ -20,7 +20,8 @@ data class BundleDefinition(
 ) {
     val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
 
-    val bundleSymbolicName: String get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension
+    val bundleSymbolicName: String
+        get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension.substringBeforeLast('_')
     val bundleVersion: Version get() = manifest?.bundleVersion ?: Version.emptyVersion
 
     private val classPaths: Map<String, VirtualFile>

@@ -24,13 +24,15 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
     override fun getIndexer(): SingleEntryIndexer<BundleManifest> = BundleManifestIndexer
     override fun getValueExternalizer(): DataExternalizer<BundleManifest> = BundleManifestExternalizer
     override fun getVersion(): Int = 0
-    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter {
-        it.fileType == ManifestFileType.INSTANCE && it.name == ManifestMf
+    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
+        file.fileType == ManifestFileType.INSTANCE && file.name == ManifestMf && ProjectLocator.getInstance()
+            .getProjectsForFile(file).any { it.allPDEModules().isNotEmpty() }
     }
 
     private object BundleManifestIndexer : SingleEntryIndexer<BundleManifest>(false) {
-        override fun computeValue(inputData: FileContent): BundleManifest? =
-            BundleManifestCacheService.resolveManifest(inputData.file, inputData.content.inputStream())
+        override fun computeValue(inputData: FileContent): BundleManifest? = BundleManifestCacheService.resolveManifest(
+            inputData.file, inputData.content.inputStream(), inputData.project
+        )
     }
 
     private object BundleManifestExternalizer : DataExternalizer<BundleManifest> {

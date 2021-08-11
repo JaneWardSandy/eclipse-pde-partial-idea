@@ -6,6 +6,7 @@ import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.ExtensionElement.OccursLimit.Companion.unbounded
 import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
 import com.intellij.util.*
 import org.jdom.*
@@ -90,9 +91,10 @@ class ExtensionPointDefinition {
             ?: definition.includes.mapNotNull { schemaLocation ->
                 cacheService.loadExtensionPoint(schemaLocation).also {
                     if (it == null) {
-                        PdeNotifier.getInstance(project).important(
+                        PdeNotifier.important(
                             "Schema Not Found", "Schema not existed for ${definition.point} at location $schemaLocation"
-                        )
+                        ).notify(project)
+                        thisLogger().warn("Schema not existed for ${definition.point} at location $schemaLocation")
                     }
                 }
             }.firstNotNullResult { findRefElement(it, ref, project, cacheService, includeVisited) }

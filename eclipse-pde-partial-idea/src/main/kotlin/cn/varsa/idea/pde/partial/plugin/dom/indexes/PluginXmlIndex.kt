@@ -25,8 +25,9 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
     override fun getIndexer(): SingleEntryIndexer<XmlInfo> = PluginXmlIndexer
     override fun getValueExternalizer(): DataExternalizer<XmlInfo> = PluginXmlExternalizer
     override fun getVersion(): Int = 0
-    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter {
-        it.fileType == XmlFileType.INSTANCE && it.name == PluginsXml
+    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
+        file.fileType == XmlFileType.INSTANCE && file.name == PluginsXml && ProjectLocator.getInstance()
+            .getProjectsForFile(file).any { it.allPDEModules().isNotEmpty() }
     }
 
     private object PluginXmlIndexer : SingleEntryIndexer<XmlInfo>(false) {

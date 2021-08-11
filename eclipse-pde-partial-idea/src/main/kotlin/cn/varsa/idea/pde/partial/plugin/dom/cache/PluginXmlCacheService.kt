@@ -8,6 +8,7 @@ import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
@@ -51,8 +52,9 @@ class PluginXmlCacheService(private val project: Project) {
 
                 XmlInfo(applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
             } catch (e: Exception) {
-                PdeNotifier.getInstance(project)
-                    .important("Plugin XLM invalid", "$PluginsXml file not valid: $pluginXmlFile : $e")
+                PdeNotifier.important("Plugin XLM invalid", "$PluginsXml file not valid: $pluginXmlFile : $e")
+                    .notify(project)
+                thisLogger().warn("$PluginsXml file not valid: $pluginXmlFile : $e", e)
                 null
             }
         }
@@ -122,7 +124,7 @@ class PluginXmlCacheService(private val project: Project) {
         lastIndexed.clear()
     }
 
-    fun getXmlInfo(bundle: BundleDefinition): XmlInfo? = bundle.root.findChild(PluginsXml)
+    fun getXmlInfo(bundle: BundleDefinition): XmlInfo? = bundle.root.validFileOrRequestResolve()?.findChild(PluginsXml)
         ?.let { getXmlInfo(bundle.bundleSymbolicName, it, bundle.root, bundle.sourceBundle?.root) }
 
     fun getXmlInfo(module: Module): XmlInfo? =
@@ -136,17 +138,19 @@ class PluginXmlCacheService(private val project: Project) {
         bundleRoot: VirtualFile,
         bundleSourceRoot: VirtualFile? = null
     ): XmlInfo? = readCompute {
-        DumbService.isDumb(project).runFalse { PluginXmlIndex.readXmlInfo(project, pluginXmlFile) }
-            ?.updateIdNames(bundleSymbolicName)?.also { lastIndexed[pluginXmlFile.presentableUrl] = it }
-            ?: lastIndexed[pluginXmlFile.presentableUrl] ?: caches.computeIfAbsent(pluginXmlFile.presentableUrl) {
-                cachedValuesManager.createCachedValue {
-                    CachedValueProvider.Result.create(
-                        resolvePluginXml(
-                            project, bundleRoot, bundleSourceRoot, pluginXmlFile
-                        )?.updateIdNames(bundleSymbolicName), pluginXmlFile
-                    )
-                }
-            }.value
+        pluginXmlFile.validFileOrRequestResolve()?.let { file ->
+            DumbService.isDumb(project).runFalse { PluginXmlIndex.readXmlInfo(project, file) }
+                ?.updateIdNames(bundleSymbolicName)?.also { lastIndexed[file.presentableUrl] = it }
+                ?: lastIndexed[file.presentableUrl] ?: caches.computeIfAbsent(file.presentableUrl) {
+                    cachedValuesManager.createCachedValue {
+                        CachedValueProvider.Result.create(
+                            resolvePluginXml(project, bundleRoot, bundleSourceRoot, file)?.updateIdNames(
+                                bundleSymbolicName
+                            ), file
+                        )
+                    }
+                }.value
+        }
     }
 
     private fun XmlInfo.updateIdNames(bundleSymbolicName: String): XmlInfo =
@@ -157,4 +161,7 @@ class PluginXmlCacheService(private val project: Project) {
                 epPoint2ExsdPath.mapKeys { if (it.key.startsWith(bundleSymbolicName) || it.key.contains('.')) it.key else "$bundleSymbolicName.${it.key}" }
                     .toMap(hashMapOf()),
                 epReferenceIdentityMap)
+
+    private fun VirtualFile.validFileOrRequestResolve() =
+        validFileOrRequestResolve(project) { "${it.presentableUrl} file not valid when build plugin.xml cache, maybe it was delete after load, please check, restart application or re-resolve workspace" }
 }

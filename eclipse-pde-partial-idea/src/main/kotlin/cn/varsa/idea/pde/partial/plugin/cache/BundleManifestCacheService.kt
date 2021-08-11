@@ -4,6 +4,7 @@ import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.indexes.*
+import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
@@ -29,10 +30,11 @@ class BundleManifestCacheService(private val project: Project) {
         fun getInstance(project: Project): BundleManifestCacheService =
             project.getService(BundleManifestCacheService::class.java)
 
-        fun resolveManifest(mfFile: VirtualFile, stream: InputStream): BundleManifest? = try {
+        fun resolveManifest(mfFile: VirtualFile, stream: InputStream, project: Project): BundleManifest? = try {
             Manifest(stream).let(BundleManifest::parse)
         } catch (e: Exception) {
-            thisLogger().warn("$ManifestMf file not valid: $mfFile : $e")
+            PdeNotifier.important("MANIFEST invalid", "$ManifestMf file not valid: $mfFile : $e").notify(project)
+            thisLogger().warn("$ManifestMf file not valid: $mfFile : $e", e)
             null
         }
     }
@@ -67,26 +69,28 @@ class BundleManifestCacheService(private val project: Project) {
     private fun getManifestPsi(module: Module): VirtualFile? =
         module.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(ManifestPath) }.firstOrNull()
 
-    private fun getManifestFile(root: VirtualFile): VirtualFile? =
-        if (!root.isValid) {
-            null
+    private fun getManifestFile(root: VirtualFile): VirtualFile? = root.validFileOrRequestResolve()?.let {
+        if (it.extension?.toLowerCase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
+            JarFileSystem.getInstance().getJarRootForLocalFile(it)
         } else {
-            if (root.extension?.toLowerCase() == "jar" && root.fileSystem != JarFileSystem.getInstance()) {
-                JarFileSystem.getInstance().getJarRootForLocalFile(root)
-            } else {
-                root
-            }?.findFileByRelativePath(ManifestPath)
+            it
         }
+    }?.findFileByRelativePath(ManifestPath)
 
     private fun getManifest0(manifestFile: VirtualFile): BundleManifest? =
-        DumbService.isDumb(project).runFalse { BundleManifestIndex.readBundleManifest(project, manifestFile) }
-            ?.also { lastIndexed[manifestFile.presentableUrl] = it } ?: lastIndexed[manifestFile.presentableUrl]
-        ?: caches.computeIfAbsent(manifestFile.presentableUrl) {
-            cachedValuesManager.createCachedValue {
-                CachedValueProvider.Result.create(readManifest(manifestFile), manifestFile)
-            }
-        }.value
+        manifestFile.validFileOrRequestResolve()?.let { file ->
+            DumbService.isDumb(project).runFalse { BundleManifestIndex.readBundleManifest(project, file) }
+                ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
+            ?: caches.computeIfAbsent(file.presentableUrl) {
+                cachedValuesManager.createCachedValue {
+                    CachedValueProvider.Result.create(readManifest(file), file)
+                }
+            }.value
+        }
 
     private fun readManifest(virtualFile: VirtualFile): BundleManifest? =
-        virtualFile.inputStream.use { resolveManifest(virtualFile, it) }
+        virtualFile.inputStream.use { resolveManifest(virtualFile, it, project) }
+
+    private fun VirtualFile.validFileOrRequestResolve() =
+        validFileOrRequestResolve(project) { "${it.presentableUrl} file not valid when build manifest cache, maybe it was delete after load, please check, restart application or re-resolve workspace" }
 }

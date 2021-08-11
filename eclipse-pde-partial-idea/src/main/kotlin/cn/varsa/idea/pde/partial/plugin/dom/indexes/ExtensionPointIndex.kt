@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.dom.indexes
 
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
+import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.ide.highlighter.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
@@ -23,13 +24,16 @@ class ExtensionPointIndex : SingleEntryFileBasedIndexExtension<ExtensionPointDef
     override fun getIndexer(): SingleEntryIndexer<ExtensionPointDefinition> = ExtensionPointIndexer
     override fun getValueExternalizer(): DataExternalizer<ExtensionPointDefinition> = ExtensionPointExternalizer
     override fun getVersion(): Int = 0
-    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter {
-        it.fileType == XmlFileType.INSTANCE && it.extension == "exsd"
+    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
+        file.fileType == XmlFileType.INSTANCE && file.extension == "exsd" && ProjectLocator.getInstance()
+            .getProjectsForFile(file).any { it.allPDEModules().isNotEmpty() }
     }
 
     private object ExtensionPointIndexer : SingleEntryIndexer<ExtensionPointDefinition>(false) {
         override fun computeValue(inputData: FileContent): ExtensionPointDefinition? =
-            ExtensionPointCacheService.resolveExtensionPoint(inputData.project, inputData.file, inputData.content.inputStream())
+            ExtensionPointCacheService.resolveExtensionPoint(
+                inputData.project, inputData.file, inputData.content.inputStream()
+            )
     }
 
     private object ExtensionPointExternalizer : DataExternalizer<ExtensionPointDefinition> {

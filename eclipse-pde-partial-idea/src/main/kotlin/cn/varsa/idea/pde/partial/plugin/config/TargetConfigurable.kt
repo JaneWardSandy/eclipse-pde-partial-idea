@@ -44,7 +44,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         setEmptyText(message("config.target.empty"))
         cellRenderer = ColoredListCellRendererWithSpeedSearch<TargetLocationDefinition> { value ->
             value?.also { location ->
-                location.alias?.also {
+                location.alias?.takeIf(String::isNotBlank)?.also {
                     append(it, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
                     append(": ")
                 }

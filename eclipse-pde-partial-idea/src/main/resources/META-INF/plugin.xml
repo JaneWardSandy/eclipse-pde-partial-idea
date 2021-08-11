@@ -18,7 +18,6 @@
 
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.TargetDefinitionService"/>
         <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"/>
-        <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.openapi.PdeNotifier"/>
 
         <projectConfigurable id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable" parentId="language"
                              instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>

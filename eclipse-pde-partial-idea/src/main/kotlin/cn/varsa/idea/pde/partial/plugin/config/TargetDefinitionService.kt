@@ -130,7 +130,7 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
             indicator.checkCanceled()
             indicator.text2 = "Resolving file $file"
 
-            val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file) ?: return@forEach
+            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file) ?: return@forEach
             if (file.isFile && file.extension.equalAny("jar", "aar", "war", ignoreCase = true)) {
                 if (file.name.startsWith("org.eclipse.equinox.launcher_")) {
                     launcherJar = file.canonicalPath

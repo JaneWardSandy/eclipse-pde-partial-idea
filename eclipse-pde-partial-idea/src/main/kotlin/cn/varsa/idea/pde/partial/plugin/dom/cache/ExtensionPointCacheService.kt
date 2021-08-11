@@ -7,6 +7,7 @@ import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
 import cn.varsa.idea.pde.partial.plugin.openapi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.util.*
@@ -31,7 +32,8 @@ class ExtensionPointCacheService(private val project: Project) {
         ): ExtensionPointDefinition? = try {
             ExtensionPointDefinition(stream)
         } catch (e: Exception) {
-            PdeNotifier.getInstance(project).important("Schema invalid", "EXSD file not valid: $schemaFile : $e")
+            PdeNotifier.important("Schema invalid", "EXSD file not valid: $schemaFile : $e").notify(project)
+            thisLogger().warn("EXSD file not valid: $schemaFile : $e", e)
             null
         }
     }
@@ -54,15 +56,20 @@ class ExtensionPointCacheService(private val project: Project) {
     }
 
     private fun loadExtensionPoint(root: VirtualFile, schema: String): ExtensionPointDefinition? =
-        root.findFileByRelativePath(schema)?.let(this::getExtensionPoint)
+        root.validFileOrRequestResolve()?.findFileByRelativePath(schema)?.let(this::getExtensionPoint)
 
-    fun getExtensionPoint(file: VirtualFile): ExtensionPointDefinition? = readCompute {
-        DumbService.isDumb(project).runFalse { ExtensionPointIndex.readEPDefinition(project, file) }
-            ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
-        ?: caches.computeIfAbsent(file.presentableUrl) {
-            cachedValuesManager.createCachedValue {
-                CachedValueProvider.Result.create(resolveExtensionPoint(project, file), file)
-            }
-        }.value
+    fun getExtensionPoint(schemaFile: VirtualFile): ExtensionPointDefinition? = readCompute {
+        schemaFile.validFileOrRequestResolve()?.let { file ->
+            DumbService.isDumb(project).runFalse { ExtensionPointIndex.readEPDefinition(project, file) }
+                ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
+            ?: caches.computeIfAbsent(file.presentableUrl) {
+                cachedValuesManager.createCachedValue {
+                    CachedValueProvider.Result.create(resolveExtensionPoint(project, file), file)
+                }
+            }.value
+        }
     }
+
+    private fun VirtualFile.validFileOrRequestResolve() =
+        validFileOrRequestResolve(project) { "${it.presentableUrl} file not valid when build extension point cache, maybe it was delete after load, please check, restart application or re-resolve workspace" }
 }

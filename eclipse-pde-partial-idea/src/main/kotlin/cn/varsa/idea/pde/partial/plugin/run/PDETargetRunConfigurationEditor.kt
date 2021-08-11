@@ -8,6 +8,7 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
+import com.intellij.ui.components.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
@@ -35,12 +36,16 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
     private val jrePath = JrePathEditor(DefaultJreSelector.projectSdk(project))
     private val javaParameters = CommonJavaParametersPanel().apply { preferredSize = null }
 
+    private val cleanRuntimeDir = JBCheckBox(message("run.remote.config.tab.wishes.cleanRuntimeDir"))
+
     init {
         panel.add(productComponent)
         panel.add(applicationComponent)
         panel.add(JSeparator())
         panel.add(jrePath)
         panel.add(javaParameters)
+        panel.add(JSeparator())
+        panel.add(cleanRuntimeDir)
 
         panel.updateUI()
 
@@ -64,6 +69,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         }
 
         configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
+        cleanRuntimeDir.isSelected = configuration.cleanRuntimeDir
     }
 
     override fun applyEditorTo(configuration: PDETargetRunConfiguration) {
@@ -75,6 +81,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
         configuration.application = applicationField.item
 
         configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
+        configuration.cleanRuntimeDir = cleanRuntimeDir.isSelected
     }
 
     override fun createEditor(): JComponent = panel

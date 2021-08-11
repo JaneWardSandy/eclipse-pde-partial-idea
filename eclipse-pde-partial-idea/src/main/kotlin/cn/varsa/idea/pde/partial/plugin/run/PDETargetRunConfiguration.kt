@@ -36,6 +36,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
 
     var product: String? = "com.teamcenter.rac.aifrcp.product"
     var application: String? = "com.teamcenter.rac.aifrcp.application"
+    var cleanRuntimeDir = false
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
         SettingsEditorGroup<PDETargetRunConfiguration>().apply {
@@ -60,6 +61,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         element.getOrCreate("partial").apply {
             setAttribute("product", product)
             setAttribute("application", application)
+            setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
         }
     }
 
@@ -68,6 +70,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         element.getChild("partial")?.also {
             product = it.getAttributeValue("product") ?: ""
             application = it.getAttributeValue("application") ?: ""
+            cleanRuntimeDir = it.getAttributeValue("cleanRuntimeDir", cleanRuntimeDir.toString()).toBoolean()
         }
     }
 
@@ -85,13 +88,21 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         override fun createJavaParameters(): JavaParameters {
             val parameters: JavaParameters = super.createJavaParameters()
 
+            if (cleanRuntimeDir && configServiceDelegate.dataPath.exists()) {
+                try {
+                    configServiceDelegate.dataPath.deleteRecursively()
+                } finally {
+                    configServiceDelegate.dataPath.delete()
+                }
+            }
+
             try {
                 if (SystemInfo.isMac) parameters.vmParametersList.add("-XstartOnFirstThread")
 
                 parameters.classPath.clear()
                 parameters.classPath.add(target.launcherJar!!)
                 parameters.programParametersList.addAll("-launcher", target.launcher!!)
-                parameters.programParametersList.addAll("-name", "Teamcenter")
+                parameters.programParametersList.addAll("-name", "Eclipse")
                 parameters.programParametersList.addAll("-showsplash", "600")
 
                 parameters.programParametersList.addAll("-application", application)

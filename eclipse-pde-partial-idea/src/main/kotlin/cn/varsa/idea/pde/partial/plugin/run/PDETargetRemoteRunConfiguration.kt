@@ -212,7 +212,7 @@ class PDETargetRemoteRunConfiguration(
                 vmParameters.add(jdkVersion.getLaunchCommandLine(connection))
                 vmParameters.addAll(ProgramParametersConfigurator.expandMacrosAndParseParameters(this@PDETargetRemoteRunConfiguration.vmParameters))
 
-                programParameters.addAll("-name", "Teamcenter")
+                programParameters.addAll("-name", "Eclipse")
                 programParameters.addAll("-showsplash", "600")
 
                 programParameters.addAll("-application", application!!)

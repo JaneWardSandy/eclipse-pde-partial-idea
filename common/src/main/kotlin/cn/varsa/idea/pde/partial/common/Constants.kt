@@ -15,8 +15,6 @@ const val ModuleLibraryName = "Partial-Runtime"
 const val ModuleCompileOnlyLibraryName = "Partial-CompileOnly"
 const val ProjectLibraryNamePrefix = PartialPrefix
 
-const val BundleSymbolNameSourcePostFix = ".source"
-
 const val KotlinBundleSymbolName = "org.jetbrains.kotlin.osgi-bundle"
 const val KotlinOrderEntryName = "KotlinJavaRuntime"
 
@@ -25,3 +23,6 @@ const val MEGABYTE = KILOBYTE * KILOBYTE
 
 const val Java = "java"
 const val Kotlin = "kotlin"
+
+const val SystemBundle = "system.bundle"
+const val OrgEclipseOSGI = "org.eclipse.osgi"

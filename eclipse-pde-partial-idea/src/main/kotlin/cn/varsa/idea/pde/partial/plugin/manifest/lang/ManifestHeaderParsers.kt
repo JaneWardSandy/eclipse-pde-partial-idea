@@ -447,8 +447,8 @@ object ImportPackageParser : HeaderParser by BasePackageParser {
                             managementService.getBundleByInnerJarPath(jarFile)?.manifest?.also { containers += it }
                         }
 
-                    containers.map { it.exportedPackageAndVersion(packageName) }.flatMap { it.values }.distinct()
-                        .sorted().also { versions ->
+                    containers.mapNotNull { it.exportedPackageAndVersion()[packageName] }.distinct().sorted()
+                        .also { versions ->
                             versions.none { versionRange.includes(it) }.ifTrue {
                                 holder.createError(
                                     message(

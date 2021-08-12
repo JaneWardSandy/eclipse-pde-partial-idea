@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.common.configure
 
+import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.service.*
 import cn.varsa.idea.pde.partial.common.support.*
 import org.osgi.framework.*
@@ -33,7 +34,7 @@ object LaunchConfigGenerator {
         properties["osgi.bundles"] = "org.eclipse.equinox.simpleconfigurator@1:start"
         properties["org.eclipse.update.reconcile"] = "false"
 
-        properties.putIfAbsent("osgi.framework", "org.eclipse.osgi")
+        properties["osgi.framework"] = OrgEclipseOSGI
         properties.putIfAbsent("osgi.bundles.defaultStartLevel", "4")
 
 

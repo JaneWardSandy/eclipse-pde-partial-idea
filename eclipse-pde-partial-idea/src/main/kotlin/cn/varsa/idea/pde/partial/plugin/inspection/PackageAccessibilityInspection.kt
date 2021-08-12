@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.packageDependencies.*
 import com.intellij.psi.*
+import org.osgi.framework.*
 import org.osgi.framework.Constants.*
 
 abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool() {
@@ -61,11 +62,16 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
             val managementService = BundleManagementService.getInstance(project)
             val index = ProjectFileIndex.getInstance(project)
 
+
+            // In Java JDK?
+            item.virtualFile?.isBelongJDK(index)?.ifTrue { return emptyList() }
+
+
             // In bundle class path?
             val containers = arrayListOf<BundleManifest>()
 
             cacheService.getManifest(item)?.also { containers += it }
-            val jarFile = index.getClassRootForFile(item.virtualFile)
+            val jarFile = item.virtualFile?.let(index::getClassRootForFile)
             jarFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it)?.manifest }
                 ?.also { containers += it }
             containers += project.allPDEModules().filterNot { requesterModule == it }.filter { module ->
@@ -87,11 +93,12 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
                 val exporterBSN = exporter.fragmentHost?.key ?: exporterSymbolic.key
                 val exporterVersions = hashSetOf(exporter.bundleVersion)
 
-                val exporterExportedPackageVersions = exporter.exportedPackageAndVersion(packageName).values.toHashSet()
+                val exporterExportedPackageVersions = hashSetOf<Version>()
+                exporter.exportedPackageAndVersion()[packageName]?.also { exporterExportedPackageVersions += it }
                 managementService.getBundlesByBSN(exporterBSN)?.mapValues { it.value.manifest }
-                    ?.mapValues { it.value?.exportedPackageAndVersion(packageName)?.values }?.also { map ->
-                        exporterVersions += map.filterValues { it?.isNotEmpty() == true }.keys
-                        exporterExportedPackageVersions += map.values.filterNotNull().flatten()
+                    ?.mapValues { it.value?.exportedPackageAndVersion()?.get(packageName) }?.also { map ->
+                        exporterVersions += map.keys
+                        exporterExportedPackageVersions += map.values.filterNotNull()
                     }
                 if (exporterExportedPackageVersions.isEmpty()) {
                     problems += Problem.error(

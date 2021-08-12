@@ -58,9 +58,8 @@ class BundleManifest private constructor(private val map: HashMap<String, String
     override fun toString(): String = "BundleManifest(map=$map)"
 }
 
-class Parameters(
-    private val value: String, private val map: MutableMap<String, Attrs> = mutableMapOf()
-) : Map<String, Attrs> by map {
+class Parameters(value: String, private val map: MutableMap<String, Attrs> = mutableMapOf()) :
+    Map<String, Attrs> by map {
 
     init {
         val qt = QuotedTokenizer(value, ";=,")
@@ -102,4 +101,12 @@ class Parameters(
     }
 }
 
-class Attrs(val attribute: Map<String, String> = mutableMapOf(), val directive: Map<String, String> = mutableMapOf())
+class Attrs(val attribute: Map<String, String> = mutableMapOf(), val directive: Map<String, String> = mutableMapOf()) {
+    private fun toStringAttribute(): String =
+        attribute.takeIf { it.isNotEmpty() }?.entries?.joinToString(";", ";") ?: ""
+
+    private fun toStringDirective(): String =
+        directive.takeIf { it.isNotEmpty() }?.entries?.joinToString(";", ";") { "${it.key}:=${it.value}" } ?: ""
+
+    override fun toString(): String = toStringAttribute() + toStringDirective()
+}

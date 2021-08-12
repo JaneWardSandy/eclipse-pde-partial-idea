@@ -43,7 +43,7 @@ class BundleManagementService : BackgroundResolvable {
 
         val definitionService = TargetDefinitionService.getInstance(project)
 
-        val bundleStep = 0.45 / (definitionService.locations.sumBy { it.bundles.size } + 1)
+        val bundleStep = 0.45 / (definitionService.locations.sumOf { it.bundles.size } + 1)
         val sourceVersions = hashMapOf<String, HashSet<BundleDefinition>>()
 
         definitionService.locations.forEach { location ->

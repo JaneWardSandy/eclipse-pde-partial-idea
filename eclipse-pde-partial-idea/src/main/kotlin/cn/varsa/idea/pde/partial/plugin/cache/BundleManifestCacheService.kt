@@ -50,8 +50,7 @@ class BundleManifestCacheService(private val project: Project) {
         val file = item.virtualFile
         if (file != null) {
             val index = ProjectFileIndex.getInstance(item.project)
-            val list = index.getOrderEntriesForFile(file)
-            if (list.size == 1 && list.first() is JdkOrderEntry) return null
+            if (file.isBelongJDK(index)) return null
 
             val module = index.getModuleForFile(file)
             if (module != null) return getManifest(module)

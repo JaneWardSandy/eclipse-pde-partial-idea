@@ -30,6 +30,9 @@ fun BundleManifest.reexportRequiredBundleAndVersion(): Map<String, VersionRange>
     requireBundle?.filter { it.value.directive[VISIBILITY_DIRECTIVE] == VISIBILITY_REEXPORT }
         ?.mapValues { (_, attrs) -> attrs.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() } ?: emptyMap()
 
-fun BundleManifest.exportedPackageAndVersion(packageName: String): Map<String, Version> =
-    exportPackage?.mapKeys { it.key.substringBefore(".*") }?.filterKeys { packageName == it }
+fun BundleManifest.importedPackageAndVersion(): Map<String, VersionRange> =
+    importPackage?.mapValues { (_, attrs) -> attrs.attribute[VERSION_ATTRIBUTE].parseVersionRange() } ?: emptyMap()
+
+fun BundleManifest.exportedPackageAndVersion(): Map<String, Version> =
+    exportPackage?.mapKeys { it.key.substringBefore(".*") }
         ?.mapValues { (_, attrs) -> attrs.attribute[VERSION_ATTRIBUTE].let { Version.parseVersion(it) } } ?: emptyMap()

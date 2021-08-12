@@ -7,6 +7,7 @@ import cn.varsa.idea.pde.partial.plugin.openapi.*
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.*
 
 val VirtualFile.fileProtocolUrl: String get() = presentableUrl.toFile().protocolUrl
@@ -32,3 +33,8 @@ fun VirtualFile.validFileOrRequestResolve(project: Project, lazyMessage: (Virtua
             }).notify(project)
         null
     }
+
+fun VirtualFile.isBelongJDK(project: Project): Boolean = isBelongJDK(ProjectFileIndex.getInstance(project))
+
+fun VirtualFile.isBelongJDK(index: ProjectFileIndex): Boolean =
+    index.getOrderEntriesForFile(this).let { it.size == 1 && it.first() is JdkOrderEntry }

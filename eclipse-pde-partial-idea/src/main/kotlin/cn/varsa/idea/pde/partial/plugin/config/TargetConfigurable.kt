@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
+import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
@@ -12,6 +13,7 @@ import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.ui.*
+import com.intellij.psi.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.*
@@ -20,6 +22,8 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.*
 import com.jetbrains.rd.swing.*
 import com.jetbrains.rd.util.reactive.*
+import org.osgi.framework.*
+import org.osgi.framework.Constants.*
 import java.awt.*
 import java.awt.event.*
 import java.util.*
@@ -166,6 +170,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                     override fun actionPerformed(e: AnActionEvent) = reloadContentList()
                 }, object : AnActionButton(message("config.content.reload"), AllIcons.Actions.ForceRefresh) {
                     override fun actionPerformed(e: AnActionEvent) = reloadContentListByDefaultRule()
+                }, object : AnActionButton(message("config.content.validate"), AllIcons.Diff.GutterCheckBoxSelected) {
+                    override fun actionPerformed(e: AnActionEvent) = ValidateAndResolveBundleDependencies().show()
                 }).createPanel()
         ).addToBottom(sourceVersionComponent)
 
@@ -457,8 +463,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     }
 
     inner class EditStartupDialog(
-        title: String = message("config.target.startupDialog.title"),
-        description: String = message("config.target.startupDialog.description"),
+        title: String = message("config.startup.startupDialog.title"),
+        description: String = message("config.startup.startupDialog.description"),
         symbolicName: String = "",
         level: Int = 4,
     ) : DialogWrapper(project), PanelWithAnchor {
@@ -469,7 +475,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
 
         private val nameComponent = LabeledComponent.create(nameTextField, description, BorderLayout.WEST)
         private val levelComponent =
-            LabeledComponent.create(levelSpinner, message("config.target.startupDialog.level"), BorderLayout.WEST)
+            LabeledComponent.create(levelSpinner, message("config.startup.startupDialog.level"), BorderLayout.WEST)
 
         init {
             setTitle(title)
@@ -492,6 +498,159 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         }
 
         fun getNewLevel(): Pair<String, Int> = Pair(nameTextField.text, levelSpinner.number)
+    }
+
+    inner class ValidateAndResolveBundleDependencies : DialogWrapper(project) {
+        private val root = CheckedTreeNode()
+        private val treeModel = DefaultTreeModel(root)
+        private val tree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer(true) {
+            override fun customizeRenderer(
+                tree: JTree,
+                value: Any?,
+                selected: Boolean,
+                expanded: Boolean,
+                leaf: Boolean,
+                row: Int,
+                hasFocus: Boolean
+            ) {
+                value?.toString()?.also { textRenderer.append(it) }
+                SpeedSearchUtil.applySpeedSearchHighlighting(tree, textRenderer, false, selected)
+            }
+        }, null).apply { model = treeModel }
+
+        private val bundle2FixBundle: HashMap<ShadowBundle, HashSet<FixBundle>>
+
+        init {
+            title = message("config.content.validateDialog.title")
+            init()
+
+            val javaPsiFacade = JavaPsiFacade.getInstance(project)
+            val index = ProjectFileIndex.getInstance(project)
+
+            val initialCapacity = ShadowLocationRoot.locations.sumOf { it.bundles.size }
+            val bundles = HashMap<String, HashMap<Version, HashSet<ShadowBundle>>>(initialCapacity)
+            val exportedPackages = HashMap<String, HashMap<Version, HashSet<ShadowBundle>>>(initialCapacity)
+
+            ShadowLocationRoot.locations.flatMap { it.bundles }.forEach { bundle ->
+                bundles.computeIfAbsent(bundle.bundle.bundleSymbolicName) { hashMapOf() }
+                    .computeIfAbsent(bundle.bundle.bundleVersion) { hashSetOf() } += bundle
+
+                bundle.bundle.manifest?.exportedPackageAndVersion()?.forEach { (packageName, version) ->
+                    exportedPackages.computeIfAbsent(packageName) { hashMapOf() }
+                        .computeIfAbsent(version) { hashSetOf() } += bundle
+                }
+            }
+
+            bundle2FixBundle = HashMap<ShadowBundle, HashSet<FixBundle>>(initialCapacity)
+            bundles.values.flatMap { it.values }.flatten().filter { it.isChecked }.sortedBy { it.bundle.canonicalName }
+                .forEach { bundle ->
+                    var problem: ProblemBundle? = null
+
+                    bundle.bundle.manifest?.importPackage?.forEach { (packageName, attrs) ->
+                        if (attrs.directive[RESOLUTION_DIRECTIVE] != RESOLUTION_OPTIONAL && javaPsiFacade.findPackage(
+                                packageName
+                            )?.directories?.mapNotNull { it.virtualFile }?.any { it.isBelongJDK(index) } != true
+                        ) {
+                            val map = exportedPackages[packageName]
+                            if (map.isNullOrEmpty()) {
+                                if (problem == null) problem = ProblemBundle(bundle)
+                                problem!!.add(MissingImportedPackage(packageName + attrs))
+                            } else {
+                                val range = attrs.attribute[VERSION_ATTRIBUTE].parseVersionRange()
+                                if (map.none { (version, set) -> range.includes(version) && set.any { it.isChecked } }) {
+                                    val missingImportedPackage = MissingImportedPackage(packageName + attrs)
+                                    map.values.flatten().distinct()
+                                        .forEach { missingImportedPackage.add(FixBundle(it)) }
+
+                                    if (problem == null) problem = ProblemBundle(bundle)
+                                    problem!!.add(missingImportedPackage)
+                                }
+                            }
+                        }
+                    }
+
+                    bundle.bundle.manifest?.requireBundle?.forEach { (requiredBundle, attrs) ->
+                        if (attrs.directive[RESOLUTION_DIRECTIVE] != RESOLUTION_OPTIONAL) {
+                            var map = bundles[requiredBundle]
+                            if (requiredBundle == SystemBundle && map.isNullOrEmpty()) map = bundles[OrgEclipseOSGI]
+
+                            if (map.isNullOrEmpty()) {
+                                if (problem == null) problem = ProblemBundle(bundle)
+                                problem!!.add(MissingRequiredBundle(requiredBundle + attrs))
+                            } else {
+                                val range = attrs.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange()
+                                if (map.none { (version, set) -> range.includes(version) && set.any { it.isChecked } }) {
+                                    val missingRequiredBundle = MissingRequiredBundle(requiredBundle + attrs)
+                                    map.values.flatten().distinct().forEach { missingRequiredBundle.add(FixBundle(it)) }
+
+                                    if (problem == null) problem = ProblemBundle(bundle)
+                                    problem!!.add(missingRequiredBundle)
+                                }
+                            }
+                        }
+                    }
+
+                    problem?.also { root.add(it) }
+                }
+
+            treeModel.reload()
+        }
+
+        override fun createCenterPanel(): JComponent = BorderLayoutPanel().withBorder(
+            IdeBorderFactory.createTitledBorder(
+                message("config.content.validateDialog.leadTitle"), false, JBUI.insetsTop(8)
+            ).setShowLine(true)
+        ).addToCenter(JBScrollPane(tree))
+
+        override fun processDoNotAskOnOk(exitCode: Int) {
+            super.processDoNotAskOnOk(exitCode)
+
+            root.children().asSequence().mapNotNull { it as? ProblemBundle }
+                .flatMap { problemBundle -> problemBundle.importedPackage.flatMap { it.fixBundle } + problemBundle.requiredBundle.flatMap { it.fixBundle } }
+                .map { it.bundle }.distinct().forEach {
+                    it.isChecked = true
+                    contentTreeModel.reload(it)
+                }
+        }
+
+        private inner class ProblemBundle(val bundle: ShadowBundle) : CheckedTreeNode() {
+            val importedPackage get() = children?.mapNotNull { it as? MissingImportedPackage } ?: emptyList()
+            val requiredBundle get() = children?.mapNotNull { it as? MissingRequiredBundle } ?: emptyList()
+
+            override fun toString(): String = bundle.bundle.canonicalName
+            override fun isEnabled(): Boolean =
+                importedPackage.any { it.isEnabled } || requiredBundle.any { it.isEnabled }
+        }
+
+        private inner class MissingImportedPackage(val value: String) : CheckedTreeNode() {
+            val fixBundle get() = children?.map { it as FixBundle } ?: emptyList()
+
+            override fun toString(): String = "Missing Constraint: $IMPORT_PACKAGE: $value"
+            override fun isEnabled(): Boolean = fixBundle.isNotEmpty()
+        }
+
+        private inner class MissingRequiredBundle(val value: String) : CheckedTreeNode() {
+            val fixBundle get() = children?.map { it as FixBundle } ?: emptyList()
+
+            override fun toString(): String = "Missing Constraint: $REQUIRE_BUNDLE: $value"
+            override fun isEnabled(): Boolean = fixBundle.isNotEmpty()
+        }
+
+        private inner class FixBundle(val bundle: ShadowBundle) : CheckedTreeNode() {
+            init {
+                bundle2FixBundle.computeIfAbsent(bundle) { hashSetOf() } += this
+            }
+
+            override fun setChecked(checked: Boolean) {
+                super.setChecked(checked)
+                bundle2FixBundle[bundle]?.filter { it.isChecked != checked }?.forEach {
+                    it.isChecked = checked
+                    treeModel.reload(it)
+                }
+            }
+
+            override fun toString(): String = "${bundle.location.location.identifier} : ${bundle.bundle.canonicalName}"
+        }
     }
 
     private object ShadowLocationRoot : CheckedTreeNode() {

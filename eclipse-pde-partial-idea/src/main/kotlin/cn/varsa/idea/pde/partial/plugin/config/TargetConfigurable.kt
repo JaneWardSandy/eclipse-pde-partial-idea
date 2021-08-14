@@ -43,11 +43,22 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         LabeledComponent.create(launcherJarCombo, message("config.target.launcherJar"), BorderLayout.WEST)
     private val launcher = LabeledComponent.create(launcherCombo, message("config.target.launcher"), BorderLayout.WEST)
 
-    private val locationModel = DefaultListModel<TargetLocationDefinition>()
+    private val locationModel = object : DefaultListModel<TargetLocationDefinition>() {
+        fun reload(location: TargetLocationDefinition) {
+            reload(indexOf(location))
+        }
+
+        fun reload(index: Int) {
+            fireContentsChanged(this, index, index)
+        }
+    }
     private val locationList = JBList(locationModel).apply {
         setEmptyText(message("config.target.empty"))
         cellRenderer = ColoredListCellRendererWithSpeedSearch<TargetLocationDefinition> { value ->
             value?.also { location ->
+                location.type?.takeIf(String::isNotBlank)?.also {
+                    append("[$it] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+                }
                 location.alias?.takeIf(String::isNotBlank)?.also {
                     append(it, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
                     append(": ")
@@ -95,7 +106,15 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             tree: JTree, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean
         ) {
             when (value) {
-                is ShadowLocation -> textRenderer.append(value.location.identifier)
+                is ShadowLocation -> {
+                    textRenderer.append(value.location.identifier)
+                    textRenderer.append(
+                        message(
+                            "config.content.bundlesInfoInfix",
+                            value.bundles.size,
+                            value.bundles.count { it.isChecked }), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
+                    )
+                }
                 is ShadowBundle -> {
                     textRenderer.append(value.bundle.canonicalName)
 
@@ -331,6 +350,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                 updateComboBox()
                 ShadowLocationRoot.addLocation(location)
                 ShadowLocationRoot.sort()
+
+                locationModel.reload(location)
                 contentTreeModel.reload()
             })
         }
@@ -364,6 +385,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                     updateComboBox()
                     ShadowLocationRoot.replaceLocation(location, value)
                     ShadowLocationRoot.sort()
+
+                    locationModel.reload(index)
                     contentTreeModel.reload()
                 })
             }

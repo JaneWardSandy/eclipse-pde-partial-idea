@@ -1,4 +1,4 @@
-package cn.varsa.idea.pde.partial.plugin.openapi
+package cn.varsa.idea.pde.partial.plugin.openapi.resolver
 
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.project.*

@@ -2,8 +2,8 @@ package cn.varsa.idea.pde.partial.plugin.support
 
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.i18n.*
-import cn.varsa.idea.pde.partial.plugin.openapi.*
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.*

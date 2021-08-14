@@ -6,6 +6,7 @@ const val ManifestPath = "$MetaInf/$ManifestMf"
 const val PluginsXml = "plugin.xml"
 const val BuildProperties = "build.properties"
 
+const val Dropins = "dropins"
 const val Plugins = "plugins"
 const val Artifacts = "artifacts"
 

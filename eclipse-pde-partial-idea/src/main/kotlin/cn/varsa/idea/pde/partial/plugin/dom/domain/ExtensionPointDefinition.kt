@@ -4,7 +4,7 @@ import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.dom.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.ExtensionElement.OccursLimit.Companion.unbounded
-import cn.varsa.idea.pde.partial.plugin.openapi.*
+import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*

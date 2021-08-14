@@ -1,4 +1,4 @@
-package cn.varsa.idea.pde.partial.plugin.openapi
+package cn.varsa.idea.pde.partial.plugin.helper
 
 import com.intellij.notification.*
 

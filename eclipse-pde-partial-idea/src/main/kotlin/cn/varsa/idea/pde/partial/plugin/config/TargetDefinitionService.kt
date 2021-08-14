@@ -4,6 +4,7 @@ import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.listener.*
+import cn.varsa.idea.pde.partial.plugin.openapi.provider.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
@@ -90,16 +91,19 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
     @Attribute var dependency = DependencyScope.COMPILE.displayName
 
     @Attribute var alias: String? = null
+    @Attribute var type: String? = null
 
-    @XCollection(elementName = "unSelectedBundles") val bundleUnSelected = mutableListOf<String>()
+    @XCollection(elementName = "unSelectedBundles", style = XCollection.Style.v2) val bundleUnSelected = mutableListOf<String>()
 
     @XMap(entryTagName = "sourceVersion", keyAttributeName = "canonicalName", valueAttributeName = "version")
     val bundleVersionSelection = hashMapOf<String, String>()
 
     private val _bundles = mutableListOf<BundleDefinition>()
+    var bundles: List<BundleDefinition> = emptyList()
+        private set
 
-    val identifier: String get() = alias?.takeIf(String::isNotBlank) ?: location
-    val bundles: List<BundleDefinition> = _bundles
+    val identifier: String
+        get() = "[${type?.takeIf(String::isNotBlank) ?: "Unknown"}] ${alias?.takeIf(String::isNotBlank) ?: location}"
 
     init {
         _location.takeIf(String::isNotBlank)?.also { location = it }
@@ -107,6 +111,7 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
 
     override fun resolve(project: Project, indicator: ProgressIndicator) {
         val scope = DependencyScope.values().firstOrNull { it.displayName == dependency } ?: DependencyScope.COMPILE
+        type = null
         _bundles.clear()
 
         indicator.text = "Resolving location $location"
@@ -116,33 +121,36 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
         if (!directory.isDirectory) return
         if (!directory.exists()) return
 
-        if (SystemInfo.isMac) {
-            File(directory.parentFile, "MacOS/eclipse").takeIf(File::exists)?.also { launcher = it.canonicalPath }
-        } else if (SystemInfo.isWindows) {
-            arrayOf("Teamcenter.exe", "eclipse.exe").map { File(directory, it) }.firstOrNull(File::exists)
-                ?.also { launcher = it.canonicalPath }
-        }
+        when {
+            SystemInfo.isMac -> File(directory.parentFile, "MacOS/eclipse").takeIf(File::exists)
+            SystemInfo.isWindows -> arrayOf("Teamcenter.exe", "eclipse.exe").map { File(directory, it) }
+                .firstOrNull(File::exists)
+            else -> null
+        }?.also { launcher = it.canonicalPath }
 
         indicator.checkCanceled()
+        PdeBundleProviderRegistry.instance.resolveLocation(directory, this) { file ->
+            if (file.exists()) {
+                indicator.checkCanceled()
+                indicator.text2 = "Resolving file $file"
 
-        val pluginsDirectory = File(directory, Plugins).takeIf(File::exists) ?: directory
-        pluginsDirectory.listFiles()?.filterNot { it.isHidden }?.forEach { file ->
-            indicator.checkCanceled()
-            indicator.text2 = "Resolving file $file"
+                LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)?.also { virtualFile ->
+                    if (file.isFile && file.extension.equalAny("jar", "aar", "war", ignoreCase = true)) {
+                        if (file.name.startsWith("org.eclipse.equinox.launcher_")) {
+                            launcherJar = file.canonicalPath
+                        }
 
-            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file) ?: return@forEach
-            if (file.isFile && file.extension.equalAny("jar", "aar", "war", ignoreCase = true)) {
-                if (file.name.startsWith("org.eclipse.equinox.launcher_")) {
-                    launcherJar = file.canonicalPath
+                        JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)?.also { jarFile ->
+                            _bundles += BundleDefinition(jarFile, file, this, project, scope)
+                        }
+                    } else if (file.isDirectory && File(file, ManifestPath).exists()) {
+                        _bundles += BundleDefinition(virtualFile, file, this, project, scope)
+                    }
                 }
-
-                JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)?.also { jarFile ->
-                    _bundles += BundleDefinition(jarFile, file, this, project, scope)
-                }
-            } else if (file.isDirectory && File(file, ManifestPath).exists()) {
-                _bundles += BundleDefinition(virtualFile, file, this, project, scope)
             }
         }
+
+        bundles = _bundles.distinctBy { it.file }
     }
 
     override fun toString(): String =

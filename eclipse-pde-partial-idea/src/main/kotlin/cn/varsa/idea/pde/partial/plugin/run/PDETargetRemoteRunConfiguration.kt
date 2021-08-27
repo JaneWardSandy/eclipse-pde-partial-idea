@@ -17,6 +17,7 @@ import com.intellij.execution.impl.*
 import com.intellij.execution.process.*
 import com.intellij.execution.runners.*
 import com.intellij.execution.util.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
@@ -159,10 +160,15 @@ class PDETargetRemoteRunConfiguration(
         override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult {
             val wishesService = try {
                 FutureTask {
-                    LocateRegistry.getRegistry(remoteHost, rmiPort).lookup(rmiName) as WishesService
-                }.get(3, TimeUnit.SECONDS)
+                    LocateRegistry.getRegistry(remoteHost, rmiPort).also { it.list().forEach(::println) }.lookup(rmiName) as WishesService
+                }.also { Thread(it).start() }.get(3, TimeUnit.SECONDS)
             } catch (e: Exception) {
-                throw IllegalStateException("Registry lookup wishes service failed and connection time out", e)
+                thisLogger().warn(
+                    "Registry lookup wishes service $remoteHost:$rmiPort failed and connection time out: $e", e
+                )
+                throw IllegalStateException(
+                    "Registry lookup wishes service $remoteHost:$rmiPort failed and connection time out: $e", e
+                )
             }
 
             if (cleanRuntimeDir) {
@@ -179,9 +185,10 @@ class PDETargetRemoteRunConfiguration(
                         if (wishesService.isJDWPRunning()) break
                         Thread.sleep(100)
                     }
-                }.get(3, TimeUnit.SECONDS)
+                }.also { Thread(it).start() }.get(3, TimeUnit.SECONDS)
             } catch (e: Exception) {
-                throw IllegalStateException("JDWP not running and connection time out", e)
+                thisLogger().warn("JDWP not running and connection time out: $e", e)
+                throw IllegalStateException("JDWP not running and connection time out: $e", e)
             }
             if (!wishesService.isJDWPRunning()) throw IllegalStateException("JDWP not running and connection time out")
 
@@ -196,7 +203,7 @@ class PDETargetRemoteRunConfiguration(
                         try {
                             FutureTask {
                                 LocateRegistry.getRegistry(remoteHost, rmiPort).lookup(rmiName) as WishesService
-                            }.get(3, TimeUnit.SECONDS).destroy()
+                            }.also { Thread(it).start() }.get(3, TimeUnit.SECONDS)?.destroy()
                         } catch (e: Exception) {
                         }
                     }

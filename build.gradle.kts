@@ -1,7 +1,7 @@
 plugins {
-    kotlin("jvm") version "1.5.10"
+    kotlin("jvm") version "1.5.21"
 
-    kotlin("kapt") version "1.5.10" apply false
+    kotlin("kapt") version "1.5.21" apply false
     id("org.jetbrains.intellij") version "0.7.3" apply false
 
     id("org.openjfx.javafxplugin") version "0.0.10" apply false
@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "cn.varsa"
-version = "1.3.2"
+version = "1.3.2.1"
 
 repositories {
     mavenLocal()

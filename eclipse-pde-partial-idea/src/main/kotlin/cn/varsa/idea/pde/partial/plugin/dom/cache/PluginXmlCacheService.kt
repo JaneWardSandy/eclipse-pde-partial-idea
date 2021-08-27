@@ -6,7 +6,6 @@ import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
-import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
@@ -28,7 +27,6 @@ class PluginXmlCacheService(private val project: Project) {
         fun getInstance(project: Project): PluginXmlCacheService = project.getService(PluginXmlCacheService::class.java)
 
         fun resolvePluginXml(
-            project: Project,
             bundleRoot: VirtualFile,
             bundleSourceRoot: VirtualFile?,
             pluginXmlFile: VirtualFile,
@@ -52,8 +50,6 @@ class PluginXmlCacheService(private val project: Project) {
 
                 XmlInfo(applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
             } catch (e: Exception) {
-                PdeNotifier.important("Plugin XLM invalid", "$PluginsXml file not valid: $pluginXmlFile : $e")
-                    .notify(project)
                 thisLogger().warn("$PluginsXml file not valid: $pluginXmlFile : $e", e)
                 null
             }
@@ -144,7 +140,7 @@ class PluginXmlCacheService(private val project: Project) {
                 ?: lastIndexed[file.presentableUrl] ?: caches.computeIfAbsent(file.presentableUrl) {
                     cachedValuesManager.createCachedValue {
                         CachedValueProvider.Result.create(
-                            resolvePluginXml(project, bundleRoot, bundleSourceRoot, file)?.updateIdNames(
+                            resolvePluginXml(bundleRoot, bundleSourceRoot, file)?.updateIdNames(
                                 bundleSymbolicName
                             ), file
                         )

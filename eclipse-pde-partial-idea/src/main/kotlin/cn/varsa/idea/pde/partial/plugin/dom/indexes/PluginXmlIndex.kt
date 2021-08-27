@@ -32,12 +32,8 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
 
     private object PluginXmlIndexer : SingleEntryIndexer<XmlInfo>(false) {
         override fun computeValue(inputData: FileContent): XmlInfo? = PluginXmlCacheService.resolvePluginXml(
-            inputData.project,
-            inputData.file.parent,
-            BundleManagementService.getInstance(inputData.project)
-                .getBundleByBundleFile(inputData.file.parent)?.sourceBundle?.root,
-            inputData.file,
-            inputData.content.inputStream()
+            inputData.file.parent, BundleManagementService.getInstance(inputData.project)
+                .getBundleByBundleFile(inputData.file.parent)?.sourceBundle?.root, inputData.file, inputData.content.inputStream()
         )
     }
 

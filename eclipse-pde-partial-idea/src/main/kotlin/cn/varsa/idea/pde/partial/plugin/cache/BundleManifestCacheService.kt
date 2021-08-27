@@ -3,7 +3,6 @@ package cn.varsa.idea.pde.partial.plugin.cache
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.common.support.*
-import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.indexes.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
@@ -30,10 +29,9 @@ class BundleManifestCacheService(private val project: Project) {
         fun getInstance(project: Project): BundleManifestCacheService =
             project.getService(BundleManifestCacheService::class.java)
 
-        fun resolveManifest(mfFile: VirtualFile, stream: InputStream, project: Project): BundleManifest? = try {
+        fun resolveManifest(mfFile: VirtualFile, stream: InputStream): BundleManifest? = try {
             Manifest(stream).let(BundleManifest::parse)
         } catch (e: Exception) {
-            PdeNotifier.important("MANIFEST invalid", "$ManifestMf file not valid: $mfFile : $e").notify(project)
             thisLogger().warn("$ManifestMf file not valid: $mfFile : $e", e)
             null
         }
@@ -88,7 +86,7 @@ class BundleManifestCacheService(private val project: Project) {
         }
 
     private fun readManifest(virtualFile: VirtualFile): BundleManifest? =
-        virtualFile.inputStream.use { resolveManifest(virtualFile, it, project) }
+        virtualFile.inputStream.use { resolveManifest(virtualFile, it) }
 
     private fun VirtualFile.validFileOrRequestResolve() =
         validFileOrRequestResolve(project) { "${it.presentableUrl} file not valid when build manifest cache, maybe it was delete after load, please check, restart application or re-resolve workspace" }

@@ -5,7 +5,6 @@ import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
-import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
@@ -28,11 +27,10 @@ class ExtensionPointCacheService(private val project: Project) {
             project.getService(ExtensionPointCacheService::class.java)
 
         fun resolveExtensionPoint(
-            project: Project, schemaFile: VirtualFile, stream: InputStream = schemaFile.inputStream
+            schemaFile: VirtualFile, stream: InputStream = schemaFile.inputStream
         ): ExtensionPointDefinition? = try {
-            ExtensionPointDefinition(stream)
+            ExtensionPointDefinition(schemaFile, stream)
         } catch (e: Exception) {
-            PdeNotifier.important("Schema invalid", "EXSD file not valid: $schemaFile : $e").notify(project)
             thisLogger().warn("EXSD file not valid: $schemaFile : $e", e)
             null
         }
@@ -64,7 +62,7 @@ class ExtensionPointCacheService(private val project: Project) {
                 ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
             ?: caches.computeIfAbsent(file.presentableUrl) {
                 cachedValuesManager.createCachedValue {
-                    CachedValueProvider.Result.create(resolveExtensionPoint(project, file), file)
+                    CachedValueProvider.Result.create(resolveExtensionPoint(file), file)
                 }
             }.value
         }

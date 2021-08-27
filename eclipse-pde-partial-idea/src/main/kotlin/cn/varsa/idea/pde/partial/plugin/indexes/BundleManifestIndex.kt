@@ -31,7 +31,7 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
 
     private object BundleManifestIndexer : SingleEntryIndexer<BundleManifest>(false) {
         override fun computeValue(inputData: FileContent): BundleManifest? = BundleManifestCacheService.resolveManifest(
-            inputData.file, inputData.content.inputStream(), inputData.project
+            inputData.file, inputData.content.inputStream()
         )
     }
 

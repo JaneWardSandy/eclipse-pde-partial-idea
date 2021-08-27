@@ -8,6 +8,7 @@ import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.vfs.*
 import com.intellij.util.*
 import org.jdom.*
 import org.jdom.filter2.*
@@ -30,6 +31,7 @@ class ExtensionPointDefinition {
             XPathFactory.instance().compile("/schema/element[@name!='extension']", Filters.element())
     }
 
+    val file: VirtualFile
     val plugin: String
     val id: String
     val name: String
@@ -39,7 +41,9 @@ class ExtensionPointDefinition {
     val extension: ElementDefinition?
     val elements: List<ElementDefinition>
 
-    constructor(stream: InputStream) {
+    val notifyOnes = hashSetOf<String>()
+
+    constructor(file: VirtualFile, stream: InputStream) {
         val document = SAXBuilder().apply { saxHandlerFactory = NameSpaceCleanerFactory() }.build(stream)
         schemaInfoPath.evaluateFirst(document).also {
             plugin = it.getAttributeValue("plugin")
@@ -49,9 +53,13 @@ class ExtensionPointDefinition {
         includes = includePath.evaluate(document).mapNotNull { it.getAttributeValue("schemaLocation") }
         extension = extensionPath.evaluateFirst(document)?.let(::ElementDefinition)
         elements = elementPath.evaluate(document).map(::ElementDefinition)
+
+        this.file = file
     }
 
     constructor(input: DataInput) {
+        file = VirtualFileManager.getInstance().getFileSystem(input.readString()).findFileByPath(input.readString())!!
+
         plugin = input.readString()
         id = input.readString()
         name = input.readString()
@@ -63,6 +71,9 @@ class ExtensionPointDefinition {
     }
 
     fun save(out: DataOutput) {
+        out.writeString(file.fileSystem.protocol)
+        out.writeString(file.path)
+
         out.writeString(plugin)
         out.writeString(id)
         out.writeString(name)
@@ -89,8 +100,12 @@ class ExtensionPointDefinition {
         if (!includeVisited.add(definition)) return null
         return definition.elements.firstOrNull { it.name == ref.ref }
             ?: definition.includes.mapNotNull { schemaLocation ->
-                cacheService.loadExtensionPoint(schemaLocation).also {
-                    if (it == null) {
+                if (schemaLocation.startsWith(schemaProtocol)) {
+                    cacheService.loadExtensionPoint(schemaLocation)
+                } else {
+                    definition.file.parent.findChild(schemaLocation)?.let { cacheService.getExtensionPoint(it) }
+                }.also {
+                    if (it == null && definition.notifyOnes.add(schemaLocation)) {
                         PdeNotifier.important(
                             "Schema Not Found", "Schema not existed for ${definition.point} at location $schemaLocation"
                         ).notify(project)
@@ -218,6 +233,8 @@ class ElementRefDefinition {
         // HACK: choice, sequence logical?
         var parent: Element? = element.parentElement
         while (parent != null && parent.name.equalAny("choice", "sequence")) {
+            if (parent.name == "choice") min = 0
+
             parent.getAttributeValue("minOccurs")?.toIntOrNull()?.takeIf { min > it }?.also { min = it }
             parent.getAttributeValue("maxOccurs")?.run { toIntOrNull() ?: unbounded }
                 ?.takeIf { (max in 0 until it) || (it == unbounded && max > it) }?.also { max = it }

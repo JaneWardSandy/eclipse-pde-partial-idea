@@ -157,7 +157,14 @@ class PDETargetRemoteRunConfiguration(
 
         override fun getRemoteConnection(): RemoteConnection = connection
         override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult {
-            val wishesService = LocateRegistry.getRegistry(remoteHost, rmiPort).lookup(rmiName) as WishesService
+            val wishesService = try {
+                FutureTask {
+                    LocateRegistry.getRegistry(remoteHost, rmiPort).lookup(rmiName) as WishesService
+                }.get(3, TimeUnit.SECONDS)
+            } catch (e: Exception) {
+                throw IllegalStateException("Registry lookup wishes service failed and connection time out", e)
+            }
+
             if (cleanRuntimeDir) {
                 wishesService.destroy()
                 wishesService.clean()
@@ -172,8 +179,9 @@ class PDETargetRemoteRunConfiguration(
                         if (wishesService.isJDWPRunning()) break
                         Thread.sleep(100)
                     }
-                }.get(1, TimeUnit.SECONDS)
+                }.get(3, TimeUnit.SECONDS)
             } catch (e: Exception) {
+                throw IllegalStateException("JDWP not running and connection time out", e)
             }
             if (!wishesService.isJDWPRunning()) throw IllegalStateException("JDWP not running and connection time out")
 
@@ -186,7 +194,9 @@ class PDETargetRemoteRunConfiguration(
                 process.addProcessListener(object : ProcessAdapter() {
                     override fun processTerminated(event: ProcessEvent) {
                         try {
-                            (LocateRegistry.getRegistry(remoteHost, rmiPort).lookup(rmiName) as WishesService).destroy()
+                            FutureTask {
+                                LocateRegistry.getRegistry(remoteHost, rmiPort).lookup(rmiName) as WishesService
+                            }.get(3, TimeUnit.SECONDS).destroy()
                         } catch (e: Exception) {
                         }
                     }

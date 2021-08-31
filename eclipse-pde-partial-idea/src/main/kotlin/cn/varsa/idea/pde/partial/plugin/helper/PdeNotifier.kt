@@ -8,9 +8,9 @@ object PdeNotifier {
 
     fun notification(title: String, message: String) =
         NotificationGroupManager.getInstance().getNotificationGroup(information)
-            .createNotification(title, message, NotificationType.INFORMATION)
+            .createNotification(message, NotificationType.INFORMATION).setTitle(title)
 
     fun important(title: String, message: String) =
         NotificationGroupManager.getInstance().getNotificationGroup(important)
-            .createNotification(title, message, NotificationType.WARNING)
+            .createNotification(message, NotificationType.WARNING).setTitle(title)
 }

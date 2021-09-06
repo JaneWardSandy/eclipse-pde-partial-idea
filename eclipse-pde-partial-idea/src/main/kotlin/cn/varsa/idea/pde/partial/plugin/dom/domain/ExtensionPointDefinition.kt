@@ -31,7 +31,7 @@ class ExtensionPointDefinition {
             XPathFactory.instance().compile("/schema/element[@name!='extension']", Filters.element())
     }
 
-    val file: VirtualFile
+    val file: VirtualFile?
     val plugin: String
     val id: String
     val name: String
@@ -41,7 +41,7 @@ class ExtensionPointDefinition {
     val extension: ElementDefinition?
     val elements: List<ElementDefinition>
 
-    val notifyOnes = hashSetOf<String>()
+    private val notifyOnes = hashSetOf<String>()
 
     constructor(file: VirtualFile, stream: InputStream) {
         val document = SAXBuilder().apply { saxHandlerFactory = NameSpaceCleanerFactory() }.build(stream)
@@ -58,7 +58,10 @@ class ExtensionPointDefinition {
     }
 
     constructor(input: DataInput) {
-        file = VirtualFileManager.getInstance().getFileSystem(input.readString()).findFileByPath(input.readString())!!
+        val protocol = input.readString()
+        val path = input.readString()
+        file = if (protocol.isNotBlank() && path.isNotBlank()) VirtualFileManager.getInstance().getFileSystem(protocol)
+            .findFileByPath(path) else null
 
         plugin = input.readString()
         id = input.readString()
@@ -71,8 +74,8 @@ class ExtensionPointDefinition {
     }
 
     fun save(out: DataOutput) {
-        out.writeString(file.fileSystem.protocol)
-        out.writeString(file.path)
+        out.writeString(file?.fileSystem?.protocol ?: "")
+        out.writeString(file?.path ?: "")
 
         out.writeString(plugin)
         out.writeString(id)
@@ -103,7 +106,7 @@ class ExtensionPointDefinition {
                 if (schemaLocation.startsWith(schemaProtocol)) {
                     cacheService.loadExtensionPoint(schemaLocation)
                 } else {
-                    definition.file.parent.findChild(schemaLocation)?.let { cacheService.getExtensionPoint(it) }
+                    definition.file?.parent?.findChild(schemaLocation)?.let { cacheService.getExtensionPoint(it) }
                 }.also {
                     if (it == null && definition.notifyOnes.add(schemaLocation)) {
                         PdeNotifier.important(
@@ -121,6 +124,7 @@ class ExtensionPointDefinition {
 
         other as ExtensionPointDefinition
 
+        if (file != other.file) return false
         if (plugin != other.plugin) return false
         if (id != other.id) return false
         if (name != other.name) return false
@@ -133,6 +137,7 @@ class ExtensionPointDefinition {
 
     override fun hashCode(): Int {
         var result = plugin.hashCode()
+        result = 31 * result + (file?.hashCode() ?: 0)
         result = 31 * result + id.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + includes.hashCode()

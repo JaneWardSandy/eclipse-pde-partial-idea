@@ -16,13 +16,22 @@ class KotlinPackageAccessibilityInspection : PackageAccessibilityInspection() {
         place: PsiElement, dependency: PsiElement, facet: PDEFacet, occurProblem: (Problem, PsiElement) -> Unit
     ) {
         when (dependency) {
+            is KtClassOrObject -> {
+                checkAccessibility(dependency, facet).forEach { occurProblem(it, place) }
+                dependency.getReturnTypeReference()?.classForRefactor()?.let { checkAccessibility(it, facet) }
+                    ?.forEach { occurProblem(it, place) }
+                dependency.superTypeListEntries.mapNotNull { it.typeReference?.classForRefactor() }
+                    .forEach { clazz -> checkAccessibility(clazz, facet).forEach { occurProblem(it, place) } }
+            }
+            is KtCallableDeclaration -> {
+                checkAccessibility(dependency, facet).forEach { occurProblem(it, place) }
+                dependency.getReturnTypeReference()?.classForRefactor()?.let { checkAccessibility(it, facet) }
+                    ?.forEach { occurProblem(it, place) }
+            }
             is KtNamedDeclaration -> {
                 checkAccessibility(dependency, facet).forEach { occurProblem(it, place) }
-
                 dependency.getValueParameters().mapNotNull { it.typeReference?.classForRefactor() }
                     .forEach { clazz -> checkAccessibility(clazz, facet).forEach { occurProblem(it, place) } }
-                dependency.takeIf { it is KtCallableDeclaration || it is KtClassOrObject }?.getReturnTypeReference()
-                    ?.classForRefactor()?.let { checkAccessibility(it, facet) }?.forEach { occurProblem(it, place) }
             }
         }
     }
@@ -38,7 +47,7 @@ class KotlinPackageAccessibilityInspection : PackageAccessibilityInspection() {
 
             if (facet.module == ModuleUtilCore.findModuleForPsiElement(namedDeclaration)) return emptyList()
 
-            return checkAccessibility(targetFile, packageName, qualifiedName, facet.module)
+            return checkAccessibility(targetFile as PsiFileSystemItem, packageName, qualifiedName, facet.module)
         }
     }
 }

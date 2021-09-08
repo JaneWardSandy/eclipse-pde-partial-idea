@@ -61,7 +61,7 @@ class ExtensionPointDefinition {
         val protocol = input.readString()
         val path = input.readString()
         file = if (protocol.isNotBlank() && path.isNotBlank()) VirtualFileManager.getInstance().getFileSystem(protocol)
-            .findFileByPath(path) else null
+            ?.findFileByPath(path) else null
 
         plugin = input.readString()
         id = input.readString()

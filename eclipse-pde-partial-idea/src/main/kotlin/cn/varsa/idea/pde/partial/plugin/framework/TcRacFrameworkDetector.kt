@@ -19,10 +19,7 @@ class TcRacFrameworkDetector : FacetBasedFrameworkDetector<PDEFacet, PDEFacetCon
     override fun createSuitableFilePattern(): ElementPattern<FileContent> =
         FileContentPattern.fileContent().inDirectory(MetaInf).withName(ManifestMf)
             .with(object : PatternCondition<FileContent>("OSGI manifest file") {
-                override fun accepts(
-                    t: FileContent,
-                    context: ProcessingContext?,
-                ): Boolean =
+                override fun accepts(t: FileContent, context: ProcessingContext?): Boolean =
                     t.contentAsText.splitToSequence('\r', '\n').any { it.startsWith(Constants.BUNDLE_SYMBOLICNAME) }
             })
 }

@@ -134,7 +134,10 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         override val product: String get() = this@PDETargetRunConfiguration.product ?: ""
         override val application: String get() = this@PDETargetRunConfiguration.application ?: ""
 
-        override val dataPath: File get() = File(compiler!!.compilerOutputPointer.presentableUrl, "partial-runtime")
+        override val dataPath: File
+            get() = File(
+                compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
+            )
         override val installArea: File get() = target.launcher!!.toFile().parentFile
         override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 

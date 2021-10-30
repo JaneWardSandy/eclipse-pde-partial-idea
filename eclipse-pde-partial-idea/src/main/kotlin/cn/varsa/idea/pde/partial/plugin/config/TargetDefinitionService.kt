@@ -93,7 +93,8 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
     @Attribute var alias: String? = null
     @Attribute var type: String? = null
 
-    @XCollection(elementName = "unSelectedBundles", style = XCollection.Style.v2) val bundleUnSelected = mutableListOf<String>()
+    @XCollection(elementName = "unSelectedBundles", style = XCollection.Style.v2) val bundleUnSelected =
+        mutableListOf<String>()
 
     @XMap(entryTagName = "sourceVersion", keyAttributeName = "canonicalName", valueAttributeName = "version")
     val bundleVersionSelection = hashMapOf<String, String>()
@@ -125,7 +126,7 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
             SystemInfo.isMac -> File(directory.parentFile, "MacOS/eclipse").takeIf(File::exists)
             SystemInfo.isWindows -> arrayOf("Teamcenter.exe", "eclipse.exe").map { File(directory, it) }
                 .firstOrNull(File::exists)
-            else -> null
+            else -> File(directory, "eclipse").takeIf(File::exists)
         }?.also { launcher = it.canonicalPath }
 
         indicator.checkCanceled()

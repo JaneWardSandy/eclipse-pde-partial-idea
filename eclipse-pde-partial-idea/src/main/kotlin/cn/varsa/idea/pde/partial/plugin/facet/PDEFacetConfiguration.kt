@@ -13,7 +13,7 @@ class PDEFacetConfiguration : FacetConfiguration, ModificationTracker, Persisten
     private val modificationCount = AtomicLong()
 
     @Attribute var compilerOutputDirectory = "out"
-    @XCollection(elementName = "binary", style = XCollection.Style.v2) val binaryOutput = hashSetOf(MetaInf)
+    @XCollection(elementName = "binary", style = XCollection.Style.v2) val binaryOutput = hashSetOf(MetaInf, PluginsXml)
 
     override fun createEditorTabs(
         editorContext: FacetEditorContext, validatorsManager: FacetValidatorsManager

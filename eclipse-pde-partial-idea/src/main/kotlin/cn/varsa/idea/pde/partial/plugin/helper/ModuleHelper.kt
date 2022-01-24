@@ -138,10 +138,10 @@ object ModuleHelper {
             metaInfDir.createChildData(null, ManifestMf), """
                 Manifest-Version: 1.0
                 $BUNDLE_MANIFESTVERSION: 2
-                $BUNDLE_NAME: ${module.name.substringAfterLast('.').toUpperCase()}
+                $BUNDLE_NAME: ${module.name.substringAfterLast('.').uppercase()}
                 $BUNDLE_SYMBOLICNAME: ${module.name};$SINGLETON_DIRECTIVE:=true
                 $BUNDLE_VERSION: 1.0.0
-                $BUNDLE_ACTIVATOR: ${module.name.toLowerCase()}.Activator
+                $BUNDLE_ACTIVATOR: ${module.name.lowercase()}.Activator
                 $BUNDLE_VENDOR: Varsa Studio
                 $REQUIRE_BUNDLE: org.eclipse.ui,
                  org.eclipse.core.runtime

@@ -79,14 +79,15 @@ tasks {
     compileJava {
         sourceCompatibility = "11"
         targetCompatibility = "11"
+        inputs.property("moduleName", "Wishes")
     }
 
     compileKotlin {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
             jvmTarget = "11"
-            apiVersion = "1.5"
-            languageVersion = "1.5"
+            apiVersion = "1.6"
+            languageVersion = "1.6"
         }
     }
 }

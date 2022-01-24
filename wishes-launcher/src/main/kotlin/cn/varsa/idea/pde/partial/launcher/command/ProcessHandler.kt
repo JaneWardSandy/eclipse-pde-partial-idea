@@ -43,7 +43,7 @@ class ProcessHandler(commandLine: CommandLine) {
                             try {
                                 stdErrReader.waitFor()
                                 stdOutReader.waitFor()
-                            } catch (e: InterruptedException) {
+                            } catch (_: InterruptedException) {
                             }
                         } finally {
                             notifyProcessTerminated(exitCode.toInt())
@@ -177,14 +177,14 @@ class ProcessWaitFor(process: Process, handler: ProcessHandler) {
                 try {
                     exitCode = process.waitFor()
                     break
-                } catch (e: InterruptedException) {
+                } catch (_: InterruptedException) {
                 }
             }
         } finally {
             if (!detached) {
                 try {
                     terminationCallback.take().accept(exitCode)
-                } catch (e: InterruptedException) {
+                } catch (_: InterruptedException) {
                 }
             }
         }
@@ -200,15 +200,15 @@ class ProcessWaitFor(process: Process, handler: ProcessHandler) {
     fun waitFor() {
         try {
             waitForThreadFuture.get()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
         }
     }
 
     fun waitFor(timeout: Long, unit: TimeUnit): Boolean {
         try {
             waitForThreadFuture.get(timeout, unit)
-        } catch (e: CancellationException) {
-        } catch (e: TimeoutException) {
+        } catch (_: CancellationException) {
+        } catch (_: TimeoutException) {
         }
 
         return waitForThreadFuture.isDone

@@ -87,7 +87,7 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
             val orderEntries = model.orderEntries.toMutableList()
             val orderEntriesMap = orderEntries.associateBy { it.presentableName }
 
-            val kotlinOrder = orderEntriesMap.filter { it.key.startsWith(KotlinOrderEntryName) }.values
+            val kotlinOrder = orderEntriesMap.filter { it.key.startsWith(KotlinOrderEntryName) }.values.toSet()
             val runtimeOrder = orderEntriesMap[ModuleLibraryName]
             val dependencyOrder = area.bundleRequiredOrFromReExportOrderedList.map { it.asCanonicalName }.mapNotNull {
                 orderEntriesMap[it] ?: orderEntriesMap["$ProjectLibraryNamePrefix$it"]

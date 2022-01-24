@@ -64,10 +64,10 @@ class BundleManifestCacheService(private val project: Project) {
     fun getManifest(root: VirtualFile): BundleManifest? = readCompute { getManifestFile(root)?.let(this::getManifest0) }
 
     private fun getManifestPsi(module: Module): VirtualFile? =
-        module.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(ManifestPath) }.firstOrNull()
+        module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(ManifestPath) }
 
     private fun getManifestFile(root: VirtualFile): VirtualFile? = root.validFileOrRequestResolve()?.let {
-        if (it.extension?.toLowerCase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
+        if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
             JarFileSystem.getInstance().getJarRootForLocalFile(it)
         } else {
             it

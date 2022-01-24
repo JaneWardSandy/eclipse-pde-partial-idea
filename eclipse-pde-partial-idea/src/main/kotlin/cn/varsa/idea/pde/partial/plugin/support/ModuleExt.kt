@@ -35,7 +35,7 @@ fun Module.isBundleRequiredOrFromReExport(symbolName: String, version: Set<Versi
     // Re-export dependency tree can resolve bundle
     allRequiredFromReExport.contains(symbolName).ifTrue { return true }
 
-    // Re-export bundle contain module, it need calc again
+    // Re-export bundle contain module, it needs calc again
     val modulesManifest =
         project.allPDEModules().filterNot { it == this }.mapNotNull(cacheService::getManifest).toHashSet()
 
@@ -66,7 +66,7 @@ private fun isBundleFromReExportOnly(
     allReExport.contains(symbolName).ifTrue { return true }
 
     // Dependency tree contains module, it needs calc again, and remove it from module set to not calc again and again and again
-    return modulesManifest.filter { allReExport.contains(it.bundleSymbolicName?.key) }.also { modulesManifest -= it }
+    return modulesManifest.filter { allReExport.contains(it.bundleSymbolicName?.key) }.toSet().also { modulesManifest -= it }
         .any { isBundleFromReExportOnly(it, symbolName, version, cacheService, managementService, modulesManifest) }
 }
 

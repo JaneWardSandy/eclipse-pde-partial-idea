@@ -124,7 +124,7 @@ class PluginXmlCacheService(private val project: Project) {
         ?.let { getXmlInfo(bundle.bundleSymbolicName, it, bundle.root, bundle.sourceBundle?.root) }
 
     fun getXmlInfo(module: Module): XmlInfo? =
-        module.moduleRootManager.contentRoots.mapNotNull { it.findChild(PluginsXml) }.firstOrNull()?.let {
+        module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findChild(PluginsXml) }?.let {
             getXmlInfo(cacheService.getManifest(module)?.bundleSymbolicName?.key ?: module.name, it, it.parent)
         }
 

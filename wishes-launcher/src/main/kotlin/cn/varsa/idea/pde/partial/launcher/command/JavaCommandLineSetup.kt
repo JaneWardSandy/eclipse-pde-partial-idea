@@ -29,7 +29,7 @@ class JavaCommandLineSetup {
         } else {
             try {
                 commandLine.charset = Charset.forName(encoding)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
         }
 

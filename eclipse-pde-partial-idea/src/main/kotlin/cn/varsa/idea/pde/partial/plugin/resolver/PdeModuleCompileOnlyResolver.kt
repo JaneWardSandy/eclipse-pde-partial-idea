@@ -18,10 +18,10 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
     override fun resolve(area: Module) {
         PDEFacet.getInstance(area) ?: return
 
-        val buildPropertiesFile = area.moduleRootManager.contentRoots.mapNotNull {
+        val buildPropertiesFile = area.moduleRootManager.contentRoots.firstNotNullOfOrNull {
             it.refresh(false, false)
             it.findChild(BuildProperties)
-        }.firstOrNull()?.also { it.refresh(false, false) } ?: return
+        }?.also { it.refresh(false, false) } ?: return
 
         val buildProperties = Properties().apply { buildPropertiesFile.inputStream.use { load(it) } }
         val classPaths = buildProperties.getProperty("jars.extra.classpath")?.splitToSequence(',') ?: return
@@ -37,7 +37,7 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
         val classesRoot = classPaths.mapNotNull { url ->
             val urlFragments = url.split('/')
             if (urlFragments[0] != "platform:") {
-                area.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(url) }.firstOrNull()
+                area.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(url) }
             } else if (urlFragments.size > 2 && urlFragments[1].equalAny("plugin", "fragment", ignoreCase = true)) {
                 managementService.getBundlesByBSN(urlFragments[2])?.values?.firstOrNull()?.let { definition ->
                     if (urlFragments.size == 3) {
@@ -52,8 +52,7 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
                         null
                     } else {
                         val entry = urlFragments.subList(3, urlFragments.size).joinToString("/")
-                        module.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(entry) }
-                            .firstOrNull()
+                        module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(entry) }
                     }
                 }
             } else {

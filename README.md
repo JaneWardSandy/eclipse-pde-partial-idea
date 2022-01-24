@@ -7,7 +7,7 @@
 ## Download
 
 The plugin is available in
-the [JetBrains Plugin Repository](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial) so you can download it
+the [JetBrains Plugin Repository](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial), so you can download it
 directly from your IDE.
 
 ## Issues or questions?
@@ -45,28 +45,28 @@ Tag hint, attribute auto-completion, extension-point valid
 Clone the project and open it in IntelliJ IDEA, Selection the Gradle task `intellij > runIde` to start a sandbox
 instance of IntelliJ IDEA with the plugin installed
 
-## Comparision
+## Comparison
 
-Feature | [PDE Partial]((https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)) | [Osmorc](https://plugins.jetbrains.com/plugin/1816-osgi)
-------- | ----------- | --------
-Framework support | equinox Only | equinox, felix, concierge, knopflerfish
-Project import support | x | by bnd
-Bundle source | eclipse target | bundle directory
-Manifest lint | partial support | partial support
-Manifest auto gen | x | by bnd
-Manifest manually edit | support with hint, reference navigate | support
-Code inspection | support | support
-Package accessibility | java, kotlin, import package, required bundle, re-export required bundle | java, import package only
-Quick fix | import package, required bundle, required bundle with version | import package
-Bundle startup manager | startup level only | startup level, auto startup
-BND | x | by bnd
-Maven | x | by bnd
-Library | auto create | x
-Facet | for binary package | for manifest file edit mode
-Artifact | auto create for package | x
-OSGI launche | x | support
-OSGI console | x | support
-Launche RCP | local run/debug, remote debug | x
+| Feature                | [PDE Partial]((https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)) | [Osmorc](https://plugins.jetbrains.com/plugin/1816-osgi) |
+|------------------------|---------------------------------------------------------------------------------|----------------------------------------------------------|
+| Framework support      | equinox Only                                                                    | equinox, felix, concierge, knopflerfish                  |
+| Project import support | x                                                                               | by bnd                                                   |
+| Bundle source          | eclipse target                                                                  | bundle directory                                         |
+| Manifest lint          | partial support                                                                 | partial support                                          |
+| Manifest auto gen      | x                                                                               | by bnd                                                   |
+| Manifest manually edit | support with hint, reference navigate                                           | support                                                  |
+| Code inspection        | support                                                                         | support                                                  |
+| Package accessibility  | java, kotlin, import package, required bundle, re-export required bundle        | java, import package only                                |
+| Quick fix              | import package, required bundle, required bundle with version                   | import package                                           |
+| Bundle startup manager | startup level only                                                              | startup level, auto startup                              |
+| BND                    | x                                                                               | by bnd                                                   |
+| Maven                  | x                                                                               | by bnd                                                   |
+| Library                | auto create                                                                     | x                                                        |
+| Facet                  | for binary package                                                              | for manifest file edit mode                              |
+| Artifact               | auto create for package                                                         | x                                                        |
+| OSGI launche           | x                                                                               | support                                                  |
+| OSGI console           | x                                                                               | support                                                  |
+| Launche RCP            | local run/debug, remote debug                                                   | x                                                        |
 
 ## Screenshots
 

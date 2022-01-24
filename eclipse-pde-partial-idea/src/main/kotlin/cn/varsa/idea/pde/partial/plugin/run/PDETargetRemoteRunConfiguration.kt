@@ -160,7 +160,8 @@ class PDETargetRemoteRunConfiguration(
         override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult {
             val wishesService = try {
                 FutureTask {
-                    LocateRegistry.getRegistry(remoteHost, rmiPort).also { it.list().forEach(::println) }.lookup(rmiName) as WishesService
+                    LocateRegistry.getRegistry(remoteHost, rmiPort).also { it.list().forEach(::println) }
+                        .lookup(rmiName) as WishesService
                 }.also { Thread(it).start() }.get(3, TimeUnit.SECONDS)
             } catch (e: Exception) {
                 thisLogger().warn(
@@ -204,7 +205,7 @@ class PDETargetRemoteRunConfiguration(
                             FutureTask {
                                 LocateRegistry.getRegistry(remoteHost, rmiPort).lookup(rmiName) as WishesService
                             }.also { Thread(it).start() }.get(3, TimeUnit.SECONDS)?.destroy()
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                         }
                     }
                 })

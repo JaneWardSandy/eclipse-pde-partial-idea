@@ -701,7 +701,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         }.also { ShadowLocationRoot.add(it) }
 
         fun removeLocation(location: TargetLocationDefinition): ShadowLocation {
-            sourceVersions.values.forEach { it -= location.bundles }
+            sourceVersions.values.forEach { it -= location.bundles.toSet() }
             return locations.first { it.location == location }.also { ShadowLocationRoot.remove(it) }
         }
 

@@ -9,25 +9,25 @@ dependencies {
 }
 
 intellij {
-    version = "2021.1.1"
-    setPlugins("java", "org.jetbrains.kotlin")
+    version.set("2021.3.1")
+    plugins.set(listOf("java", "org.jetbrains.kotlin"))
 
-    downloadSources = true
+    downloadSources.set(true)
 }
 
 tasks {
     patchPluginXml {
-        sinceBuild("211")
-        untilBuild("")
+        sinceBuild.set("213")
+        untilBuild.set("")
 
         val projectPath = rootProject.projectDir.path
-        pluginDescription(File("$projectPath/DESCRIPTION.html").readText(Charsets.UTF_8))
-        changeNotes(File("$projectPath/CHANGES.html").readText(Charsets.UTF_8))
+        pluginDescription.set(File("$projectPath/DESCRIPTION.html").readText(Charsets.UTF_8))
+        changeNotes.set(File("$projectPath/CHANGES.html").readText(Charsets.UTF_8))
     }
 
     publishPlugin {
         val ideaPluginToken: String by rootProject.extra
-        token(ideaPluginToken)
+        token.set(ideaPluginToken)
     }
 
     runIde {
@@ -46,8 +46,8 @@ tasks {
     compileKotlin {
         kotlinOptions {
             jvmTarget = "11"
-            apiVersion = "1.5"
-            languageVersion = "1.5"
+            apiVersion = "1.6"
+            languageVersion = "1.6"
         }
     }
 }

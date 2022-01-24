@@ -24,8 +24,11 @@ import com.intellij.openapi.roots.*
 import com.intellij.util.*
 import com.intellij.util.execution.*
 import org.jdom.*
+import java.net.*
 import java.rmi.registry.*
+import java.rmi.server.*
 import java.util.concurrent.*
+
 
 class PDETargetRemoteRunConfiguration(
     project: Project, factory: ConfigurationFactory, name: String
@@ -42,6 +45,7 @@ class PDETargetRemoteRunConfiguration(
     var rmiPort = 7995
     var rmiName = "WishesService"
     var remotePort = 5005
+    var timeoutInSec = 3
     var jdkVersion = PDETargetRemoteRunConfigurationEditor.JDKVersionItem.JDK5to8
 
     var listeningTeardown = false
@@ -75,14 +79,15 @@ class PDETargetRemoteRunConfiguration(
         super<LocatableConfigurationBase>.writeExternal(element)
 
         element.getOrCreate("portal").apply {
-            setAttribute("product", product)
-            setAttribute("application", application)
+            setAttribute("product", product ?: "")
+            setAttribute("application", application ?: "")
         }
         element.getOrCreate("remote").apply {
             setAttribute("host", remoteHost)
 
             setAttribute("rmiPort", rmiPort.toString())
             setAttribute("rmiName", rmiName)
+            setAttribute("timeoutInSec", timeoutInSec.toString())
 
             setAttribute("remotePort", remotePort.toString())
             setAttribute("jdkVersion", jdkVersion.toString())
@@ -110,14 +115,15 @@ class PDETargetRemoteRunConfiguration(
         super<LocatableConfigurationBase>.readExternal(element)
 
         element.getChild("portal")?.also {
-            product = it.getAttributeValue("product", product)
-            application = it.getAttributeValue("application", application)
+            product = it.getAttributeValue("product", product) ?: ""
+            application = it.getAttributeValue("application", application) ?: ""
         }
         element.getChild("remote")?.also { remote ->
             remoteHost = remote.getAttributeValue("host", remoteHost)
 
             rmiPort = remote.getAttributeValue("rmiPort", rmiPort.toString()).toIntOrNull() ?: rmiPort
             rmiName = remote.getAttributeValue("rmiName", rmiName)
+            timeoutInSec = remote.getAttributeValue("timeoutInSec", timeoutInSec.toString()).toIntOrNull() ?: timeoutInSec
 
             remotePort = remote.getAttributeValue("remotePort", remotePort.toString()).toIntOrNull() ?: remotePort
             jdkVersion = remote.getAttributeValue("jdkVersion", "").run {
@@ -155,21 +161,23 @@ class PDETargetRemoteRunConfiguration(
 
     private inner class PDERemoteState : RemoteState {
         private val connection = RemoteConnection(true, remoteHost, remotePort.toString(), false)
+        private val socketFactory = object : RMISocketFactory() {
+            override fun createSocket(host: String?, port: Int): Socket = Socket().apply {
+                soTimeout = timeoutInSec * 1000
+                setSoLinger(false, 0)
+                connect(InetSocketAddress(host, port), timeoutInSec * 1000)
+            }
+
+            override fun createServerSocket(port: Int): ServerSocket = ServerSocket(port)
+        }
 
         override fun getRemoteConnection(): RemoteConnection = connection
         override fun execute(executor: Executor?, runner: ProgramRunner<*>): ExecutionResult {
             val wishesService = try {
-                FutureTask {
-                    LocateRegistry.getRegistry(remoteHost, rmiPort).also { it.list().forEach(::println) }
-                        .lookup(rmiName) as WishesService
-                }.also { Thread(it).start() }.get(3, TimeUnit.SECONDS)
+                LocateRegistry.getRegistry(remoteHost, rmiPort, socketFactory).lookup(rmiName) as WishesService
             } catch (e: Exception) {
-                thisLogger().warn(
-                    "Registry lookup wishes service $remoteHost:$rmiPort failed and connection time out: $e", e
-                )
-                throw IllegalStateException(
-                    "Registry lookup wishes service $remoteHost:$rmiPort failed and connection time out: $e", e
-                )
+                thisLogger().warn("Registry lookup wishes service $remoteHost:$rmiPort failed: $e", e)
+                throw IllegalStateException("Registry lookup wishes service $remoteHost:$rmiPort failed: $e", e)
             }
 
             if (cleanRuntimeDir) {

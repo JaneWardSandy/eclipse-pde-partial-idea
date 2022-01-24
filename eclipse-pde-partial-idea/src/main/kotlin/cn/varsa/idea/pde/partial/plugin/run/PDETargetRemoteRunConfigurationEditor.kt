@@ -33,6 +33,7 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
     private val rmiPortSpinner = JBIntSpinner(7995, 1, Int.MAX_VALUE)
     private val rmiNameTextField = JBTextField()
     private val remotePortSpinner = JBIntSpinner(5005, 1, Int.MAX_VALUE)
+    private val timeoutInSecSpinner = JBIntSpinner(3, 1, 60)
     private val jdkVersion = ComboBox(JDKVersionItem.values()).apply {
         renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
         ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
@@ -59,6 +60,8 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         LabeledComponent.create(rmiNameTextField, message("run.remote.config.tab.wishes.rmiName"), BorderLayout.WEST)
     private val rmiPortComponent =
         LabeledComponent.create(rmiPortSpinner, message("run.remote.config.tab.wishes.rmiPort"), BorderLayout.WEST)
+    private val timeoutInSecComponent =
+        LabeledComponent.create(timeoutInSecSpinner, message("run.remote.config.tab.wishes.timeoutInSec"), BorderLayout.WEST)
     private val jdkVersionComponent =
         LabeledComponent.create(jdkVersion, message("run.remote.config.tab.wishes.javaVersion"), BorderLayout.WEST)
 
@@ -78,11 +81,12 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         panel.add(BorderLayoutPanel().addToCenter(VerticalBox().apply {
             add(remoteHostComponent)
             add(rmiNameComponent)
+            add(jdkVersionComponent)
         }).addToRight(VerticalBox().apply {
             add(remotePortComponent)
             add(rmiPortComponent)
+            add(timeoutInSecComponent)
         }))
-        panel.add(jdkVersionComponent)
         panel.add(JSeparator())
         panel.add(vmParametersComponent)
         panel.add(programParametersComponent)
@@ -93,7 +97,7 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
 
         panel.updateUI()
 
-        UIUtil.mergeComponentsWithAnchor(remotePortComponent, rmiPortComponent)
+        UIUtil.mergeComponentsWithAnchor(remotePortComponent, rmiPortComponent, timeoutInSecComponent)
         myAnchor = UIUtil.mergeComponentsWithAnchor(
             productComponent,
             applicationComponent,
@@ -124,6 +128,7 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         rmiNameTextField.text = configuration.rmiName
         remotePortSpinner.number = configuration.remotePort
         jdkVersion.item = configuration.jdkVersion
+        timeoutInSecSpinner.number = configuration.timeoutInSec
 
         vmParametersEditor.text = configuration.vmParameters
         programParametersEditor.text = configuration.programParameters
@@ -143,6 +148,7 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
         configuration.rmiName = rmiNameTextField.text
         configuration.remotePort = remotePortSpinner.number
         configuration.jdkVersion = jdkVersion.item ?: JDKVersionItem.JDK5to8
+        configuration.timeoutInSec = timeoutInSecSpinner.number
 
         configuration.vmParameters = vmParametersEditor.text
         configuration.programParameters = programParametersEditor.text

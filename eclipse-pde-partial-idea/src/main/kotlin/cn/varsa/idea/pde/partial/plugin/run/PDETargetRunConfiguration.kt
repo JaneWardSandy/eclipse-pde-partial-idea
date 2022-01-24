@@ -59,8 +59,8 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
         element.getOrCreate("partial").apply {
-            setAttribute("product", product)
-            setAttribute("application", application)
+            setAttribute("product", product ?: "")
+            setAttribute("application", application ?: "")
             setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
         }
     }

@@ -23,32 +23,37 @@ object ModuleHelper {
     // Compile output path
     fun resetCompileOutputPath(module: Module) {
         val facet = PDEFacet.getInstance(module) ?: return
-        setCompileOutputPath(module, "${module.getModuleDir()}/${facet.configuration.compilerOutputDirectory}")
+        setCompileOutputPath(
+            module,
+            "${module.getModuleDir()}/${facet.configuration.compilerClassesOutput}",
+            "${module.getModuleDir()}/${facet.configuration.compilerTestClassesOutput}"
+        )
     }
 
-    fun setCompileOutputPath(module: Module, baseDirectory: String) {
+    fun setCompileOutputPath(module: Module, compilerOutputPath: String, compilerOutputPathForTest: String) {
         PDEFacet.getInstance(module) ?: return
-        ModuleRootModificationUtil.modifyModel(module) { setCompileOutputPath(it, baseDirectory) }
+        ModuleRootModificationUtil.modifyModel(module) {
+            setCompileOutputPath(
+                it, compilerOutputPath, compilerOutputPathForTest
+            )
+        }
     }
 
-    private fun setCompileOutputPath(model: ModifiableRootModel, baseDirectory: String): Boolean {
+    private fun setCompileOutputPath(
+        model: ModifiableRootModel, compilerOutputPath: String, compilerOutputPathForTest: String
+    ): Boolean {
         PDEFacet.getInstance(model.module) ?: return false
         val extension = model.getModuleExtension(CompilerModuleExtension::class.java) ?: return false
 
         extension.isExcludeOutput = true
         extension.inheritCompilerOutputPath(false)
         extension.setCompilerOutputPath(
-            VirtualFileManager.constructUrl(
-                StandardFileSystems.FILE_PROTOCOL, "$baseDirectory/${CompilerModuleExtension.PRODUCTION}"
-            )
+            VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, compilerOutputPath)
         )
         extension.setCompilerOutputPathForTests(
-            VirtualFileManager.constructUrl(
-                StandardFileSystems.FILE_PROTOCOL, "$baseDirectory/${CompilerModuleExtension.TEST}"
-            )
+            VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, compilerOutputPathForTest)
         )
 
-        logger.info("Update compiler output for ${model.module.name} to $baseDirectory")
         return true
     }
 

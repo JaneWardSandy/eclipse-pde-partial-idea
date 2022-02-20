@@ -67,7 +67,8 @@ class ConfigControl : Controller(), ConfigService {
     override var application: String = ""
 
     override val dataPath: File get() = File(runtimeDirectory, "partial-runtime")
-    override val installArea: File get() = launcher.toFile().parentFile
+    override val installArea: File
+        get() = (launcher.takeIf(String::isNotBlank)?.toFile() ?: launcherJar.toFile().parentFile).parentFile
 
     override val projectDirectory: File get() = projectRoot.toFile()
 

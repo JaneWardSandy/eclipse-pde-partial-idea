@@ -44,7 +44,7 @@ class LibraryView : View("Libraries") {
 
         completeWhen {
             configControl.run {
-                librariesProperty.sizeProperty.greaterThan(0) and launcherProperty.isNotEmpty and launcherJarProperty.isNotEmpty
+                librariesProperty.sizeProperty.greaterThan(0) and launcherJarProperty.isNotEmpty
             }
         }
     }

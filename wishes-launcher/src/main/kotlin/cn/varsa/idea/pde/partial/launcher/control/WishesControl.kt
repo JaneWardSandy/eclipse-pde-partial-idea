@@ -23,7 +23,10 @@ class WishesControl : Controller() {
         parameters.charset = configControl.osCharset.name()
 
         parameters.classPath.add(configControl.launcherJar)
-        parameters.programParameters.addAll("-launcher", configControl.launcher)
+
+        if (configControl.launcher.isNotBlank()) {
+            parameters.programParameters.addAll("-launcher", configControl.launcher)
+        }
 
         parameters.programParameters.addAll("-data", configControl.dataPath.absolutePath)
         parameters.programParameters.addAll("-configuration", configControl.configurationDirectory.protocolUrl)

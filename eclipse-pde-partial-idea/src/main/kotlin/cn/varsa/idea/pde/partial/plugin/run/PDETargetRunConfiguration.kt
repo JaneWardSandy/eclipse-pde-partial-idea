@@ -51,7 +51,6 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this)
 
         if (compiler == null) throw RuntimeConfigurationWarning(message("run.local.config.noCompiler", project.name))
-        if (target.launcher == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncher"))
         if (target.launcherJar == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncherJar"))
         if (product.isNullOrBlank() || application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
     }
@@ -101,7 +100,11 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
 
                 parameters.classPath.clear()
                 parameters.classPath.add(target.launcherJar!!)
-                parameters.programParametersList.addAll("-launcher", target.launcher!!)
+
+                if (target.launcher != null) {
+                    parameters.programParametersList.addAll("-launcher", target.launcher)
+                }
+
                 parameters.programParametersList.addAll("-name", "Eclipse")
                 parameters.programParametersList.addAll("-showsplash", "600")
 
@@ -138,7 +141,8 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
             get() = File(
                 compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
             )
-        override val installArea: File get() = target.launcher!!.toFile().parentFile
+        override val installArea: File
+            get() = (target.launcher?.toFile() ?: target.launcherJar!!.toFile().parentFile).parentFile
         override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 
         override val libraries: List<File>

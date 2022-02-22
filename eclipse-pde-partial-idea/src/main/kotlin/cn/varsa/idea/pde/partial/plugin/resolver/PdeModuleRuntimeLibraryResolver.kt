@@ -29,11 +29,11 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
 
         val cacheService = BundleManifestCacheService.getInstance(area.project)
         val managementService = BundleManagementService.getInstance(area.project)
+        val bundleManifest = cacheService.getManifest(area)
 
-        val classesRoot =
-            cacheService.getManifest(area)?.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
-                area.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(binaryName) }
-            }?.map { it.protocolUrl }?.distinct() ?: emptyList()
+        val classesRoot = bundleManifest?.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
+            area.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(binaryName) }
+        }?.map { it.protocolUrl }?.distinct() ?: emptyList()
 
         area.updateModel { model ->
             val libraryTableModel = model.moduleLibraryTable.modifiableModel
@@ -61,10 +61,14 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
             }
 
             val orderedList = area.bundleRequiredOrFromReExportOrderedList
+            val importedList = bundleManifest?.importedPackageAndVersion() ?: emptyMap()
+
             applicationInvokeAndWait {
-                area.project.allPDEModules().filterNot { it == area }
-                    .filter { module -> orderedList.any { it.first == cacheService.getManifest(module)?.bundleSymbolicName?.key } }
-                    .forEach { model.findModuleOrderEntry(it) ?: model.addModuleOrderEntry(it) }
+                area.project.allPDEModules().filterNot { it == area }.filter { module ->
+                    val manifest = cacheService.getManifest(module)
+                    orderedList.any { it.first == manifest?.bundleSymbolicName?.key } || manifest?.exportedPackageAndVersion()
+                        ?.any { (packageName, version) -> importedList[packageName]?.includes(version) == true } == true
+                }.forEach { model.findModuleOrderEntry(it) ?: model.addModuleOrderEntry(it) }
             }
 
             area.project.libraryTable().libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }

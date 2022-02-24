@@ -20,5 +20,7 @@ class ManifestHeaderParserProvider : HeaderParserProvider {
         parsers[BUNDLE_CLASSPATH] = BundleClasspathParser
         parsers[IMPORT_PACKAGE] = ImportPackageParser
         parsers[EXPORT_PACKAGE] = ExportPackageParser
+
+        parsers[FRAGMENT_HOST] = FragmentHostParser
     }
 }

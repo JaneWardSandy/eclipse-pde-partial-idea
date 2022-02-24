@@ -27,6 +27,10 @@ import org.osgi.framework.Version
 private fun AnnotationHolder.createError(message: String, range: TextRange) =
     newAnnotation(HighlightSeverity.ERROR, message).range(range).create()
 
+private fun AnnotationHolder.createWeakWarning(message: String, range: TextRange) =
+    newAnnotation(HighlightSeverity.WEAK_WARNING, message).range(range).create()
+
+
 object OsgiHeaderParser : StandardHeaderParser() {
     private val clauseEndTokens =
         TokenSet.orSet(ManifestParser.HEADER_END_TOKENS, TokenSet.create(ManifestTokenType.COMMA))
@@ -295,13 +299,13 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
                     holder.createError(message("manifest.lang.invalidValue", text), clause.textRange)
                     annotated = true
                 } else if (BundleManagementService.getInstance(project)
-                        .getBundlesByBSN(text, range) == null && project.allPDEModules()
+                        .getBundlesByBSN(text, range) == null && project.allPDEModules(header.module)
                         .mapNotNull { cacheService.getManifest(it) }
                         .none { it.bundleSymbolicName?.key == text && range.includes(it.bundleVersion) }
                 ) {
                     val versions = BundleManagementService.getInstance(project).getBundlesByBSN(text)?.keys?.toHashSet()
                         ?: hashSetOf()
-                    versions += project.allPDEModules().mapNotNull { cacheService.getManifest(it) }
+                    versions += project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
                         .filter { it.bundleSymbolicName?.key == text }.map { it.bundleVersion }
 
                     holder.createError(
@@ -310,6 +314,9 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
                         ), if (versionAttr != null) versionAttr.textRange else clause.textRange
                     )
                     holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
+                    annotated = true
+                } else if (header.module?.let { cacheService.getManifest(it) }?.fragmentHost?.key == text) {
+                    holder.createWeakWarning(message("manifest.lang.requiredWasFragmentHost", text), clause.textRange)
                     annotated = true
                 }
             }
@@ -427,7 +434,7 @@ object ImportPackageParser : HeaderParser by BasePackageParser {
                 valuePart.unwrappedText.substringBeforeLast(".*").takeIf(String::isNotBlank)?.also { packageName ->
                     val directories = PsiHelper.resolvePackage(header, packageName)
 
-                    val modelsMap = header.project.allPDEModules().map { module ->
+                    val modelsMap = header.project.allPDEModules(header.module).map { module ->
                         val manifest = cacheService.getManifest(module)
                         Triple(module,
                                manifest,
@@ -526,5 +533,75 @@ object ExportPackageParser : HeaderParser by BasePackageParser {
         }
 
         return PsiReference.EMPTY_ARRAY
+    }
+}
+
+object FragmentHostParser : HeaderParser by RequireBundleParser {
+    override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
+        var annotated = false
+
+        val clauses = header.headerValues.mapNotNull { it as? Clause }
+        if (clauses.size > 1) {
+            holder.createError(message("manifest.lang.multipleClause"), header.textRange)
+            annotated = true
+        } else if (clauses.isEmpty()) {
+            holder.createError(message("manifest.lang.invalidBlank"), header.textRange)
+            annotated = true
+        } else {
+            val clause = clauses.first()
+
+            val versionAttr = clause.getAttributes().firstOrNull { it.name == BUNDLE_VERSION_ATTRIBUTE }
+            val rangeText = versionAttr?.getValue()
+            val range = try {
+                if (rangeText?.surroundingWith('\"') == false) throw IllegalArgumentException("$rangeText: invalid format, should be quoted")
+                rangeText.parseVersionRange()
+            } catch (e: Exception) {
+                holder.createError(
+                    message("manifest.lang.invalidRange", e.message ?: "Unknown"),
+                    versionAttr?.textRange ?: clause.textRange
+                )
+                annotated = true
+                VersionRangeAny
+            }
+
+            val text = clause.getValue()?.unwrappedText
+            if (text.isNullOrBlank()) {
+                holder.createError(message("manifest.lang.invalidBlank"), clause.textRange)
+                annotated = true
+            } else {
+                val project = header.project
+                val cacheService = BundleManifestCacheService.getInstance(project)
+
+                if (header.module?.let { cacheService.getManifest(it) }?.bundleSymbolicName?.key == text) {
+                    holder.createError(message("manifest.lang.invalidValue", text), clause.textRange)
+                    annotated = true
+                } else {
+                    val manifest = project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
+                        .firstOrNull { it.bundleSymbolicName?.key == text && range.includes(it.bundleVersion) }
+                        ?: BundleManagementService.getInstance(project).getBundlesByBSN(text, range)?.manifest
+
+                    if (manifest == null) {
+                        val versions = (BundleManagementService.getInstance(project).getBundlesByBSN(text)?.keys
+                            ?: emptySet()) + project.allPDEModules(header.module)
+                            .mapNotNull { cacheService.getManifest(it) }.filter { it.bundleSymbolicName?.key == text }
+                            .map { it.bundleVersion }
+
+
+                        holder.createError(
+                            message(
+                                "manifest.lang.notExistVersionInRange", range, versions.sorted().joinToString()
+                            ), if (versionAttr != null) versionAttr.textRange else clause.textRange
+                        )
+                        holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
+                        annotated = true
+                    } else if (manifest.fragmentHost != null) {
+                        holder.createError(message("manifest.lang.hostWasFragment"), clause.textRange)
+                        annotated = true
+                    }
+                }
+            }
+        }
+
+        return annotated || RequireBundleParser.annotate(header, holder)
     }
 }

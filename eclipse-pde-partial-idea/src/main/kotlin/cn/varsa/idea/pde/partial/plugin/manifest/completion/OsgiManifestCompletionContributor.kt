@@ -34,9 +34,8 @@ class OsgiManifestCompletionContributor : CompletionContributor() {
             clause(BUNDLE_REQUIREDEXECUTIONENVIRONMENT),
             ValueProvider(*JavaVersions.values().map { it.ee }.toTypedArray())
         )
-        extend(
-            CompletionType.BASIC, clause(REQUIRE_BUNDLE), BundleNameProvider()
-        )
+        extend(CompletionType.BASIC, clause(REQUIRE_BUNDLE), BundleNameProvider())
+        extend(CompletionType.BASIC, clause(FRAGMENT_HOST), BundleNameProvider())
 
         // Directive Key
         extend(
@@ -59,14 +58,11 @@ class OsgiManifestCompletionContributor : CompletionContributor() {
             header(IMPORT_PACKAGE),
             HeaderParametersProvider(VERSION_ATTRIBUTE, BUNDLE_SYMBOLICNAME_ATTRIBUTE, "$RESOLUTION_DIRECTIVE:")
         )
-        extend(
-            CompletionType.BASIC, header(ACTIVATION_LAZY), ValueProvider(ACTIVATION_LAZY)
-        )
+        extend(CompletionType.BASIC, header(ACTIVATION_LAZY), ValueProvider(ACTIVATION_LAZY))
+        extend(CompletionType.BASIC, header(FRAGMENT_HOST), HeaderParametersProvider(BUNDLE_VERSION_ATTRIBUTE))
 
         // Directive Value
-        extend(
-            CompletionType.BASIC, directive(SINGLETON_DIRECTIVE), ValueProvider(true.toString(), false.toString())
-        )
+        extend(CompletionType.BASIC, directive(SINGLETON_DIRECTIVE), ValueProvider(true.toString(), false.toString()))
         extend(
             CompletionType.BASIC,
             directive(FRAGMENT_ATTACHMENT_DIRECTIVE),
@@ -125,8 +121,9 @@ class BundleNameProvider : CompletionProvider<CompletionParameters>() {
         parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet
     ) {
         parameters.editor.project?.let { project ->
-            project.allPDEModulesSymbolicName(parameters.originalFile.module) + BundleManagementService.getInstance(project)
-                .getBundles().map { it.bundleSymbolicName }
+            project.allPDEModulesSymbolicName(parameters.originalFile.module) + BundleManagementService.getInstance(
+                project
+            ).getBundles().map { it.bundleSymbolicName }
         }?.distinct()?.sorted()?.forEach {
             result.addElement(LookupElementBuilder.create(it).withCaseSensitivity(false))
         }

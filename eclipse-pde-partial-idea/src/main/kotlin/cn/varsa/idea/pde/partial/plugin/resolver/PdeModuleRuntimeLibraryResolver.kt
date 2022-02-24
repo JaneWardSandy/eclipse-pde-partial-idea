@@ -62,11 +62,13 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
 
             val orderedList = area.bundleRequiredOrFromReExportOrderedList
             val importedList = bundleManifest?.importedPackageAndVersion() ?: emptyMap()
+            val hostBSN = bundleManifest?.fragmentHost?.key
 
             applicationInvokeAndWait {
                 area.project.allPDEModules().filterNot { it == area }.filter { module ->
                     val manifest = cacheService.getManifest(module)
-                    orderedList.any { it.first == manifest?.bundleSymbolicName?.key } || manifest?.exportedPackageAndVersion()
+                    val bsn = manifest?.bundleSymbolicName?.key
+                    hostBSN == bsn || orderedList.any { it.first == bsn } || manifest?.exportedPackageAndVersion()
                         ?.any { (packageName, version) -> importedList[packageName]?.includes(version) == true } == true
                 }.forEach { model.findModuleOrderEntry(it) ?: model.addModuleOrderEntry(it) }
             }
@@ -87,12 +89,16 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
     override fun postResolve(area: Module) {
         PDEFacet.getInstance(area) ?: return
 
+        val cacheService = BundleManifestCacheService.getInstance(area.project)
+        val hostBSN = cacheService.getManifest(area)?.fragmentHost?.key
+
         area.updateModel { model ->
             val orderEntries = model.orderEntries.toMutableList()
             val orderEntriesMap = orderEntries.associateBy { it.presentableName }
 
             val kotlinOrder = orderEntriesMap.filter { it.key.startsWith(KotlinOrderEntryName) }.values.toSet()
             val runtimeOrder = orderEntriesMap[ModuleLibraryName]
+            val hostOrder = orderEntriesMap[hostBSN] ?: orderEntriesMap["$ProjectLibraryNamePrefix$hostBSN"]
             val dependencyOrder = area.bundleRequiredOrFromReExportOrderedList.map { it.asCanonicalName }.mapNotNull {
                 orderEntriesMap[it] ?: orderEntriesMap["$ProjectLibraryNamePrefix$it"]
             }
@@ -104,6 +110,10 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
                 libraryIndex += kotlinOrder.size
 
                 runtimeOrder?.also {
+                    remove(it)
+                    add(libraryIndex++, it)
+                }
+                hostOrder?.also {
                     remove(it)
                     add(libraryIndex++, it)
                 }

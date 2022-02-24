@@ -602,6 +602,6 @@ object FragmentHostParser : HeaderParser by RequireBundleParser {
             }
         }
 
-        return annotated || RequireBundleParser.annotate(header, holder)
+        return annotated
     }
 }

@@ -10,11 +10,13 @@ import cn.varsa.idea.pde.partial.plugin.manifest.psi.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.lang.*
 import com.intellij.lang.annotation.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*
+import com.intellij.psi.search.*
 import com.intellij.psi.tree.*
 import org.jetbrains.lang.manifest.header.*
 import org.jetbrains.lang.manifest.header.impl.*
@@ -199,6 +201,20 @@ object NotBlankValueParser : StandardHeaderParser() {
     }
 }
 
+object BooleanValueParser : StandardHeaderParser() {
+    override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
+        val headerValue = header.headerValue
+        if (headerValue is HeaderValuePart && headerValue.unwrappedText.toBooleanStrictOrNull() == null) {
+            holder.createError(
+                message("manifest.lang.shouldBe", ECLIPSE_EXTENSIBLE_API, "true or false"),
+                headerValue.highlightingRange
+            )
+            return true
+        }
+        return false
+    }
+}
+
 object BundleSymbolicNameParser : HeaderParser by OsgiHeaderParser {
     override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
         var annotated = false
@@ -298,26 +314,32 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
                 if (header.module?.let { cacheService.getManifest(it) }?.bundleSymbolicName?.key == text) {
                     holder.createError(message("manifest.lang.invalidValue", text), clause.textRange)
                     annotated = true
-                } else if (BundleManagementService.getInstance(project)
-                        .getBundlesByBSN(text, range) == null && project.allPDEModules(header.module)
-                        .mapNotNull { cacheService.getManifest(it) }
-                        .none { it.bundleSymbolicName?.key == text && range.includes(it.bundleVersion) }
-                ) {
-                    val versions = BundleManagementService.getInstance(project).getBundlesByBSN(text)?.keys?.toHashSet()
-                        ?: hashSetOf()
-                    versions += project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
-                        .filter { it.bundleSymbolicName?.key == text }.map { it.bundleVersion }
-
-                    holder.createError(
-                        message(
-                            "manifest.lang.notExistVersionInRange", range, versions.sorted().joinToString()
-                        ), if (versionAttr != null) versionAttr.textRange else clause.textRange
-                    )
-                    holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
-                    annotated = true
                 } else if (header.module?.let { cacheService.getManifest(it) }?.fragmentHost?.key == text) {
                     holder.createWeakWarning(message("manifest.lang.requiredWasFragmentHost", text), clause.textRange)
                     annotated = true
+                } else {
+                    val manifest = project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
+                        .firstOrNull { it.bundleSymbolicName?.key == text && range.includes(it.bundleVersion) }
+                        ?: BundleManagementService.getInstance(project).getBundlesByBSN(text, range)?.manifest
+
+                    if (manifest == null) {
+                        val versions =
+                            BundleManagementService.getInstance(project).getBundlesByBSN(text)?.keys?.toHashSet()
+                                ?: hashSetOf()
+                        versions += project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
+                            .filter { it.bundleSymbolicName?.key == text }.map { it.bundleVersion }
+
+                        holder.createError(
+                            message(
+                                "manifest.lang.notExistVersionInRange", range, versions.sorted().joinToString()
+                            ), if (versionAttr != null) versionAttr.textRange else clause.textRange
+                        )
+                        holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
+                        annotated = true
+                    } else if (manifest.fragmentHost != null) {
+                        holder.createError(message("manifest.lang.requiredCannotBeFragment"), clause.textRange)
+                        annotated = true
+                    }
                 }
             }
         }
@@ -479,7 +501,21 @@ object ExportPackageParser : HeaderParser by BasePackageParser {
     override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
         var annotated = BasePackageParser.annotate(header, holder)
 
-        header.headerValues.mapNotNull { it as? Clause }.onEach { clause ->
+        val project = header.project
+        val cacheService = BundleManifestCacheService.getInstance(project)
+
+        val hostManifest =
+            header.module?.let { cacheService.getManifest(it) }?.fragmentHost?.let { it.key to it.value.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
+                ?.let { (hostBSN, hostVersion) ->
+                    project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
+                        .firstOrNull { it.isFragmentHost(hostBSN, hostVersion) } ?: BundleManagementService.getInstance(
+                        project
+                    ).getBundlesByBSN(hostBSN, hostVersion)?.manifest
+                }
+        val hostExtensibleAPI = hostManifest?.eclipseExtensibleAPI
+        val hostExportPackages = hostManifest?.exportPackage?.keys?.map { it.substringBefore(".*") }
+
+        header.headerValues.mapNotNull { it as? Clause }.forEach { clause ->
             val versionAttr = clause.getAttributes().firstOrNull { it.name == VERSION_ATTRIBUTE }
             val versionText = versionAttr?.getValue()
             try {
@@ -492,30 +528,54 @@ object ExportPackageParser : HeaderParser by BasePackageParser {
                 )
                 annotated = true
             }
-        }.mapNotNull { it.getDirectives().firstOrNull { directive -> USES_DIRECTIVE == directive.name } }
-            .mapNotNull { it.getValueElement() }.forEach { valuePart ->
-                val text = valuePart.unwrappedText
-                var start = if (text.startsWith('"')) 1 else 0
-                val length = text.length - if (text.endsWith('"')) 1 else 0
-                val offset = valuePart.textOffset
 
-                while (start < length) {
-                    val end = text.indexOf(',', start).takeIf { it > -1 } ?: length
-                    val range = TextRange.create(start, end)
-                    start = end + 1
-
-                    val packageName = range.substring(text).replace("\\s".toRegex(), "")
-                    if (packageName.isBlank()) {
-                        holder.createError(message("manifest.lang.invalidReference"), range.shiftRight(offset))
-                        annotated = true
-                    } else if (PsiHelper.resolvePackage(header, packageName).isEmpty()) {
+            clause.getValue()?.also { valuePart ->
+                val packageName = valuePart.unwrappedText.substringBeforeLast(".*")
+                if (packageName.isBlank()) {
+                    holder.createError(message("manifest.lang.invalidReference"), valuePart.textRange)
+                    annotated = true
+                } else {
+                    if (PsiHelper.resolvePackage(header, packageName).isEmpty()) {
                         holder.createError(
-                            message("manifest.lang.cannotResolvePackage", packageName), range.shiftRight(offset)
+                            message("manifest.lang.cannotResolvePackage", packageName), valuePart.textRange
+                        )
+                        annotated = true
+                    }
+                    if (hostExportPackages != null && packageName !in hostExportPackages && hostExtensibleAPI != true) {
+                        holder.createWeakWarning(
+                            message("manifest.lang.additionalAPIToHost"), valuePart.textRange
                         )
                         annotated = true
                     }
                 }
             }
+
+            clause.getDirectives().firstOrNull { directive -> USES_DIRECTIVE == directive.name }?.getValueElement()
+                ?.also { valuePart ->
+                    val text = valuePart.unwrappedText
+                    var start = if (text.startsWith('"')) 1 else 0
+                    val length = text.length - if (text.endsWith('"')) 1 else 0
+                    val offset = valuePart.textOffset
+
+                    while (start < length) {
+                        val end = text.indexOf(',', start).takeIf { it > -1 } ?: length
+                        val range = TextRange.create(start, end)
+                        start = end + 1
+
+                        val packageName = range.substring(text).replace("\\s".toRegex(), "")
+
+                        if (packageName.isBlank()) {
+                            holder.createError(message("manifest.lang.invalidReference"), range.shiftRight(offset))
+                            annotated = true
+                        } else if (PsiHelper.resolvePackage(header, packageName).isEmpty()) {
+                            holder.createError(
+                                message("manifest.lang.cannotResolvePackage", packageName), range.shiftRight(offset)
+                            )
+                            annotated = true
+                        }
+                    }
+                }
+        }
 
         return annotated
     }

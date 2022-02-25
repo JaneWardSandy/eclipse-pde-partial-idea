@@ -7,6 +7,9 @@ import java.util.concurrent.*
 import java.util.jar.*
 import kotlin.collections.set
 
+const val ECLIPSE_EXTENSIBLE_API = "Eclipse-ExtensibleAPI"
+const val ECLIPSE_SOURCE_BUNDLE = "Eclipse-SourceBundle"
+
 class BundleManifest private constructor(private val map: HashMap<String, String>) : Map<String, String> by map {
     private val parametersMap = ConcurrentHashMap<String, Parameters?>()
 
@@ -38,8 +41,8 @@ class BundleManifest private constructor(private val map: HashMap<String, String
     val bundleCategory by lazy { get(BUNDLE_CATEGORY) }
     val bundleNativeCode by lazy { get(BUNDLE_NATIVECODE) }
 
-    val eclipseSourceBundle by lazy { getParameters("Eclipse-SourceBundle")?.entries?.firstOrNull() }
-    val eclipseExtensibleAPI by lazy { get("Eclipse-ExtensibleAPI").toBoolean() }
+    val eclipseSourceBundle by lazy { getParameters(ECLIPSE_SOURCE_BUNDLE)?.entries?.firstOrNull() }
+    val eclipseExtensibleAPI by lazy { get(ECLIPSE_EXTENSIBLE_API).toBoolean() }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

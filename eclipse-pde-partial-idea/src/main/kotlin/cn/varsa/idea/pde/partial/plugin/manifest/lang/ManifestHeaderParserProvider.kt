@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.manifest.lang
 
+import cn.varsa.idea.pde.partial.common.domain.*
 import org.jetbrains.lang.manifest.header.*
 import org.osgi.framework.Constants.*
 
@@ -21,6 +22,7 @@ class ManifestHeaderParserProvider : HeaderParserProvider {
         parsers[IMPORT_PACKAGE] = ImportPackageParser
         parsers[EXPORT_PACKAGE] = ExportPackageParser
 
+        parsers[ECLIPSE_EXTENSIBLE_API] = BooleanValueParser
         parsers[FRAGMENT_HOST] = FragmentHostParser
     }
 }

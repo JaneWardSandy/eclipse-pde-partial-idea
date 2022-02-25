@@ -14,6 +14,10 @@ import org.osgi.framework.Constants.*
 
 class OsgiManifestCompletionContributor : CompletionContributor() {
     init {
+        val valuePart = { name: String ->
+            PlatformPatterns.psiElement(ManifestTokenType.HEADER_VALUE_PART)
+                .withSuperParent(2, PlatformPatterns.psiElement(Header::class.java).withName(name))
+        }
         val clause = { name: String ->
             PlatformPatterns.psiElement(ManifestTokenType.HEADER_VALUE_PART)
                 .withSuperParent(3, PlatformPatterns.psiElement(Header::class.java).withName(name))
@@ -36,7 +40,7 @@ class OsgiManifestCompletionContributor : CompletionContributor() {
         )
         extend(CompletionType.BASIC, clause(REQUIRE_BUNDLE), BundleNameProvider())
         extend(CompletionType.BASIC, clause(FRAGMENT_HOST), BundleNameProvider())
-        extend(CompletionType.BASIC, clause("Eclipse-ExtensibleAPI"), ValueProvider(true.toString(), false.toString()))
+        extend(CompletionType.BASIC, valuePart(ECLIPSE_EXTENSIBLE_API), ValueProvider(true.toString(), false.toString()))
 
         // Directive Key
         extend(
@@ -122,9 +126,9 @@ class BundleNameProvider : CompletionProvider<CompletionParameters>() {
         parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet
     ) {
         parameters.editor.project?.let { project ->
-            project.allPDEModulesSymbolicName(parameters.originalFile.module) + BundleManagementService.getInstance(
+            project.allPDEModulesSymbolicName(parameters.originalFile.module) { it.fragmentHost == null } + BundleManagementService.getInstance(
                 project
-            ).getBundles().map { it.bundleSymbolicName }
+            ).getBundles().filter { it.manifest?.fragmentHost == null }.map { it.bundleSymbolicName }
         }?.distinct()?.sorted()?.forEach {
             result.addElement(LookupElementBuilder.create(it).withCaseSensitivity(false))
         }

@@ -319,7 +319,7 @@ object RequireBundleParser : HeaderParser by OsgiHeaderParser {
                     annotated = true
                 } else {
                     val manifest = project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
-                        .firstOrNull { it.bundleSymbolicName?.key == text && range.includes(it.bundleVersion) }
+                        .firstOrNull { it.bundleSymbolicName?.key == text && it.bundleVersion in range }
                         ?: BundleManagementService.getInstance(project).getBundlesByBSN(text, range)?.manifest
 
                     if (manifest == null) {
@@ -478,7 +478,7 @@ object ImportPackageParser : HeaderParser by BasePackageParser {
 
                     containers.mapNotNull { it.exportedPackageAndVersion()[packageName] }.distinct().sorted()
                         .also { versions ->
-                            versions.none { versionRange.includes(it) }.ifTrue {
+                            versions.none { it in versionRange }.ifTrue {
                                 holder.createError(
                                     message(
                                         "manifest.lang.notExistVersionInRange", versionRange, versions.joinToString()
@@ -504,14 +504,13 @@ object ExportPackageParser : HeaderParser by BasePackageParser {
         val project = header.project
         val cacheService = BundleManifestCacheService.getInstance(project)
 
-        val hostManifest =
-            header.module?.let { cacheService.getManifest(it) }?.fragmentHost?.let { it.key to it.value.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
-                ?.let { (hostBSN, hostVersion) ->
-                    project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
-                        .firstOrNull { it.isFragmentHost(hostBSN, hostVersion) } ?: BundleManagementService.getInstance(
-                        project
-                    ).getBundlesByBSN(hostBSN, hostVersion)?.manifest
-                }
+        val hostManifest = header.module?.let { cacheService.getManifest(it) }?.fragmentHostAndVersionRange()
+            ?.let { (hostBSN, hostVersion) ->
+                project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
+                    .firstOrNull { it.isFragmentHost(hostBSN, hostVersion) } ?: BundleManagementService.getInstance(
+                    project
+                ).getBundlesByBSN(hostBSN, hostVersion)?.manifest
+            }
         val hostExtensibleAPI = hostManifest?.eclipseExtensibleAPI
         val hostExportPackages = hostManifest?.exportPackage?.keys?.map { it.substringBefore(".*") }
 
@@ -637,7 +636,7 @@ object FragmentHostParser : HeaderParser by RequireBundleParser {
                     annotated = true
                 } else {
                     val manifest = project.allPDEModules(header.module).mapNotNull { cacheService.getManifest(it) }
-                        .firstOrNull { it.bundleSymbolicName?.key == text && range.includes(it.bundleVersion) }
+                        .firstOrNull { it.bundleSymbolicName?.key == text && it.bundleVersion in range }
                         ?: BundleManagementService.getInstance(project).getBundlesByBSN(text, range)?.manifest
 
                     if (manifest == null) {

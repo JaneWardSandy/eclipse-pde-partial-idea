@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.plugin.resolver
 
 import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
@@ -27,11 +28,12 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
     override fun resolve(area: Module) {
         PDEFacet.getInstance(area) ?: return
 
-        val cacheService = BundleManifestCacheService.getInstance(area.project)
-        val managementService = BundleManagementService.getInstance(area.project)
-        val bundleManifest = cacheService.getManifest(area)
+        val project = area.project
+        val cacheService = BundleManifestCacheService.getInstance(project)
+        val managementService = BundleManagementService.getInstance(project)
+        val bundleManifest = cacheService.getManifest(area) ?: return
 
-        val classesRoot = bundleManifest?.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
+        val classesRoot = bundleManifest.bundleClassPath?.keys?.filterNot { it == "." }?.flatMap { binaryName ->
             area.moduleRootManager.contentRoots.mapNotNull { it.findFileByRelativePath(binaryName) }
         }?.map { it.protocolUrl }?.distinct() ?: emptyList()
 
@@ -60,20 +62,22 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
                 }
             }
 
-            val orderedList = area.bundleRequiredOrFromReExportOrderedList
-            val importedList = bundleManifest?.importedPackageAndVersion() ?: emptyMap()
-            val hostBSN = bundleManifest?.fragmentHost?.key
+            val orderedList = bundleManifest.bundleRequiredOrFromReExportOrderedList(project, area)
+            val importedList = bundleManifest.importedPackageAndVersion()
+            val hostAndRange = bundleManifest.fragmentHostAndVersionRange()
 
             applicationInvokeAndWait {
-                area.project.allPDEModules().filterNot { it == area }.filter { module ->
+                project.allPDEModules(area).filter { module ->
                     val manifest = cacheService.getManifest(module)
                     val bsn = manifest?.bundleSymbolicName?.key
-                    hostBSN == bsn || orderedList.any { it.first == bsn } || manifest?.exportedPackageAndVersion()
-                        ?.any { (packageName, version) -> importedList[packageName]?.includes(version) == true } == true
+                    val version = manifest?.bundleVersion
+                    val range = manifest?.fragmentHostAndVersionRange()
+                    (bsn == hostAndRange?.first && version in hostAndRange?.second) || orderedList.any { (it.first == bsn && version == it.second) || (it.first == range?.first && it.second in range.second) } || manifest?.exportedPackageAndVersion()
+                        ?.any { (packageName, version) -> version in importedList[packageName] } == true
                 }.forEach { model.findModuleOrderEntry(it) ?: model.addModuleOrderEntry(it) }
             }
 
-            area.project.libraryTable().libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }
+            project.libraryTable().libraries.filter { it.name?.startsWith(ProjectLibraryNamePrefix) == true }
                 .forEach { depLibrary ->
                     depLibrary.name?.substringAfter(ProjectLibraryNamePrefix)
                         ?.let { managementService.getBundleByBCN(it) }?.dependencyScope?.also {
@@ -89,8 +93,10 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
     override fun postResolve(area: Module) {
         PDEFacet.getInstance(area) ?: return
 
-        val cacheService = BundleManifestCacheService.getInstance(area.project)
-        val hostBSN = cacheService.getManifest(area)?.fragmentHost?.key
+        val project = area.project
+        val cacheService = BundleManifestCacheService.getInstance(project)
+        val manifest = cacheService.getManifest(area) ?: return
+        val hostBCN = project.fragmentHostManifest(manifest, area)?.canonicalName
 
         area.updateModel { model ->
             val orderEntries = model.orderEntries.toMutableList()
@@ -98,10 +104,11 @@ class PdeModuleRuntimeLibraryResolver : ManifestLibraryResolver {
 
             val kotlinOrder = orderEntriesMap.filter { it.key.startsWith(KotlinOrderEntryName) }.values.toSet()
             val runtimeOrder = orderEntriesMap[ModuleLibraryName]
-            val hostOrder = orderEntriesMap[hostBSN] ?: orderEntriesMap["$ProjectLibraryNamePrefix$hostBSN"]
-            val dependencyOrder = area.bundleRequiredOrFromReExportOrderedList.map { it.asCanonicalName }.mapNotNull {
-                orderEntriesMap[it] ?: orderEntriesMap["$ProjectLibraryNamePrefix$it"]
-            }
+            val hostOrder = orderEntriesMap[hostBCN] ?: orderEntriesMap["$ProjectLibraryNamePrefix$hostBCN"]
+            val dependencyOrder =
+                manifest.bundleRequiredOrFromReExportOrderedList(project, area).map { it.asCanonicalName }.mapNotNull {
+                    orderEntriesMap[it] ?: orderEntriesMap["$ProjectLibraryNamePrefix$it"]
+                }
 
             var libraryIndex = orderEntries.indexOfLast { it is JdkOrderEntry || it is ModuleSourceOrderEntry } + 1
             val arrangeOrderEntries = orderEntries.apply {

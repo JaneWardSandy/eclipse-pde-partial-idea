@@ -44,7 +44,7 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
                     ModuleRootManager.getInstance(module).run {
                         orderEntries().forEachModule { orderModule ->
                             cacheService.getManifest(orderModule)
-                                ?.takeIf { it.bundleSymbolicName?.key == refText && range.includes(it.bundleVersion) }
+                                ?.takeIf { it.bundleSymbolicName?.key == refText && it.bundleVersion in range }
                                 ?.let { orderModule.rootManager.contentRoots }
                                 ?.firstNotNullOfOrNull { root -> root.findFileByRelativePath(ManifestPath) }
                                 ?.let { PsiManager.getInstance(orderModule.project).findFile(it) }
@@ -56,7 +56,7 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
                             orderEntries().forEachLibrary { orderLib ->
                                 orderLib.getFiles(OrderRootType.CLASSES).firstOrNull { file ->
                                     cacheService.getManifest(file)
-                                        ?.let { it.bundleSymbolicName?.key == refText && range.includes(it.bundleVersion) } == true
+                                        ?.let { it.bundleSymbolicName?.key == refText && it.bundleVersion in range } == true
                                 }?.findFileByRelativePath(ManifestPath)
                                     ?.let { PsiManager.getInstance(module.project).findFile(it) }
                                     ?.let { it as? ManifestFile }?.let { it.getHeader(BUNDLE_SYMBOLICNAME) ?: it }

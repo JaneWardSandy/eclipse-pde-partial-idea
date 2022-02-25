@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.plugin.support
 
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
@@ -22,3 +23,12 @@ fun Project.libraryTable(): LibraryTable = LibraryTablesRegistrar.getInstance().
 
 fun Project.allModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
 fun Module.getModuleDir(): String = guessModuleDir()?.presentableUrl!!
+
+fun Project.fragmentHostManifest(
+    fragment: BundleManifest, vararg exclude: Module? = emptyArray()
+): BundleManifest? = fragment.fragmentHostAndVersionRange()?.let { (fragmentHostBSN, fragmentHostVersion) ->
+    allPDEModules(*exclude).mapNotNull { BundleManifestCacheService.getInstance(this).getManifest(it) }
+        .firstOrNull { it.isFragmentHost(fragmentHostBSN, fragmentHostVersion) } ?: BundleManagementService.getInstance(
+        this
+    ).getBundlesByBSN(fragmentHostBSN, fragmentHostVersion)?.manifest
+}

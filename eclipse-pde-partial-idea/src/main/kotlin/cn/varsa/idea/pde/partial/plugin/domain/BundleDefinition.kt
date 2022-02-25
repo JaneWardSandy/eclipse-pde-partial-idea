@@ -68,4 +68,4 @@ data class BundleDefinition(
     override fun toString(): String = canonicalName
 }
 
-val Pair<String, Version>.asCanonicalName: String get() = "$first-$second"
+val Pair<String?, Version>.asCanonicalName: String get() = "$first-$second"

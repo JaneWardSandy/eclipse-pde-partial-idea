@@ -83,6 +83,10 @@
         <manifestLibraryResolver
                 id="PdeModuleRuntimeLibraryResolver"
                 implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleRuntimeLibraryResolver"/>
+        <manifestLibraryResolver
+                id="PdeModuleFragmentLibraryResolver"
+                order="after PdeModuleRuntimeLibraryResolver"
+                implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleFragmentLibraryResolver"/>
         <buildLibraryResolver
                 id="PdeModuleCompileOnlyResolver"
                 implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleCompileOnlyResolver"/>

@@ -32,8 +32,7 @@ class WrongImportPackageInspection : AbstractOsgiVisitor() {
                                 val packageName = valuePart.unwrappedText.substringBeforeLast(".*")
                                 if (packageName.isBlank()) continue
 
-                                if (project.allPDEModules().filterNot { facet.module == it }
-                                        .mapNotNull { cacheService.getManifest(it) }
+                                if (project.allPDEModules(facet.module).mapNotNull { cacheService.getManifest(it) }
                                         .any { it.getExportedPackageName(packageName) != null }) {
                                     continue@nextValue
                                 }

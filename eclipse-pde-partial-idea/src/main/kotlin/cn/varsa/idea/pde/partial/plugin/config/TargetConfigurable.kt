@@ -580,7 +580,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                                 problem!!.add(MissingImportedPackage(packageName + attrs))
                             } else {
                                 val range = attrs.attribute[VERSION_ATTRIBUTE].parseVersionRange()
-                                if (map.none { (version, set) -> range.includes(version) && set.any { it.isChecked } }) {
+                                if (map.none { (version, set) -> version in range && set.any { it.isChecked } }) {
                                     val missingImportedPackage = MissingImportedPackage(packageName + attrs)
                                     map.values.flatten().distinct()
                                         .forEach { missingImportedPackage.add(FixBundle(it)) }
@@ -602,7 +602,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                                 problem!!.add(MissingRequiredBundle(requiredBundle + attrs))
                             } else {
                                 val range = attrs.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange()
-                                if (map.none { (version, set) -> range.includes(version) && set.any { it.isChecked } }) {
+                                if (map.none { (version, set) -> version in range && set.any { it.isChecked } }) {
                                     val missingRequiredBundle = MissingRequiredBundle(requiredBundle + attrs)
                                     map.values.flatten().distinct().forEach { missingRequiredBundle.add(FixBundle(it)) }
 

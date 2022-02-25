@@ -71,29 +71,28 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
             item.virtualFile?.isBelongJDK(index)?.ifTrue { return emptyList() }
 
             // In Fragment Host?
-            importer.fragmentHost?.run { key to value.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
-                ?.also { (fragmentHostBSN, fragmentHostVersion) ->
-                    hostImporter = project.allPDEModules(requesterModule).mapNotNull { cacheService.getManifest(it) }
-                        .firstOrNull { it.isFragmentHost(fragmentHostBSN, fragmentHostVersion) }
-                        ?: BundleManagementService.getInstance(project)
-                            .getBundlesByBSN(fragmentHostBSN, fragmentHostVersion)?.manifest
+            importer.fragmentHostAndVersionRange()?.also { (fragmentHostBSN, fragmentHostVersion) ->
+                hostImporter = project.allPDEModules(requesterModule).mapNotNull { cacheService.getManifest(it) }
+                    .firstOrNull { it.isFragmentHost(fragmentHostBSN, fragmentHostVersion) }
+                    ?: BundleManagementService.getInstance(project)
+                        .getBundlesByBSN(fragmentHostBSN, fragmentHostVersion)?.manifest
 
-                    ownerFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it)?.manifest }
-                        ?.isFragmentHost(fragmentHostBSN, fragmentHostVersion)?.ifTrue { return emptyList() }
+                ownerFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it)?.manifest }
+                    ?.isFragmentHost(fragmentHostBSN, fragmentHostVersion)?.ifTrue { return emptyList() }
 
-                    project.allPDEModules(requesterModule).any { module ->
-                        cacheService.getManifest(module)?.let { manifest ->
-                            manifest.isFragmentHost(
-                                fragmentHostBSN, fragmentHostVersion
-                            ) && (ownerFile?.presentableUrl == module.getModuleDir() || manifest.bundleClassPath?.keys?.filterNot { it == "." }
-                                ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
-                                ?.any { ownerFile?.presentableUrl == it } == true)
-                        } == true
-                    }.ifTrue { return emptyList() }
+                project.allPDEModules(requesterModule).any { module ->
+                    cacheService.getManifest(module)?.let { manifest ->
+                        manifest.isFragmentHost(
+                            fragmentHostBSN, fragmentHostVersion
+                        ) && (ownerFile?.presentableUrl == module.getModuleDir() || manifest.bundleClassPath?.keys?.filterNot { it == "." }
+                            ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+                            ?.any { ownerFile?.presentableUrl == it } == true)
+                    } == true
+                }.ifTrue { return emptyList() }
 
-                    cacheService.getManifest(item)?.isFragmentHost(fragmentHostBSN, fragmentHostVersion)
-                        ?.ifTrue { return emptyList() }
-                }
+                cacheService.getManifest(item)?.isFragmentHost(fragmentHostBSN, fragmentHostVersion)
+                    ?.ifTrue { return emptyList() }
+            }
 
             // In bundle class path?
             val containers = arrayListOf<BundleManifest>()
@@ -116,8 +115,7 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
                 }
 
                 val exporterHost =
-                    exporter.fragmentHost?.run { key to value.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
-                        ?.let { (fragmentHostBSN, fragmentHostVersion) ->
+                    exporter.fragmentHostAndVersionRange()?.let { (fragmentHostBSN, fragmentHostVersion) ->
                             project.allPDEModules(requesterModule).mapNotNull { cacheService.getManifest(it) }
                                 .firstOrNull { it.isFragmentHost(fragmentHostBSN, fragmentHostVersion) }
                                 ?: BundleManagementService.getInstance(project)

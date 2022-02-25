@@ -9,10 +9,15 @@ import com.intellij.openapi.project.*
 import org.osgi.framework.*
 import org.osgi.framework.Constants.*
 
+fun BundleManifest.fragmentHostAndVersionRange() =
+    fragmentHost?.run { key to value.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
+
+val BundleManifest.canonicalName: String get() = "${bundleSymbolicName?.key}-$bundleVersion"
+
 fun BundleManifest.isFragmentHost(
     fragmentHostBSN: String, fragmentHostVersion: VersionRange = VersionRangeAny
 ): Boolean =
-    bundleSymbolicName?.key == fragmentHostBSN && fragmentHostVersion.includes(bundleVersion) && fragmentHost?.key.isNullOrBlank()
+    bundleSymbolicName?.key == fragmentHostBSN && bundleVersion in fragmentHostVersion && fragmentHost?.key.isNullOrBlank()
 
 fun BundleManifest.getExportedPackageName(packageName: String): String? =
     exportPackage?.keys?.map { it.substringBefore(".*") }?.firstOrNull { packageName == it }
@@ -21,14 +26,14 @@ fun BundleManifest.isPackageImported(packageName: String, version: Set<Version> 
     importPackage?.filterKeys { packageName == it }?.let { map ->
         if (version.isEmpty()) map.isNotEmpty()
         else map.values.map { it.attribute[VERSION_ATTRIBUTE].parseVersionRange() }
-            .any { range -> version.any { range.includes(it) } }
+            .any { range -> version.any { it in range } }
     } == true
 
 fun BundleManifest.isBundleRequired(symbolicName: String, version: Set<Version> = emptySet()): Boolean =
     requireBundle?.filterKeys { symbolicName == it }?.let { map ->
         if (version.isEmpty()) map.isNotEmpty()
         else map.values.map { it.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
-            .any { range -> version.any { range.includes(it) } }
+            .any { range -> version.any { it in range } }
     } == true
 
 fun BundleManifest.requiredBundleAndVersion(): Map<String, VersionRange> =
@@ -82,7 +87,7 @@ private fun isBundleFromReExportOnly(
 ): Boolean {
     // Re-export directly
     manifest.reexportRequiredBundleAndVersion()
-        .filterValues { range -> version.isEmpty() || version.any { range.includes(it) } }.containsKey(symbolName)
+        .filterValues { range -> version.isEmpty() || version.any { it in range } }.containsKey(symbolName)
         .ifTrue { return true }
 
     val allReExport = managementService.getLibReExportRequired(manifest.reexportRequiredBundleAndVersion())
@@ -94,4 +99,39 @@ private fun isBundleFromReExportOnly(
     return modulesManifest.filter { allReExport.contains(it.bundleSymbolicName?.key) }.toSet()
         .also { modulesManifest -= it }
         .any { isBundleFromReExportOnly(it, symbolName, version, cacheService, managementService, modulesManifest) }
+}
+
+fun BundleManifest.bundleRequiredOrFromReExportOrderedList(
+    project: Project, vararg exclude: Module? = emptyArray()
+): LinkedHashSet<Pair<String, Version>> {
+    val cacheService = BundleManifestCacheService.getInstance(project)
+    val managementService = BundleManagementService.getInstance(project)
+
+    val result = linkedSetOf<Pair<String, Version>>()
+
+    val modulesManifest = project.allPDEModules(*exclude).mapNotNull { cacheService.getManifest(it) }
+        .associate { it.bundleSymbolicName?.key to (it.bundleVersion to it) }.toMutableMap()
+
+    fun processBSN(
+        exportBundle: String, range: VersionRange, onEach: (Map.Entry<String, VersionRange>) -> Unit
+    ) {
+        managementService.getBundlesByBSN(exportBundle, range)
+            ?.let { result += it.bundleSymbolicName to it.bundleVersion }
+
+        modulesManifest[exportBundle]?.takeIf { it.first in range }
+            ?.also { modulesManifest -= exportBundle }?.second?.also { result += exportBundle to it.bundleVersion }
+            ?.requiredBundleAndVersion()?.forEach { onEach(it) }
+    }
+
+    fun cycleBSN(exportBundle: String, range: VersionRange) {
+        processBSN(exportBundle, range) { cycleBSN(it.key, it.value) }
+
+        managementService.getLibReExportRequired(exportBundle, range)?.forEach { (bsn, reqRange) ->
+            processBSN(bsn, reqRange) { cycleBSN(it.key, it.value) }
+        }
+    }
+
+    requiredBundleAndVersion().forEach { cycleBSN(it.key, it.value) }
+
+    return result
 }

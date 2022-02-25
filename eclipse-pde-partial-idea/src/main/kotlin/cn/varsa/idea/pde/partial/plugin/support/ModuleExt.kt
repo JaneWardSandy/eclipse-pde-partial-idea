@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.support
 
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import com.intellij.openapi.module.*
@@ -40,7 +41,7 @@ val Module.bundleRequiredOrFromReExportOrderedList: LinkedHashSet<Pair<String, V
             managementService.getBundlesByBSN(exportBundle, range)
                 ?.let { result += it.bundleSymbolicName to it.bundleVersion }
 
-            modulesManifest[exportBundle]?.takeIf { range.includes(it.first) }
+            modulesManifest[exportBundle]?.takeIf { it.first in range }
                 ?.also { modulesManifest -= exportBundle }?.second?.also { result += exportBundle to it.bundleVersion }
                 ?.requiredBundleAndVersion()?.forEach { onEach(it) }
         }

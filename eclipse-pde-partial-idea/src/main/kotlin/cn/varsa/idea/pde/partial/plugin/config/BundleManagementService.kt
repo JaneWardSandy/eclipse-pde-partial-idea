@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.config
 
+import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
@@ -149,7 +150,7 @@ class BundleManagementService : BackgroundResolvable {
         libPair: Map<String, Map<Version, Map<String, VersionRange>>>
     ) {
         val nextSet = next.filterKeys { it != symbolName }
-            .mapNotNull { (nextBsn, range) -> libPair[nextBsn]?.filterKeys { range.includes(it) }?.values }.flatten()
+            .mapNotNull { (nextBsn, range) -> libPair[nextBsn]?.filterKeys { it in range }?.values }.flatten()
             .flatMap { it.entries }.associate { it.key to it.value }
 
         if (!reExport.keys.containsAll(nextSet.keys)) {
@@ -166,7 +167,7 @@ class BundleManagementService : BackgroundResolvable {
     fun getBundlesByBSN(bsn: String) = bundles[bsn]?.toMap()
     fun getBundlesByBSN(bsn: String, version: Version) = bundles[bsn]?.get(version)
     fun getBundlesByBSN(bsn: String, range: VersionRange) =
-        bundles[bsn]?.filterKeys { range.includes(it) }?.maxByOrNull { it.key }?.value
+        bundles[bsn]?.filterKeys { it in range }?.maxByOrNull { it.key }?.value
 
     fun getBundles() = bundles.values.flatMap { it.values }
     fun getBundleByInnerJarPath(presentableUrl: String) = jarPathInnerBundle[presentableUrl]
@@ -174,5 +175,5 @@ class BundleManagementService : BackgroundResolvable {
 
     fun getLibReExportRequired(bsn: String, version: Version) = libReExportRequiredSymbolName[bsn]?.get(version)
     fun getLibReExportRequired(bsn: String, range: VersionRange) =
-        libReExportRequiredSymbolName[bsn]?.filterKeys { range.includes(it) }?.maxByOrNull { it.key }?.value
+        libReExportRequiredSymbolName[bsn]?.filterKeys { it in range }?.maxByOrNull { it.key }?.value
 }

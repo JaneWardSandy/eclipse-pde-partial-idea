@@ -39,6 +39,7 @@ class BundleManifest private constructor(private val map: HashMap<String, String
     val bundleNativeCode by lazy { get(BUNDLE_NATIVECODE) }
 
     val eclipseSourceBundle by lazy { getParameters("Eclipse-SourceBundle")?.entries?.firstOrNull() }
+    val eclipseExtensibleAPI by lazy { get("Eclipse-ExtensibleAPI").toBoolean() }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

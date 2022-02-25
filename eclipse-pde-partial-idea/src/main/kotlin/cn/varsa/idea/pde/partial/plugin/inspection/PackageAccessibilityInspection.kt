@@ -53,33 +53,58 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
         fun checkAccessibility(
             item: PsiFileSystemItem, packageName: String, qualifiedName: String, requesterModule: Module
         ): List<Problem> {
-            // In bundleClassPath
-            val library = requesterModule.findLibrary { it.name == ModuleLibraryName }
-            if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return emptyList()
-
             val project = requesterModule.project
             val cacheService = BundleManifestCacheService.getInstance(project)
             val managementService = BundleManagementService.getInstance(project)
             val index = ProjectFileIndex.getInstance(project)
 
+            val importer = cacheService.getManifest(requesterModule) ?: return emptyList()
+            var hostImporter: BundleManifest? = null
+            val ownerFile = item.virtualFile?.let(index::getClassRootForFile)
+
+            // In bundleClassPath
+            val library = requesterModule.findLibrary { it.name == ModuleLibraryName }
+            if (library?.let { LibraryUtil.isClassAvailableInLibrary(it, qualifiedName) } == true) return emptyList()
+
 
             // In Java JDK?
             item.virtualFile?.isBelongJDK(index)?.ifTrue { return emptyList() }
 
+            // In Fragment Host?
+            importer.fragmentHost?.run { key to value.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
+                ?.also { (fragmentHostBSN, fragmentHostVersion) ->
+                    hostImporter = project.allPDEModules(requesterModule).mapNotNull { cacheService.getManifest(it) }
+                        .firstOrNull { it.isFragmentHost(fragmentHostBSN, fragmentHostVersion) }
+                        ?: BundleManagementService.getInstance(project)
+                            .getBundlesByBSN(fragmentHostBSN, fragmentHostVersion)?.manifest
+
+                    ownerFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it)?.manifest }
+                        ?.isFragmentHost(fragmentHostBSN, fragmentHostVersion)?.ifTrue { return emptyList() }
+
+                    project.allPDEModules(requesterModule).any { module ->
+                        cacheService.getManifest(module)?.let { manifest ->
+                            manifest.isFragmentHost(
+                                fragmentHostBSN, fragmentHostVersion
+                            ) && (ownerFile?.presentableUrl == module.getModuleDir() || manifest.bundleClassPath?.keys?.filterNot { it == "." }
+                                ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+                                ?.any { ownerFile?.presentableUrl == it } == true)
+                        } == true
+                    }.ifTrue { return emptyList() }
+
+                    cacheService.getManifest(item)?.isFragmentHost(fragmentHostBSN, fragmentHostVersion)
+                        ?.ifTrue { return emptyList() }
+                }
 
             // In bundle class path?
             val containers = arrayListOf<BundleManifest>()
-
-            cacheService.getManifest(item)?.also { containers += it }
-            val jarFile = item.virtualFile?.let(index::getClassRootForFile)
-            jarFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it)?.manifest }
+            ownerFile?.presentableUrl?.let { managementService.getBundleByInnerJarPath(it)?.manifest }
                 ?.also { containers += it }
-            containers += project.allPDEModules().filterNot { requesterModule == it }.filter { module ->
-                jarFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
+            containers += project.allPDEModules(requesterModule).filter { module ->
+                ownerFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
                     ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
-                    ?.any { jarFile?.presentableUrl == it } == true
+                    ?.any { ownerFile?.presentableUrl == it } == true
             }.mapNotNull { cacheService.getManifest(it) }
-
+            if (containers.isEmpty()) cacheService.getManifest(item)?.also { containers += it }
 
             val problems = arrayListOf<Problem>()
             if (containers.isEmpty()) problems += Problem.weak(message("inspection.hint.nonBundle", packageName))
@@ -90,44 +115,72 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
                     return@forEach
                 }
 
-                val exporterBSN = exporter.fragmentHost?.key ?: exporterSymbolic.key
+                val exporterHost =
+                    exporter.fragmentHost?.run { key to value.attribute[BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
+                        ?.let { (fragmentHostBSN, fragmentHostVersion) ->
+                            project.allPDEModules(requesterModule).mapNotNull { cacheService.getManifest(it) }
+                                .firstOrNull { it.isFragmentHost(fragmentHostBSN, fragmentHostVersion) }
+                                ?: BundleManagementService.getInstance(project)
+                                    .getBundlesByBSN(fragmentHostBSN, fragmentHostVersion)?.manifest
+                        }
+
+                val exporterBSN = exporterSymbolic.key
                 val exporterVersions = hashSetOf(exporter.bundleVersion)
 
-                val exporterExportedPackageVersions = hashSetOf<Version>()
-                exporter.exportedPackageAndVersion()[packageName]?.also { exporterExportedPackageVersions += it }
+                val exporterHostBSN = exporterHost?.bundleSymbolicName?.key
+                val exporterHostVersions = hashSetOf<Version>().apply {
+                    exporterHost?.bundleVersion?.let { this += it }
+                }
+
+                val exportedPackageVersions = hashSetOf<Version>()
+
+                exporter.exportedPackageAndVersion()[packageName]?.also { exportedPackageVersions += it }
+                exporterHost?.exportedPackageAndVersion()?.get(packageName)?.also { exportedPackageVersions += it }
+
                 managementService.getBundlesByBSN(exporterBSN)?.mapValues { it.value.manifest }
-                    ?.mapValues { it.value?.exportedPackageAndVersion()?.get(packageName) }?.also { map ->
-                        exporterVersions += map.keys
-                        exporterExportedPackageVersions += map.values.filterNotNull()
+                    ?.mapValues { it.value?.exportedPackageAndVersion()?.get(packageName) }?.also {
+                        exporterVersions += it.keys
+                        exportedPackageVersions += it.values.filterNotNull()
                     }
-                if (exporterExportedPackageVersions.isEmpty()) {
-                    problems += Problem.error(
-                        message(
-                            "inspection.hint.packageNoExport", packageName, exporterBSN
-                        )
-                    )
+                exporterHostBSN?.let { managementService.getBundlesByBSN(it) }?.mapValues { it.value.manifest }
+                    ?.mapValues { it.value?.exportedPackageAndVersion()?.get(packageName) }?.also {
+                        exporterHostVersions += it.keys
+                        exportedPackageVersions += it.values.filterNotNull()
+                    }
+
+                if (exportedPackageVersions.isEmpty()) {
+                    problems += Problem.error(message("inspection.hint.packageNoExport",
+                                                      packageName,
+                                                      exporterHostBSN?.let { "Fragment: $exporterBSN(Host: $exporterHostBSN)" }
+                                                          ?: exporterBSN))
                     return@forEach
                 }
 
-                val importer = cacheService.getManifest(requesterModule)
-                if (importer != null) {
-                    if (importer.isPackageImported(packageName, exporterExportedPackageVersions)) return emptyList()
-                    if (importer.isBundleRequired(exporterBSN, exporterVersions)) return emptyList()
-                    if (requesterModule.isBundleRequiredOrFromReExport(
-                            exporterBSN, exporterVersions
-                        )
-                    ) return emptyList()
-                }
 
-                val requiredFixes =
-                    exporterVersions.map { it.toString() }.map { AccessibilityFix.requireBundleFix(exporterBSN, it) }
-                        .toTypedArray()
+                val bsn = exporterHostBSN ?: exporterBSN
+                val versions = exporterHostVersions.takeIf { it.isNotEmpty() } ?: exporterVersions
 
-                problems += Problem.error(
-                    message("inspection.hint.packageAccessibility", packageName, exporterBSN),
-                    AccessibilityFix.importPackageFix(packageName),
-                    *requiredFixes + AccessibilityFix.requireBundleFix(exporterBSN)
-                )
+                importer.isPackageImported(packageName, exportedPackageVersions).ifTrue { return emptyList() }
+                importer.isBundleRequired(bsn, versions).ifTrue { return emptyList() }
+                requesterModule.isBundleRequiredOrFromReExport(bsn, versions).ifTrue { return emptyList() }
+
+
+                hostImporter?.isPackageImported(packageName, exportedPackageVersions)?.ifTrue { return emptyList() }
+                hostImporter?.isBundleRequired(bsn, versions)?.ifTrue { return emptyList() }
+                hostImporter?.isBundleRequiredOrFromReExport(project, requesterModule, bsn, versions)
+                    ?.ifTrue { return emptyList() }
+
+
+                val fixes = mutableListOf<AccessibilityFix>()
+                fixes += versions.map { it.toString() }.map { ver -> AccessibilityFix.requireBundleFix(bsn, ver) }
+                fixes += AccessibilityFix.requireBundleFix(bsn)
+
+                problems += Problem.error(message("inspection.hint.packageAccessibility",
+                                                  packageName,
+                                                  exporterHostBSN?.let { "Fragment: $exporterBSN(Host: $exporterHostBSN)" }
+                                                      ?: exporterBSN),
+                                          AccessibilityFix.importPackageFix(packageName),
+                                          *fixes.toTypedArray())
             }
 
             return problems
@@ -135,7 +188,9 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
     }
 }
 
-class Problem(val type: ProblemHighlightType, val message: @InspectionMessage String, vararg val fixes: LocalQuickFix) {
+class Problem(
+    val type: ProblemHighlightType, val message: @InspectionMessage String, vararg val fixes: LocalQuickFix
+) {
     companion object {
         fun weak(message: @InspectionMessage String, vararg fixes: LocalQuickFix): Problem =
             Problem(ProblemHighlightType.WEAK_WARNING, message, *fixes)
@@ -156,8 +211,9 @@ class AccessibilityFix private constructor(
     }
 
     companion object Factory {
-        fun importPackageFix(importPackage: String): AccessibilityFix =
-            AccessibilityFix(message("inspection.fix.addPackageToImport", importPackage), IMPORT_PACKAGE, importPackage)
+        fun importPackageFix(importPackage: String): AccessibilityFix = AccessibilityFix(
+            message("inspection.fix.addPackageToImport", importPackage), IMPORT_PACKAGE, importPackage
+        )
 
         fun requireBundleFix(requireBundle: String, version: String? = null): AccessibilityFix {
             val headerValue =

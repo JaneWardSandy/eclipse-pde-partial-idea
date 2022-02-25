@@ -36,6 +36,7 @@ class OsgiManifestCompletionContributor : CompletionContributor() {
         )
         extend(CompletionType.BASIC, clause(REQUIRE_BUNDLE), BundleNameProvider())
         extend(CompletionType.BASIC, clause(FRAGMENT_HOST), BundleNameProvider())
+        extend(CompletionType.BASIC, clause("Eclipse-ExtensibleAPI"), ValueProvider(true.toString(), false.toString()))
 
         // Directive Key
         extend(

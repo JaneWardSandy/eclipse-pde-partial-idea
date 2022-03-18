@@ -15,7 +15,8 @@ class PDEFacetConfiguration : FacetConfiguration, ModificationTracker, Persisten
 
     @Attribute var compilerClassesOutput = "out/${CompilerModuleExtension.PRODUCTION}"
     @Attribute var compilerTestClassesOutput = "out/${CompilerModuleExtension.TEST}"
-    @XCollection(elementName = "binary", style = XCollection.Style.v2) val binaryOutput = hashSetOf(MetaInf, PluginsXml)
+    @XCollection(elementName = "binary", style = XCollection.Style.v2) val binaryOutput =
+        hashSetOf(MetaInf, PluginsXml, FragmentXml)
 
     override fun createEditorTabs(
         editorContext: FacetEditorContext, validatorsManager: FacetValidatorsManager

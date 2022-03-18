@@ -4,6 +4,7 @@ const val ManifestMf = "MANIFEST.MF"
 const val MetaInf = "META-INF"
 const val ManifestPath = "$MetaInf/$ManifestMf"
 const val PluginsXml = "plugin.xml"
+const val FragmentXml = "fragment.xml"
 const val BuildProperties = "build.properties"
 
 const val Dropins = "dropins"

@@ -8,16 +8,18 @@
         <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.dom.indexes.PluginXmlIndex"/>
         <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.dom.indexes.ExtensionPointIndex"/>
 
-        <!-- plugin.xml -->
+        <!-- plugin.xml, fragment.xml -->
         <dom.fileMetaData rootTagName="plugin"
                           implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.PluginDescriptorDomFileDescription"/>
+        <dom.fileMetaData rootTagName="fragment"
+                          implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.FragmentDescriptorDomFileDescription"/>
         <dom.extender domClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.Extension"
                       extenderClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionsDomExtender"/>
 
         <!-- exsd -->
         <fileTypeDetector implementation="cn.varsa.idea.pde.partial.plugin.dom.exsd.ExsdFileTypeDetector"/>
 
-        <!-- plugin.xml validator -->
+        <!-- plugin.xml, fragment.xml validator -->
         <localInspection enabledByDefault="true" level="ERROR"
                          bundle="messages.EclipsePDEPartialBundles_locale"
                          key="inspection.pluginUnresolvedReference"

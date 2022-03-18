@@ -50,7 +50,7 @@ class PluginXmlCacheService(private val project: Project) {
 
                 XmlInfo(applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
             } catch (e: Exception) {
-                thisLogger().warn("$PluginsXml file not valid: $pluginXmlFile : $e", e)
+                thisLogger().warn("${pluginXmlFile.name} file not valid: $pluginXmlFile : $e", e)
                 null
             }
         }
@@ -120,13 +120,16 @@ class PluginXmlCacheService(private val project: Project) {
         lastIndexed.clear()
     }
 
-    fun getXmlInfo(bundle: BundleDefinition): XmlInfo? = bundle.root.validFileOrRequestResolve()?.findChild(PluginsXml)
+    fun getXmlInfo(bundle: BundleDefinition): XmlInfo? = bundle.root.validFileOrRequestResolve()?.let(::findXml)
         ?.let { getXmlInfo(bundle.bundleSymbolicName, it, bundle.root, bundle.sourceBundle?.root) }
 
     fun getXmlInfo(module: Module): XmlInfo? =
-        module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findChild(PluginsXml) }?.let {
+        module.moduleRootManager.contentRoots.firstNotNullOfOrNull(::findXml)?.let {
             getXmlInfo(cacheService.getManifest(module)?.bundleSymbolicName?.key ?: module.name, it, it.parent)
         }
+
+    private fun findXml(root: VirtualFile?): VirtualFile? =
+        root?.children?.firstOrNull { it.name == PluginsXml || it.name == FragmentXml }
 
     private fun getXmlInfo(
         bundleSymbolicName: String,

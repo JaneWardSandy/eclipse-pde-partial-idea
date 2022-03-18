@@ -2,8 +2,11 @@ package cn.varsa.idea.pde.partial.common.support
 
 import org.osgi.framework.*
 
-fun String?.parseVersionRange(): VersionRange = if (this == null) VersionRangeAny else VersionRange(unquote())
-fun String?.parseVersion(): Version = if (this == null) Version.emptyVersion else Version.parseVersion(unquote())
+fun String?.parseVersionRange(): VersionRange =
+    this?.unquote()?.takeIf(String::isNotBlank)?.let(::VersionRange) ?: VersionRangeAny
+
+fun String?.parseVersion(): Version =
+    this?.unquote()?.takeIf(String::isNotBlank)?.let(Version::parseVersion) ?: Version.emptyVersion
 
 infix operator fun VersionRange?.contains(version: Version?): Boolean =
     this != null && (version == null || includes(version))

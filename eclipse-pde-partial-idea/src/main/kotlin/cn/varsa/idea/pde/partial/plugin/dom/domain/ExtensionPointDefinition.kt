@@ -1,18 +1,17 @@
 package cn.varsa.idea.pde.partial.plugin.dom.domain
 
 import cn.varsa.idea.pde.partial.common.support.*
-import cn.varsa.idea.pde.partial.plugin.dom.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.plugin.ExtensionElement.OccursLimit.Companion.unbounded
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.*
 import org.jdom.*
 import org.jdom.filter2.*
-import org.jdom.input.*
 import org.jdom.xpath.*
 import org.jetbrains.kotlin.utils.addToStdlib.*
 import java.io.*
@@ -22,13 +21,14 @@ class ExtensionPointDefinition {
         const val schemaProtocol = "schema://"
 
         private val schemaInfoPath = XPathFactory.instance().compile(
-            "/schema/annotation/appinfo/meta.schema | /schema/annotation/appInfo/meta.schema", Filters.element()
+            "*[local-name()='annotation']/*[local-name()='appinfo']/*[local-name()='meta.schema'] | *[local-name()='annotation']/*[local-name()='appInfo']/*[local-name()='meta.schema']",
+            Filters.element()
         )
-        private val includePath = XPathFactory.instance().compile("/schema/include", Filters.element())
+        private val includePath = XPathFactory.instance().compile("*[local-name()='include']", Filters.element())
         private val extensionPath =
-            XPathFactory.instance().compile("/schema/element[@name='extension']", Filters.element())
+            XPathFactory.instance().compile("*[local-name()='element' and @name='extension']", Filters.element())
         private val elementPath =
-            XPathFactory.instance().compile("/schema/element[@name!='extension']", Filters.element())
+            XPathFactory.instance().compile("*[local-name()='element' and @name!='extension']", Filters.element())
     }
 
     val file: VirtualFile?
@@ -44,15 +44,16 @@ class ExtensionPointDefinition {
     private val notifyOnes = hashSetOf<String>()
 
     constructor(file: VirtualFile, stream: InputStream) {
-        val document = SAXBuilder().apply { saxHandlerFactory = NameSpaceCleanerFactory() }.build(stream)
-        schemaInfoPath.evaluateFirst(document).also {
+        val rootElement = JDOMUtil.load(stream)
+
+        schemaInfoPath.evaluateFirst(rootElement).also {
             plugin = it.getAttributeValue("plugin")
             id = it.getAttributeValue("id")
             name = it.getAttributeValue("name")
         }
-        includes = includePath.evaluate(document).mapNotNull { it.getAttributeValue("schemaLocation") }
-        extension = extensionPath.evaluateFirst(document)?.let(::ElementDefinition)
-        elements = elementPath.evaluate(document).map(::ElementDefinition)
+        includes = includePath.evaluate(rootElement).mapNotNull { it.getAttributeValue("schemaLocation") }
+        extension = extensionPath.evaluateFirst(rootElement)?.let(::ElementDefinition)
+        elements = elementPath.evaluate(rootElement).map(::ElementDefinition)
 
         this.file = file
     }
@@ -153,11 +154,14 @@ class ExtensionPointDefinition {
 
 class ElementDefinition {
     companion object {
-        private val elementDeprecatedPath = XPathFactory.instance()
-            .compile("annotation/appinfo/meta.element | annotation/appInfo/meta.element", Filters.element())
-        private val elementRefPath =
-            XPathFactory.instance().compile("complexType/descendant::element", Filters.element())
-        private val attributePath = XPathFactory.instance().compile("complexType/attribute", Filters.element())
+        private val elementDeprecatedPath = XPathFactory.instance().compile(
+            "*[local-name()='annotation']/*[local-name()='appinfo']/*[local-name()='meta.element'] | *[local-name()='annotation']/*[local-name()='appInfo']/*[local-name()='meta.element']",
+            Filters.element()
+        )
+        private val elementRefPath = XPathFactory.instance()
+            .compile("*[local-name()='complexType']/descendant::*[local-name()='element']", Filters.element())
+        private val attributePath = XPathFactory.instance()
+            .compile("*[local-name()='complexType']/*[local-name()='attribute']", Filters.element())
     }
 
     val name: String
@@ -291,10 +295,14 @@ class ElementRefDefinition {
 
 class AttributeDefinition {
     companion object {
-        private val metaPath = XPathFactory.instance()
-            .compile("annotation/appinfo/meta.attribute | annotation/appInfo/meta.attribute", Filters.element())
-        private val simplePath = XPathFactory.instance().compile("simpleType/restriction", Filters.element())
-        private val simpleEnumerationPath = XPathFactory.instance().compile("enumeration", Filters.element())
+        private val metaPath = XPathFactory.instance().compile(
+            "*[local-name()='annotation']/*[local-name()='appinfo']/*[local-name()='meta.attribute'] | *[local-name()='annotation']/*[local-name()='appInfo']/*[local-name()='meta.attribute']",
+            Filters.element()
+        )
+        private val simplePath = XPathFactory.instance()
+            .compile("*[local-name()='simpleType']/*[local-name()='restriction']", Filters.element())
+        private val simpleEnumerationPath =
+            XPathFactory.instance().compile("*[local-name()='enumeration']", Filters.element())
     }
 
     val name: String

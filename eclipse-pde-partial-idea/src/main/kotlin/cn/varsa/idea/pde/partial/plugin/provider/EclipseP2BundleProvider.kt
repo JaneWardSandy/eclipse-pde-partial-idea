@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.provider
 
+import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.support.*
 import java.io.*
 import java.net.*
@@ -9,7 +10,9 @@ import javax.xml.stream.*
 
 class EclipseP2BundleProvider : EclipseSDKBundleProvider() {
     override val type: String = "Eclipse Oomph"
-    override fun resolveDirectory(rootDirectory: File, processBundle: (File) -> Unit): Boolean {
+    override fun resolveDirectory(
+        rootDirectory: File, processFeature: (File) -> Unit, processBundle: (File) -> Unit
+    ): Boolean {
         val configIni =
             File(rootDirectory, "configuration/config.ini").takeIf { it.exists() && it.isFile }?.inputStream()
                 ?.use { Properties().apply { load(it) } } ?: return false
@@ -23,7 +26,8 @@ class EclipseP2BundleProvider : EclipseSDKBundleProvider() {
             return false
         }
 
-        val pluginsDirectory = File(p2Directory, "pool/plugins").takeIf { it.exists() } ?: return false
+        val pluginsDirectory = File(p2Directory, "pool/$Plugins").takeIf { it.exists() } ?: return false
+        val featureDirectory = File(p2Directory, "pool/$Features")
 
         val profileFile = File(
             p2Directory, "org.eclipse.equinox.p2.engine/profileRegistry/$profileName.profile"
@@ -36,12 +40,21 @@ class EclipseP2BundleProvider : EclipseSDKBundleProvider() {
             try {
                 while (reader.hasNext()) {
                     if (reader.next() == XMLStreamConstants.START_ELEMENT && reader.localName == "artifact") {
-                        if (reader.getAttributeValue("", "classifier") != "osgi.bundle") continue
-                        val id = reader.getAttributeValue("", "id") ?: continue
-                        val version = reader.getAttributeValue("", "version") ?: continue
+                        when (reader.getAttributeValue("", "classifier")) {
+                            "osgi.bundle" -> {
+                                val id = reader.getAttributeValue("", "id") ?: continue
+                                val version = reader.getAttributeValue("", "version") ?: continue
 
-                        processBundle(File(pluginsDirectory, "${id}_$version.jar"))
-                        processBundle(File(pluginsDirectory, "${id}_$version"))
+                                processBundle(File(pluginsDirectory, "${id}_$version.jar"))
+                                processBundle(File(pluginsDirectory, "${id}_$version"))
+                            }
+                            "org.eclipse.update.feature" -> {
+                                val id = reader.getAttributeValue("", "id") ?: continue
+                                val version = reader.getAttributeValue("", "version") ?: continue
+
+                                processFeature(File(featureDirectory, "${id}_$version"))
+                            }
+                        }
                     }
                 }
             } finally {
@@ -53,7 +66,7 @@ class EclipseP2BundleProvider : EclipseSDKBundleProvider() {
             else processProfileXml(fileInputStream)
         }
 
-        super.resolveDirectory(rootDirectory, processBundle)
+        super.resolveDirectory(rootDirectory, processFeature, processBundle)
         return true
     }
 }

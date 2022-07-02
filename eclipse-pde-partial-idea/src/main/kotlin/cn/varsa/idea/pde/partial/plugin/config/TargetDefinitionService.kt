@@ -99,8 +99,9 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
     @XMap(entryTagName = "sourceVersion", keyAttributeName = "canonicalName", valueAttributeName = "version")
     val bundleVersionSelection = hashMapOf<String, String>()
 
-    private val _bundles = mutableListOf<BundleDefinition>()
     var bundles: List<BundleDefinition> = emptyList()
+        private set
+    var features: List<FeatureDefinition> = emptyList()
         private set
 
     val identifier: String
@@ -113,7 +114,8 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
     override fun resolve(project: Project, indicator: ProgressIndicator) {
         val scope = DependencyScope.values().firstOrNull { it.displayName == dependency } ?: DependencyScope.COMPILE
         type = null
-        _bundles.clear()
+        val bundlesDefinitions = mutableListOf<BundleDefinition>()
+        val featureDefinitions = mutableListOf<FeatureDefinition>()
 
         indicator.text = "Resolving location $location"
         indicator.checkCanceled()
@@ -130,7 +132,16 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
         }?.also { launcher = it.canonicalPath }
 
         indicator.checkCanceled()
-        PdeBundleProviderRegistry.instance.resolveLocation(directory, this) { file ->
+
+        val processFeature = { file: File ->
+            if (file.exists()) {
+                indicator.checkCanceled()
+                indicator.text2 = "Resolving feature file $file"
+
+                featureDefinitions += FeatureDefinition(file, this, project)
+            }
+        }
+        PdeBundleProviderRegistry.instance.resolveLocation(directory, this, processFeature) { file ->
             if (file.exists()) {
                 indicator.checkCanceled()
                 indicator.text2 = "Resolving file $file"
@@ -142,16 +153,17 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
                         }
 
                         JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)?.also { jarFile ->
-                            _bundles += BundleDefinition(jarFile, file, this, project, scope)
+                            bundlesDefinitions += BundleDefinition(jarFile, file, this, project, scope)
                         }
                     } else if (file.isDirectory && File(file, ManifestPath).exists()) {
-                        _bundles += BundleDefinition(virtualFile, file, this, project, scope)
+                        bundlesDefinitions += BundleDefinition(virtualFile, file, this, project, scope)
                     }
                 }
             }
         }
 
-        bundles = _bundles.distinctBy { it.file }
+        bundles = bundlesDefinitions.distinctBy { it.file }
+        features = featureDefinitions.distinctBy { it.file }
     }
 
     override fun toString(): String =

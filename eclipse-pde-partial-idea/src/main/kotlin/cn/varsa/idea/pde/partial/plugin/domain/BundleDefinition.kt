@@ -1,5 +1,6 @@
 package cn.varsa.idea.pde.partial.plugin.domain
 
+import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.*
 import com.intellij.util.*
 import org.osgi.framework.*
 import java.io.*
+import javax.xml.stream.*
 
 data class BundleDefinition(
     val root: VirtualFile,
@@ -66,6 +68,43 @@ data class BundleDefinition(
 
     val canonicalName: String get() = "$bundleSymbolicName-$bundleVersion"
     override fun toString(): String = canonicalName
+}
+
+data class FeatureDefinition(
+    val file: File, val location: TargetLocationDefinition, val project: Project
+) {
+    var id: String = ""
+        private set
+    var version: Version = Version.emptyVersion
+        private set
+
+    val plugins = hashMapOf<String, Version>()
+
+    init {
+        File(file, FeatureXml).takeIf { it.isFile && it.exists() }?.inputStream()?.use {
+            val reader = XMLInputFactory.newInstance().createXMLStreamReader(it)
+            try {
+                while (reader.hasNext()) {
+                    if (reader.next() == XMLStreamConstants.START_ELEMENT) {
+                        when (reader.localName) {
+                            "feature" -> {
+                                id = reader.getAttributeValue("", "id")
+                                version = Version.parseVersion(reader.getAttributeValue("", "version"))
+                            }
+                            "plugin" -> {
+                                plugins[reader.getAttributeValue("", "id")] =
+                                    Version.parseVersion(reader.getAttributeValue("", "version"))
+                            }
+                        }
+                    }
+                }
+            } finally {
+                reader.close()
+            }
+        }
+    }
+
+    override fun toString(): String = "$id-$version"
 }
 
 val Pair<String?, Version>.asCanonicalName: String get() = "$first-$second"

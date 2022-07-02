@@ -115,6 +115,9 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
                             value.bundles.count { it.isChecked }), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
                     )
                 }
+                is ShadowFeature -> {
+                    textRenderer.append(value.toString())
+                }
                 is ShadowBundle -> {
                     textRenderer.append(value.bundle.canonicalName)
 
@@ -183,15 +186,17 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             ).setShowLine(true)
         ).addToCenter(
             ToolbarDecorator.createDecorator(contentTree).disableAddAction().disableRemoveAction()
-                .disableUpDownActions().addExtraActions(object : AnActionButton(
-                    message("config.target.reload"), AllIcons.Actions.Refresh
-                ) {
-                    override fun actionPerformed(e: AnActionEvent) = reloadContentList()
-                }, object : AnActionButton(message("config.content.reload"), AllIcons.Actions.ForceRefresh) {
-                    override fun actionPerformed(e: AnActionEvent) = reloadContentListByDefaultRule()
-                }, object : AnActionButton(message("config.content.validate"), AllIcons.Diff.GutterCheckBoxSelected) {
-                    override fun actionPerformed(e: AnActionEvent) = ValidateAndResolveBundleDependencies().show()
-                }).createPanel()
+                .disableUpDownActions().addExtraActions(
+                    object : AnActionButton(message("config.target.reload"), AllIcons.Actions.Refresh) {
+                        override fun actionPerformed(e: AnActionEvent) = reloadContentList()
+                    },
+                    object : AnActionButton(message("config.content.reload"), AllIcons.Actions.ForceRefresh) {
+                        override fun actionPerformed(e: AnActionEvent) = reloadContentListByDefaultRule()
+                    },
+                    object : AnActionButton(message("config.content.validate"), AllIcons.Diff.GutterCheckBoxSelected) {
+                        override fun actionPerformed(e: AnActionEvent) = ValidateAndResolveBundleDependencies().show()
+                    },
+                ).createPanel()
         ).addToBottom(sourceVersionComponent)
 
         var selectedShadowBundle: ShadowBundle? = null
@@ -683,16 +688,37 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         fun sort() = children?.also { Collections.sort(it, Comparator.comparing(TreeNode::toString)) }
 
         fun addLocation(location: TargetLocationDefinition): ShadowLocation = ShadowLocation(location).apply {
+            val bundleMap = hashMapOf<String, ShadowBundle>()
             location.bundles.sortedBy { it.canonicalName }.forEach {
                 val eclipseSourceBundle = it.manifest?.eclipseSourceBundle
                 if (eclipseSourceBundle != null) {
                     sourceVersions.computeIfAbsent(eclipseSourceBundle.key) { hashSetOf() } += it
                 } else {
-                    add(ShadowBundle(this, it).apply {
+                    bundleMap[it.canonicalName] = ShadowBundle(this, it).apply {
                         isChecked = !location.bundleUnSelected.contains(it.canonicalName)
-                    })
+                    }
                 }
             }
+
+            val featuredBundle = hashSetOf<BundleDefinition>()
+            location.features.sortedBy { it.id }.forEach {
+                val feature = ShadowFeature(this, it.id, it.version)
+                it.plugins.forEach { (id, version) ->
+                    val bundle = bundleMap["$id-$version"]
+                    if (bundle != null) {
+                        feature.add(bundle)
+                        featuredBundle += bundle.bundle
+                    }
+                }
+
+                add(feature)
+            }
+            bundleMap.values.filter { it.bundle !in featuredBundle }.takeIf { it.isNotEmpty() }
+                ?.also { unFeaturedBundles ->
+                    val feature = ShadowFeature(this, "Non-featured", Version.emptyVersion)
+                    unFeaturedBundles.forEach { feature.add(it) }
+                    add(feature)
+                }
 
             bundles.forEach { bundle ->
                 bundle.sourceBundle =
@@ -727,7 +753,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     }
 
     private data class ShadowLocation(val location: TargetLocationDefinition) : CheckedTreeNode() {
-        val bundles get() = children?.map { it as ShadowBundle } ?: emptyList()
+        val features get() = children?.map { it as ShadowFeature } ?: emptyList()
+        val bundles get() = features.flatMap { it.bundles }.distinct()
 
         val isModify: Boolean
             get() = bundles.any { it.isModify } || location.bundleUnSelected != bundles.filterNot { it.isChecked }
@@ -750,6 +777,13 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         }
 
         override fun toString(): String = location.identifier
+    }
+
+    private data class ShadowFeature(val location: ShadowLocation, val id: String, val version: Version) :
+        CheckedTreeNode() {
+        val bundles get() = children?.map { it as ShadowBundle } ?: emptyList()
+
+        override fun toString(): String = "$id-$version"
     }
 
     private data class ShadowBundle(val location: ShadowLocation, val bundle: BundleDefinition) : CheckedTreeNode() {

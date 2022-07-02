@@ -14,5 +14,5 @@ interface TargetBundleProvider {
     /**
      * @return resolved succeed
      */
-    fun resolveDirectory(rootDirectory: File, processBundle: (File) -> Unit): Boolean
+    fun resolveDirectory(rootDirectory: File, processFeature: (File) -> Unit, processBundle: (File) -> Unit): Boolean
 }

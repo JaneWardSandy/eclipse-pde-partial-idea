@@ -22,17 +22,19 @@ val VirtualFile.protocolUrl: String
 
 fun VirtualFile.validFile(): VirtualFile? = takeIf { isValid }
 
-fun VirtualFile.validFileOrRequestResolve(project: Project, lazyMessage: (VirtualFile) -> String): VirtualFile? =
-    validFile() ?: run {
-        PdeNotifier.important("Virtual file invalid", lazyMessage(this))
-            .addAction(object : NotificationAction(EclipsePDEPartialBundles.message("action.resolveRequest.text")) {
-                override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                    e.project?.also { TargetDefinitionService.getInstance(it).backgroundResolve(it) }
-                    notification.expire()
-                }
-            }).notify(project)
-        null
-    }
+fun VirtualFile.validFileOrRequestResolve(
+    project: Project,
+    lazyMessage: (VirtualFile) -> String = { "${it.presentableUrl} file not valid when build manifest cache, maybe it was delete after load, please check, restart application or re-resolve workspace" }
+): VirtualFile? = validFile() ?: run {
+    PdeNotifier.important("Virtual file invalid", lazyMessage(this))
+        .addAction(object : NotificationAction(EclipsePDEPartialBundles.message("action.resolveRequest.text")) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                e.project?.also { TargetDefinitionService.getInstance(it).backgroundResolve(it) }
+                notification.expire()
+            }
+        }).notify(project)
+    null
+}
 
 fun VirtualFile.isBelongJDK(project: Project): Boolean = isBelongJDK(ProjectFileIndex.getInstance(project))
 

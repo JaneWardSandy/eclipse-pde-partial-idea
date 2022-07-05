@@ -52,6 +52,7 @@ class EclipseP2BundleProvider : EclipseSDKBundleProvider() {
                                 val id = reader.getAttributeValue("", "id") ?: continue
                                 val version = reader.getAttributeValue("", "version") ?: continue
 
+                                processFeature(File(featureDirectory, "${id}_$version.jar"))
                                 processFeature(File(featureDirectory, "${id}_$version"))
                             }
                         }

@@ -71,7 +71,7 @@ data class BundleDefinition(
 }
 
 data class FeatureDefinition(
-    val file: File, val location: TargetLocationDefinition, val project: Project
+    val root: VirtualFile, val file: File, val location: TargetLocationDefinition, val project: Project
 ) {
     var id: String = ""
         private set
@@ -81,7 +81,13 @@ data class FeatureDefinition(
     val plugins = hashMapOf<String, Version>()
 
     init {
-        File(file, FeatureXml).takeIf { it.isFile && it.exists() }?.inputStream()?.use {
+        root.validFileOrRequestResolve(project)?.let {
+            if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
+                JarFileSystem.getInstance().getJarRootForLocalFile(it)
+            } else {
+                it
+            }
+        }?.findFileByRelativePath(FeatureXml)?.validFileOrRequestResolve(project)?.inputStream?.use {
             val reader = XMLInputFactory.newInstance().createXMLStreamReader(it)
             try {
                 while (reader.hasNext()) {

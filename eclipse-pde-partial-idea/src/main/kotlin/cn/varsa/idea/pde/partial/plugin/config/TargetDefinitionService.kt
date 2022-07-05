@@ -138,7 +138,15 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
                 indicator.checkCanceled()
                 indicator.text2 = "Resolving feature file $file"
 
-                featureDefinitions += FeatureDefinition(file, this, project)
+                LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)?.also { virtualFile ->
+                    if (file.isFile && file.extension.equalAny("jar", "aar", "war", ignoreCase = true)) {
+                        JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile)?.also { jarFile ->
+                            featureDefinitions += FeatureDefinition(jarFile, file, this, project)
+                        }
+                    } else if (file.isDirectory && File(file, FeatureXml).exists()) {
+                        featureDefinitions += FeatureDefinition(virtualFile, file, this, project)
+                    }
+                }
             }
         }
         PdeBundleProviderRegistry.instance.resolveLocation(directory, this, processFeature) { file ->

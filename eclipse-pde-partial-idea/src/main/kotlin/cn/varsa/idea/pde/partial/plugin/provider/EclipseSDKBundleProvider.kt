@@ -8,8 +8,8 @@ open class EclipseSDKBundleProvider : DirectoryBundleProvider() {
     override fun resolveDirectory(
         rootDirectory: File, processFeature: (File) -> Unit, processBundle: (File) -> Unit
     ): Boolean {
-        File(rootDirectory, Features).takeIf { it.exists() && it.isDirectory }?.listFiles()
-            ?.filter { it.isDirectory && !it.isHidden }?.forEach(processFeature)
+        File(rootDirectory, Features).takeIf { it.exists() && it.isDirectory }?.listFiles()?.filterNot { it.isHidden }
+            ?.forEach(processFeature)
 
         super.resolveDirectory(File(rootDirectory, Dropins), processFeature, processBundle)
 

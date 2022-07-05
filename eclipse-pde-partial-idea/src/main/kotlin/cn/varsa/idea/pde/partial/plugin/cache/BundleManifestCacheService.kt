@@ -66,7 +66,7 @@ class BundleManifestCacheService(private val project: Project) {
     private fun getManifestPsi(module: Module): VirtualFile? =
         module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(ManifestPath) }
 
-    private fun getManifestFile(root: VirtualFile): VirtualFile? = root.validFileOrRequestResolve()?.let {
+    private fun getManifestFile(root: VirtualFile): VirtualFile? = root.validFileOrRequestResolve(project)?.let {
         if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
             JarFileSystem.getInstance().getJarRootForLocalFile(it)
         } else {
@@ -75,7 +75,7 @@ class BundleManifestCacheService(private val project: Project) {
     }?.findFileByRelativePath(ManifestPath)
 
     private fun getManifest0(manifestFile: VirtualFile): BundleManifest? =
-        manifestFile.validFileOrRequestResolve()?.let { file ->
+        manifestFile.validFileOrRequestResolve(project)?.let { file ->
             DumbService.isDumb(project).runFalse { BundleManifestIndex.readBundleManifest(project, file) }
                 ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
             ?: caches.computeIfAbsent(file.presentableUrl) {
@@ -87,7 +87,4 @@ class BundleManifestCacheService(private val project: Project) {
 
     private fun readManifest(virtualFile: VirtualFile): BundleManifest? =
         virtualFile.inputStream.use { resolveManifest(virtualFile, it) }
-
-    private fun VirtualFile.validFileOrRequestResolve() =
-        validFileOrRequestResolve(project) { "${it.presentableUrl} file not valid when build manifest cache, maybe it was delete after load, please check, restart application or re-resolve workspace" }
 }

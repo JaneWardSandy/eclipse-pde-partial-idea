@@ -10,8 +10,8 @@ fun String.toFile(child: String): File = File(this, child)
 fun URI.toFile(): File = File(this)
 
 fun File.touchFile(): File = this.apply {
-    parentFile.makeDirs()
-    if (!exists()) createNewFile()
+  parentFile.makeDirs()
+  if (!exists()) createNewFile()
 }
 
 fun File.makeDirs(): File = this.apply { if (!exists()) mkdirs() }

@@ -6,5 +6,5 @@ import com.intellij.ide.util.frameworkSupport.*
 import com.intellij.openapi.roots.*
 
 class TcRacFrameworkSupportProvider : FacetBasedFrameworkSupportProvider<PDEFacet>(PDEFacetType.getInstance()) {
-    override fun setupConfiguration(facet: PDEFacet, rootModel: ModifiableRootModel, version: FrameworkVersion?) {}
+  override fun setupConfiguration(facet: PDEFacet, rootModel: ModifiableRootModel, version: FrameworkVersion?) {}
 }

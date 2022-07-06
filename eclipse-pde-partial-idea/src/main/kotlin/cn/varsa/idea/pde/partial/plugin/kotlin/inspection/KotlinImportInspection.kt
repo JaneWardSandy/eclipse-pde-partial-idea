@@ -17,44 +17,44 @@ import org.osgi.framework.Constants.*
 
 class KotlinImportInspection : AbstractBaseJavaLocalInspectionTool() {
 
-    override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-        if (file !is KtFile) return null
+  override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+    if (file !is KtFile) return null
 
-        val project = file.project
+    val project = file.project
 
-        val projectFileIndex = ProjectFileIndex.getInstance(project)
-        if (file.virtualFile?.let(projectFileIndex::isInLibrary) == true) return null
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    if (file.virtualFile?.let(projectFileIndex::isInLibrary) == true) return null
 
-        val module = file.module ?: return null
-        PDEFacet.getInstance(module) ?: return null
-        module.isBundleRequiredOrFromReExport(KotlinBundleSymbolName).ifTrue { return null }
+    val module = file.module ?: return null
+    PDEFacet.getInstance(module) ?: return null
+    module.isBundleRequiredOrFromReExport(KotlinBundleSymbolName).ifTrue { return null }
 
-        val managementService = BundleManagementService.getInstance(project)
-        val fixes =
-            managementService.getBundlesByBSN(KotlinBundleSymbolName)?.keys?.map { KotlinRequireBundleFix(it.toString()) }
-                ?.toTypedArray() ?: emptyArray()
+    val managementService = BundleManagementService.getInstance(project)
+    val fixes =
+      managementService.getBundlesByBSN(KotlinBundleSymbolName)?.keys?.map { KotlinRequireBundleFix(it.toString()) }
+        ?.toTypedArray() ?: emptyArray()
 
-        return arrayOf(
-            manager.createProblemDescriptor(
-                file,
-                message("inspection.hint.bundleNotRequired", KotlinBundleSymbolName),
-                isOnTheFly,
-                fixes + KotlinRequireBundleFix(),
-                ProblemHighlightType.ERROR
-            )
-        )
-    }
+    return arrayOf(
+      manager.createProblemDescriptor(
+        file,
+        message("inspection.hint.bundleNotRequired", KotlinBundleSymbolName),
+        isOnTheFly,
+        fixes + KotlinRequireBundleFix(),
+        ProblemHighlightType.ERROR
+      )
+    )
+  }
 }
 
 class KotlinRequireBundleFix(version: String? = null) : AbstractOsgiQuickFix() {
-    private val headerValue =
-        "$KotlinBundleSymbolName${if (version.isNullOrBlank()) "" else ";$BUNDLE_VERSION_ATTRIBUTE=\"$version\""}"
+  private val headerValue =
+    "$KotlinBundleSymbolName${if (version.isNullOrBlank()) "" else ";$BUNDLE_VERSION_ATTRIBUTE=\"$version\""}"
 
-    override fun getName(): String = message("inspection.fix.addBundleToRequired", headerValue)
+  override fun getName(): String = message("inspection.fix.addBundleToRequired", headerValue)
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        getVerifiedManifestFile(descriptor.psiElement)?.also {
-            writeCompute { PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue) }
-        }
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    getVerifiedManifestFile(descriptor.psiElement)?.also {
+      writeCompute { PsiHelper.appendToHeader(it, REQUIRE_BUNDLE, headerValue) }
     }
+  }
 }

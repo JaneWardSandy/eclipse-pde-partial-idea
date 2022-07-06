@@ -11,20 +11,20 @@ import com.intellij.util.xmlb.annotations.*
 import java.util.concurrent.atomic.*
 
 class PDEFacetConfiguration : FacetConfiguration, ModificationTracker, PersistentStateComponent<PDEFacetConfiguration> {
-    private val modificationCount = AtomicLong()
+  private val modificationCount = AtomicLong()
 
-    @Attribute var compilerClassesOutput = "out/${CompilerModuleExtension.PRODUCTION}"
-    @Attribute var compilerTestClassesOutput = "out/${CompilerModuleExtension.TEST}"
-    @XCollection(elementName = "binary", style = XCollection.Style.v2) val binaryOutput =
-        hashSetOf(MetaInf, PluginsXml, FragmentXml)
+  @Attribute var compilerClassesOutput = "out/${CompilerModuleExtension.PRODUCTION}"
+  @Attribute var compilerTestClassesOutput = "out/${CompilerModuleExtension.TEST}"
+  @XCollection(elementName = "binary", style = XCollection.Style.v2) val binaryOutput =
+    hashSetOf(MetaInf, PluginsXml, FragmentXml)
 
-    override fun createEditorTabs(
-        editorContext: FacetEditorContext, validatorsManager: FacetValidatorsManager
-    ): Array<FacetEditorTab> = arrayOf(PDEFacetEditorTab(this, editorContext, validatorsManager))
+  override fun createEditorTabs(
+    editorContext: FacetEditorContext, validatorsManager: FacetValidatorsManager
+  ): Array<FacetEditorTab> = arrayOf(PDEFacetEditorTab(this, editorContext, validatorsManager))
 
-    override fun getModificationCount(): Long = modificationCount.get()
-    override fun getState(): PDEFacetConfiguration = this
-    override fun loadState(state: PDEFacetConfiguration) {
-        XmlSerializerUtil.copyBean(state, this)
-    }
+  override fun getModificationCount(): Long = modificationCount.get()
+  override fun getState(): PDEFacetConfiguration = this
+  override fun loadState(state: PDEFacetConfiguration) {
+    XmlSerializerUtil.copyBean(state, this)
+  }
 }

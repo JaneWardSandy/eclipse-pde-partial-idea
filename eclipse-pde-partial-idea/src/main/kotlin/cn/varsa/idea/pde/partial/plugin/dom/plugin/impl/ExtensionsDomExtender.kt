@@ -25,92 +25,92 @@ import java.lang.reflect.*
 
 class ExtensionsDomExtender : DomExtender<Extension>() {
 
-    override fun supportsStubs(): Boolean = false
-    override fun registerExtensions(extension: Extension, registrar: DomExtensionsRegistrar) {
-        val project = extension.module?.project ?: return
-        val point = extension.getPoint().stringValue?.takeIf(String::isNotBlank) ?: return
+  override fun supportsStubs(): Boolean = false
+  override fun registerExtensions(extension: Extension, registrar: DomExtensionsRegistrar) {
+    val project = extension.module?.project ?: return
+    val point = extension.getPoint().stringValue?.takeIf(String::isNotBlank) ?: return
 
-        if (DumbService.isDumb(project)) return
+    if (DumbService.isDumb(project)) return
 
-        val managementService = ExtensionPointManagementService.getInstance(extension.xmlTag.project)
-        managementService.getExtensionPoint(point)?.also {
-            registerElement(it, it.extension, project, registrar, managementService)
-        }?.extension?.also { definition ->
-            definition.elementRefs.map { ExtensionElement.OccursLimit(it.ref, it.minOccurs, it.maxOccurs) }
-                .also { extension.putUserData(ExtensionElement.occursLimitKey, it) }
-        }
+    val managementService = ExtensionPointManagementService.getInstance(extension.xmlTag.project)
+    managementService.getExtensionPoint(point)?.also {
+      registerElement(it, it.extension, project, registrar, managementService)
+    }?.extension?.also { definition ->
+      definition.elementRefs.map { ExtensionElement.OccursLimit(it.ref, it.minOccurs, it.maxOccurs) }
+        .also { extension.putUserData(ExtensionElement.occursLimitKey, it) }
+    }
+  }
+
+  private fun registerElement(
+    extensionPoint: ExtensionPointDefinition,
+    element: ElementDefinition?,
+    project: Project,
+    registrar: DomExtensionsRegistrar,
+    managementService: ExtensionPointManagementService
+  ) {
+    element?.elementRefs?.mapNotNull { extensionPoint.findRefElement(it, project) }?.forEach { definition ->
+      if (definition.attributes.isEmpty() && definition.type == "string") {
+        registrar.registerCollectionChildrenExtension(XmlName(definition.name), SimpleTagValue::class.java)
+      } else {
+        registrar.registerCollectionChildrenExtension(XmlName(definition.name), ExtensionElement::class.java)
+          .addExtender(object : DomExtender<ExtensionElement>() {
+            override fun registerExtensions(
+              t: ExtensionElement, registrar: DomExtensionsRegistrar
+            ) {
+              registerElement(extensionPoint, definition, project, registrar, managementService)
+
+              definition.elementRefs.map {
+                ExtensionElement.OccursLimit(it.ref, it.minOccurs, it.maxOccurs)
+              }.also { t.putUserData(ExtensionElement.occursLimitKey, it) }
+            }
+          })
+      }
     }
 
-    private fun registerElement(
-        extensionPoint: ExtensionPointDefinition,
-        element: ElementDefinition?,
-        project: Project,
-        registrar: DomExtensionsRegistrar,
-        managementService: ExtensionPointManagementService
-    ) {
-        element?.elementRefs?.mapNotNull { extensionPoint.findRefElement(it, project) }?.forEach { definition ->
-            if (definition.attributes.isEmpty() && definition.type == "string") {
-                registrar.registerCollectionChildrenExtension(XmlName(definition.name), SimpleTagValue::class.java)
-            } else {
-                registrar.registerCollectionChildrenExtension(XmlName(definition.name), ExtensionElement::class.java)
-                    .addExtender(object : DomExtender<ExtensionElement>() {
-                        override fun registerExtensions(
-                            t: ExtensionElement, registrar: DomExtensionsRegistrar
-                        ) {
-                            registerElement(extensionPoint, definition, project, registrar, managementService)
+    element?.attributes?.forEach { definition ->
+      val type: Type = when {
+        definition.type == "boolean" -> Boolean::class.java
+        definition.kind == "java" -> PsiClass::class.java
+        else -> String::class.java
+      }
+      val childExtension = registrar.registerGenericAttributeValueChildExtension(XmlName(definition.name), type)
 
-                            definition.elementRefs.map {
-                                ExtensionElement.OccursLimit(it.ref, it.minOccurs, it.maxOccurs)
-                            }.also { t.putUserData(ExtensionElement.occursLimitKey, it) }
-                        }
-                    })
-            }
-        }
+      if (definition.use == "required") childExtension.addCustomAnnotation(Required.INSTANCE)
 
-        element?.attributes?.forEach { definition ->
-            val type: Type = when {
-                definition.type == "boolean" -> Boolean::class.java
-                definition.kind == "java" -> PsiClass::class.java
-                else -> String::class.java
-            }
-            val childExtension = registrar.registerGenericAttributeValueChildExtension(XmlName(definition.name), type)
-
-            if (definition.use == "required") childExtension.addCustomAnnotation(Required.INSTANCE)
-
-            if (definition.kind == "identifier" || definition.simpleBaseType == "string") {
-                val references = (definition.simpleEnumeration ?: emptyList()) + (definition.basedOn?.split(',')
-                    ?.map { it.split('/') }?.filter { it.size == 3 }
-                    ?.flatMap { managementService.getReferenceIdentifies(it[0], it[1], it[2].substringAfter('@')) }
-                    ?.sorted() ?: emptyList())
-                childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
-                childExtension.setConverter(StringListConverter(references))
-            } else if (definition.kind == "java") {
-                definition.basedOn?.split(':')?.filter(String::isNotBlank)?.takeIf(List<String>::isNotEmpty)
-                    ?.toTypedArray()?.let(::ExtendClass)?.also(childExtension::addCustomAnnotation)
-                childExtension.setConverter(ClassConverter)
-            } else if (definition.kind == "resource") {
-                childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
-                childExtension.setConverter(PathReferenceConverter.INSTANCE)
-            }
-        }
+      if (definition.kind == "identifier" || definition.simpleBaseType == "string") {
+        val references =
+          (definition.simpleEnumeration ?: emptyList()) + (definition.basedOn?.split(',')?.map { it.split('/') }
+            ?.filter { it.size == 3 }
+            ?.flatMap { managementService.getReferenceIdentifies(it[0], it[1], it[2].substringAfter('@')) }?.sorted()
+            ?: emptyList())
+        childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
+        childExtension.setConverter(StringListConverter(references))
+      } else if (definition.kind == "java") {
+        definition.basedOn?.split(':')?.filter(String::isNotBlank)?.takeIf(List<String>::isNotEmpty)?.toTypedArray()
+          ?.let(::ExtendClass)?.also(childExtension::addCustomAnnotation)
+        childExtension.setConverter(ClassConverter)
+      } else if (definition.kind == "resource") {
+        childExtension.addCustomAnnotation(NoSpellchecking.INSTANCE)
+        childExtension.setConverter(PathReferenceConverter.INSTANCE)
+      }
     }
+  }
 
-    interface SimpleTagValue : GenericDomValue<String>
+  interface SimpleTagValue : GenericDomValue<String>
 
-    class StringListConverter(private val values: Collection<String>) : ResolvingConverter.StringConverter() {
-        override fun getVariants(context: ConvertContext?): Collection<String> = values
+  class StringListConverter(private val values: Collection<String>) : ResolvingConverter.StringConverter() {
+    override fun getVariants(context: ConvertContext?): Collection<String> = values
+  }
+
+  object ClassConverter : PsiClassConverter() {
+    override fun getScope(context: ConvertContext): GlobalSearchScope = GlobalSearchScope.allScope(context.project)
+
+    override fun createClassReferenceProvider(
+      genericDomValue: GenericDomValue<PsiClass>?,
+      context: ConvertContext?,
+      extendClass: com.intellij.util.xml.ExtendClass?
+    ): JavaClassReferenceProvider = super.createClassReferenceProvider(genericDomValue, context, extendClass).apply {
+      setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, java.lang.Boolean.TRUE)
     }
-
-    object ClassConverter : PsiClassConverter() {
-        override fun getScope(context: ConvertContext): GlobalSearchScope = GlobalSearchScope.allScope(context.project)
-
-        override fun createClassReferenceProvider(
-            genericDomValue: GenericDomValue<PsiClass>?,
-            context: ConvertContext?,
-            extendClass: com.intellij.util.xml.ExtendClass?
-        ): JavaClassReferenceProvider =
-            super.createClassReferenceProvider(genericDomValue, context, extendClass).apply {
-                setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, java.lang.Boolean.TRUE)
-            }
-    }
+  }
 }

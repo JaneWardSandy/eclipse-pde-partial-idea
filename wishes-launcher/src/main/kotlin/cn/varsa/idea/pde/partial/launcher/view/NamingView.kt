@@ -6,31 +6,31 @@ import javafx.scene.*
 import tornadofx.*
 
 class NamingView : View("RMI Naming") {
-    private val configControl: ConfigControl by inject()
-    private val validationContext = ValidationContext()
+  private val configControl: ConfigControl by inject()
+  private val validationContext = ValidationContext()
 
-    override val root: Parent = form {
-        fieldset("Naming binding") {
-            intField("RMI Port", configControl.rmiPortProperty, validationContext)
-            stringField("RMI Name", configControl.rmiNameProperty, validationContext)
-        }
-        fieldset("Preview") {
-            field("Name") { label(configControl.rmiUrlProperty) }
-        }
-
-        completeWhen(validationContext::valid)
+  override val root: Parent = form {
+    fieldset("Naming binding") {
+      intField("RMI Port", configControl.rmiPortProperty, validationContext)
+      stringField("RMI Name", configControl.rmiNameProperty, validationContext)
+    }
+    fieldset("Preview") {
+      field("Name") { label(configControl.rmiUrlProperty) }
     }
 
-    override fun onDock() {
-        super.onDock()
-        configControl.rmiPort = config.int("rmiPort", 7995)
-        configControl.rmiName = config.string("rmiName", "WishesService")
-    }
+    completeWhen(validationContext::valid)
+  }
 
-    override fun onSave() {
-        super.onSave()
-        config["rmiPort"] = configControl.rmiPort.toString()
-        config["rmiName"] = configControl.rmiName
-        config.save()
-    }
+  override fun onDock() {
+    super.onDock()
+    configControl.rmiPort = config.int("rmiPort", 7995)
+    configControl.rmiName = config.string("rmiName", "WishesService")
+  }
+
+  override fun onSave() {
+    super.onSave()
+    config["rmiPort"] = configControl.rmiPort.toString()
+    config["rmiName"] = configControl.rmiName
+    config.save()
+  }
 }

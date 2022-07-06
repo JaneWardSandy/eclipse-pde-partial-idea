@@ -11,82 +11,82 @@ import java.nio.charset.*
 import java.util.jar.*
 
 class ConfigControl : Controller(), ConfigService {
-    val librariesProperty = mutableListOf<String>().asObservable()
+  val librariesProperty = mutableListOf<String>().asObservable()
 
-    val javaExeProperty = SimpleStringProperty("")
-    var javaExe: String by javaExeProperty
+  val javaExeProperty = SimpleStringProperty("")
+  var javaExe: String by javaExeProperty
 
-    val ideaCharsetProperty = SimpleObjectProperty(Charset.defaultCharset())
-    var ideaCharset: Charset by ideaCharsetProperty
+  val ideaCharsetProperty = SimpleObjectProperty(Charset.defaultCharset())
+  var ideaCharset: Charset by ideaCharsetProperty
 
-    val osCharsetProperty = SimpleObjectProperty(Charset.defaultCharset())
-    var osCharset: Charset by osCharsetProperty
+  val osCharsetProperty = SimpleObjectProperty(Charset.defaultCharset())
+  var osCharset: Charset by osCharsetProperty
 
-    val rmiRunningProperty = SimpleBooleanProperty(false)
-    var rmiRunning by rmiRunningProperty
+  val rmiRunningProperty = SimpleBooleanProperty(false)
+  var rmiRunning by rmiRunningProperty
 
-    val portalRunningProperty = SimpleBooleanProperty(false)
-    var portalRunning by portalRunningProperty
+  val portalRunningProperty = SimpleBooleanProperty(false)
+  var portalRunning by portalRunningProperty
 
-    val jdwpRunningProperty = SimpleBooleanProperty(false)
-    var jdwpRunning by jdwpRunningProperty
+  val jdwpRunningProperty = SimpleBooleanProperty(false)
+  var jdwpRunning by jdwpRunningProperty
 
 
-    val runtimeDirectoryProperty = SimpleStringProperty("")
-    var runtimeDirectory: String by runtimeDirectoryProperty
+  val runtimeDirectoryProperty = SimpleStringProperty("")
+  var runtimeDirectory: String by runtimeDirectoryProperty
 
-    val projectRootProperty = SimpleStringProperty("")
-    var projectRoot: String by projectRootProperty
+  val projectRootProperty = SimpleStringProperty("")
+  var projectRoot: String by projectRootProperty
 
-    val launcherProperty = SimpleStringProperty("")
-    var launcher: String by launcherProperty
+  val launcherProperty = SimpleStringProperty("")
+  var launcher: String by launcherProperty
 
-    val launcherJarProperty = SimpleStringProperty("")
-    var launcherJar: String by launcherJarProperty
+  val launcherJarProperty = SimpleStringProperty("")
+  var launcherJar: String by launcherJarProperty
 
-    val rmiPortProperty = SimpleIntegerProperty(7995)
-    var rmiPort by rmiPortProperty
+  val rmiPortProperty = SimpleIntegerProperty(7995)
+  var rmiPort by rmiPortProperty
 
-    val rmiNameProperty = SimpleStringProperty("WishesService")
-    var rmiName: String by rmiNameProperty
+  val rmiNameProperty = SimpleStringProperty("WishesService")
+  var rmiName: String by rmiNameProperty
 
-    val rmiUrlProperty = stringBinding(rmiPortProperty, rmiNameProperty) { "rmi://127.0.0.1:$rmiPort/$rmiName" }
+  val rmiUrlProperty = stringBinding(rmiPortProperty, rmiNameProperty) { "rmi://127.0.0.1:$rmiPort/$rmiName" }
 
-    val maxMemProperty = SimpleLongProperty(0)
-    var maxMem by maxMemProperty
+  val maxMemProperty = SimpleLongProperty(0)
+  var maxMem by maxMemProperty
 
-    val allocatedMemProperty = SimpleLongProperty(0)
-    var allocatedMem by allocatedMemProperty
+  val allocatedMemProperty = SimpleLongProperty(0)
+  var allocatedMem by allocatedMemProperty
 
-    val usedMemProperty = SimpleLongProperty(0)
-    var usedMem by usedMemProperty
+  val usedMemProperty = SimpleLongProperty(0)
+  var usedMem by usedMemProperty
 
-    val startupLevels = mutableMapOf<String, Int>()
+  val startupLevels = mutableMapOf<String, Int>()
 
-    override var product: String = ""
-    override var application: String = ""
+  override var product: String = ""
+  override var application: String = ""
 
-    override val dataPath: File get() = File(runtimeDirectory, "partial-runtime")
-    override val installArea: File
-        get() = (launcher.takeIf(String::isNotBlank)?.toFile() ?: launcherJar.toFile().parentFile).parentFile
+  override val dataPath: File get() = File(runtimeDirectory, "partial-runtime")
+  override val installArea: File
+    get() = (launcher.takeIf(String::isNotBlank)?.toFile() ?: launcherJar.toFile().parentFile).parentFile
 
-    override val projectDirectory: File get() = projectRoot.toFile()
+  override val projectDirectory: File get() = projectRoot.toFile()
 
-    override val libraries: List<File>
-        get() = librariesProperty.asSequence().filter(String::isNotBlank).map(::File).filter(File::exists)
-            .filter(File::isDirectory).map { File(it, Plugins).takeIf(File::exists) ?: it }.mapNotNull(File::listFiles)
-            .toList().flatMap { it.toList() }
+  override val libraries: List<File>
+    get() = librariesProperty.asSequence().filter(String::isNotBlank).map(::File).filter(File::exists)
+      .filter(File::isDirectory).map { File(it, Plugins).takeIf(File::exists) ?: it }.mapNotNull(File::listFiles)
+      .toList().flatMap { it.toList() }
 
-    override val devModules: MutableList<DevModule> = mutableListOf()
+  override val devModules: MutableList<DevModule> = mutableListOf()
 
-    override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
-        if (jarFileOrDirectory.isFile && jarFileOrDirectory.extension.lowercase() == "jar") {
-            JarFile(jarFileOrDirectory).use { it.manifest?.let(BundleManifest::parse) }
-        } else {
-            File(jarFileOrDirectory, ManifestPath).takeIf(File::exists)?.inputStream()?.use(::Manifest)
-                ?.let(BundleManifest.Companion::parse)
-        }
+  override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
+    if (jarFileOrDirectory.isFile && jarFileOrDirectory.extension.lowercase() == "jar") {
+      JarFile(jarFileOrDirectory).use { it.manifest?.let(BundleManifest::parse) }
+    } else {
+      File(jarFileOrDirectory, ManifestPath).takeIf(File::exists)?.inputStream()?.use(::Manifest)
+        ?.let(BundleManifest.Companion::parse)
+    }
 
-    override fun startUpLevel(bundleSymbolicName: String): Int = startupLevels[bundleSymbolicName] ?: 4
-    override fun isAutoStartUp(bundleSymbolicName: String): Boolean = startupLevels.containsKey(bundleSymbolicName)
+  override fun startUpLevel(bundleSymbolicName: String): Int = startupLevels[bundleSymbolicName] ?: 4
+  override fun isAutoStartUp(bundleSymbolicName: String): Boolean = startupLevels.containsKey(bundleSymbolicName)
 }

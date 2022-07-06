@@ -18,73 +18,74 @@ import java.util.jar.*
 import kotlin.io.use
 
 class BundleManifestCacheService(private val project: Project) {
-    private val cachedValuesManager by lazy { CachedValuesManager.getManager(project) }
+  private val cachedValuesManager by lazy { CachedValuesManager.getManager(project) }
 
-    // Key was manifest file path
-    // will maintain key's relation to the same value on CacheValue update
-    private val caches = ConcurrentHashMap<String, CachedValue<BundleManifest>>()
-    private val lastIndexed = ConcurrentHashMap<String, BundleManifest>()
+  // Key was manifest file path
+  // will maintain key's relation to the same value on CacheValue update
+  private val caches = ConcurrentHashMap<String, CachedValue<BundleManifest>>()
+  private val lastIndexed = ConcurrentHashMap<String, BundleManifest>()
 
-    companion object {
-        fun getInstance(project: Project): BundleManifestCacheService =
-            project.getService(BundleManifestCacheService::class.java)
+  companion object {
+    fun getInstance(project: Project): BundleManifestCacheService =
+      project.getService(BundleManifestCacheService::class.java)
 
-        fun resolveManifest(mfFile: VirtualFile, stream: InputStream): BundleManifest? = try {
-            Manifest(stream).let(BundleManifest::parse)
-        } catch (e: Exception) {
-            thisLogger().warn("$ManifestMf file not valid: $mfFile : $e", e)
-            null
-        }
+    fun resolveManifest(mfFile: VirtualFile, stream: InputStream): BundleManifest? = try {
+      Manifest(stream).let(BundleManifest::parse)
+    } catch (e: Exception) {
+      thisLogger().warn("$ManifestMf file not valid: $mfFile : $e", e)
+      null
+    }
+  }
+
+  fun clearCache() {
+    caches.clear()
+    lastIndexed.clear()
+  }
+
+  fun getManifest(psiClass: PsiClass): BundleManifest? = psiClass.containingFile?.let(this::getManifest)
+
+  fun getManifest(item: PsiFileSystemItem): BundleManifest? {
+    val file = item.virtualFile
+    if (file != null) {
+      val index = ProjectFileIndex.getInstance(item.project)
+      if (file.isBelongJDK(index)) return null
+
+      val module = index.getModuleForFile(file)
+      if (module != null) return getManifest(module)
+
+      val libRoot = index.getClassRootForFile(file)
+      if (libRoot != null) return getManifest(libRoot)
     }
 
-    fun clearCache() {
-        caches.clear()
-        lastIndexed.clear()
+    return null
+  }
+
+  fun getManifest(module: Module): BundleManifest? = readCompute { getManifestPsi(module)?.let(this::getManifest0) }
+  fun getManifest(root: VirtualFile): BundleManifest? = readCompute { getManifestFile(root)?.let(this::getManifest0) }
+
+  private fun getManifestPsi(module: Module): VirtualFile? =
+    module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(ManifestPath) }
+
+  private fun getManifestFile(root: VirtualFile): VirtualFile? = root.validFileOrRequestResolve(project)?.let {
+    if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
+      JarFileSystem.getInstance().getJarRootForLocalFile(it)
+    } else {
+      it
+    }
+  }?.findFileByRelativePath(ManifestPath)
+
+  private fun getManifest0(manifestFile: VirtualFile): BundleManifest? =
+    manifestFile.validFileOrRequestResolve(project)?.let { file ->
+      DumbService.isDumb(project).runFalse { BundleManifestIndex.readBundleManifest(project, file) }
+        ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl] ?: caches.computeIfAbsent(
+        file.presentableUrl
+      ) {
+        cachedValuesManager.createCachedValue {
+          CachedValueProvider.Result.create(readManifest(file), file)
+        }
+      }.value
     }
 
-    fun getManifest(psiClass: PsiClass): BundleManifest? = psiClass.containingFile?.let(this::getManifest)
-
-    fun getManifest(item: PsiFileSystemItem): BundleManifest? {
-        val file = item.virtualFile
-        if (file != null) {
-            val index = ProjectFileIndex.getInstance(item.project)
-            if (file.isBelongJDK(index)) return null
-
-            val module = index.getModuleForFile(file)
-            if (module != null) return getManifest(module)
-
-            val libRoot = index.getClassRootForFile(file)
-            if (libRoot != null) return getManifest(libRoot)
-        }
-
-        return null
-    }
-
-    fun getManifest(module: Module): BundleManifest? = readCompute { getManifestPsi(module)?.let(this::getManifest0) }
-    fun getManifest(root: VirtualFile): BundleManifest? = readCompute { getManifestFile(root)?.let(this::getManifest0) }
-
-    private fun getManifestPsi(module: Module): VirtualFile? =
-        module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(ManifestPath) }
-
-    private fun getManifestFile(root: VirtualFile): VirtualFile? = root.validFileOrRequestResolve(project)?.let {
-        if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
-            JarFileSystem.getInstance().getJarRootForLocalFile(it)
-        } else {
-            it
-        }
-    }?.findFileByRelativePath(ManifestPath)
-
-    private fun getManifest0(manifestFile: VirtualFile): BundleManifest? =
-        manifestFile.validFileOrRequestResolve(project)?.let { file ->
-            DumbService.isDumb(project).runFalse { BundleManifestIndex.readBundleManifest(project, file) }
-                ?.also { lastIndexed[file.presentableUrl] = it } ?: lastIndexed[file.presentableUrl]
-            ?: caches.computeIfAbsent(file.presentableUrl) {
-                cachedValuesManager.createCachedValue {
-                    CachedValueProvider.Result.create(readManifest(file), file)
-                }
-            }.value
-        }
-
-    private fun readManifest(virtualFile: VirtualFile): BundleManifest? =
-        virtualFile.inputStream.use { resolveManifest(virtualFile, it) }
+  private fun readManifest(virtualFile: VirtualFile): BundleManifest? =
+    virtualFile.inputStream.use { resolveManifest(virtualFile, it) }
 }

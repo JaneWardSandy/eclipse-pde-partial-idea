@@ -29,133 +29,133 @@ import java.io.*
 import java.util.*
 
 class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory, name: String) :
-    ApplicationConfiguration(name, project, factory) {
-    private val target by lazy { TargetDefinitionService.getInstance(project) }
-    private val cache by lazy { BundleManifestCacheService.getInstance(project) }
-    private val compiler by lazy { CompilerProjectExtension.getInstance(project) }
+  ApplicationConfiguration(name, project, factory) {
+  private val target by lazy { TargetDefinitionService.getInstance(project) }
+  private val cache by lazy { BundleManifestCacheService.getInstance(project) }
+  private val compiler by lazy { CompilerProjectExtension.getInstance(project) }
 
-    var product: String? = "com.teamcenter.rac.aifrcp.product"
-    var application: String? = "com.teamcenter.rac.aifrcp.application"
-    var cleanRuntimeDir = false
+  var product: String? = "com.teamcenter.rac.aifrcp.product"
+  var application: String? = "com.teamcenter.rac.aifrcp.application"
+  var cleanRuntimeDir = false
 
-    override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
-        SettingsEditorGroup<PDETargetRunConfiguration>().apply {
-            addEditor(message("run.local.config.tab.configuration.title"), PDETargetRunConfigurationEditor(project))
-            JavaRunConfigurationExtensionManager.instance.appendEditors(this@PDETargetRunConfiguration, this)
-            addEditor(message("run.local.config.tab.logs.title"), LogConfigurationPanel())
-        }
-
-    override fun checkConfiguration() {
-        JavaParametersUtil.checkAlternativeJRE(this)
-        ProgramParametersUtil.checkWorkingDirectoryExist(this, project, configurationModule.module)
-        JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this)
-
-        if (compiler == null) throw RuntimeConfigurationWarning(message("run.local.config.noCompiler", project.name))
-        if (target.launcherJar == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncherJar"))
-        if (product.isNullOrBlank() || application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
+  override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
+    SettingsEditorGroup<PDETargetRunConfiguration>().apply {
+      addEditor(message("run.local.config.tab.configuration.title"), PDETargetRunConfigurationEditor(project))
+      JavaRunConfigurationExtensionManager.instance.appendEditors(this@PDETargetRunConfiguration, this)
+      addEditor(message("run.local.config.tab.logs.title"), LogConfigurationPanel())
     }
 
-    override fun writeExternal(element: Element) {
-        super.writeExternal(element)
-        element.getOrCreate("partial").apply {
-            setAttribute("product", product ?: "")
-            setAttribute("application", application ?: "")
-            setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
-        }
+  override fun checkConfiguration() {
+    JavaParametersUtil.checkAlternativeJRE(this)
+    ProgramParametersUtil.checkWorkingDirectoryExist(this, project, configurationModule.module)
+    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this)
+
+    if (compiler == null) throw RuntimeConfigurationWarning(message("run.local.config.noCompiler", project.name))
+    if (target.launcherJar == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncherJar"))
+    if (product.isNullOrBlank() || application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
+  }
+
+  override fun writeExternal(element: Element) {
+    super.writeExternal(element)
+    element.getOrCreate("partial").apply {
+      setAttribute("product", product ?: "")
+      setAttribute("application", application ?: "")
+      setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
+    }
+  }
+
+  override fun readExternal(element: Element) {
+    super.readExternal(element)
+    element.getChild("partial")?.also {
+      product = it.getAttributeValue("product") ?: ""
+      application = it.getAttributeValue("application") ?: ""
+      cleanRuntimeDir = it.getAttributeValue("cleanRuntimeDir", cleanRuntimeDir.toString()).toBoolean()
+    }
+  }
+
+  override fun getState(executor: Executor, env: ExecutionEnvironment): RunProfileState =
+    PDEApplicationCommandLineState(this, env).apply {
+      consoleBuilder =
+        TextConsoleBuilderFactory.getInstance().createBuilder(project, GlobalSearchScope.allScope(project))
     }
 
-    override fun readExternal(element: Element) {
-        super.readExternal(element)
-        element.getChild("partial")?.also {
-            product = it.getAttributeValue("product") ?: ""
-            application = it.getAttributeValue("application") ?: ""
-            cleanRuntimeDir = it.getAttributeValue("cleanRuntimeDir", cleanRuntimeDir.toString()).toBoolean()
+  private inner class PDEApplicationCommandLineState(
+    configuration: PDETargetRunConfiguration, environment: ExecutionEnvironment?
+  ) : JavaApplicationCommandLineState<PDETargetRunConfiguration>(
+    configuration, environment
+  ) {
+    override fun createJavaParameters(): JavaParameters {
+      val parameters: JavaParameters = super.createJavaParameters()
+
+      if (cleanRuntimeDir && configServiceDelegate.dataPath.exists()) {
+        try {
+          configServiceDelegate.dataPath.deleteRecursively()
+        } finally {
+          configServiceDelegate.dataPath.delete()
         }
-    }
+      }
 
-    override fun getState(executor: Executor, env: ExecutionEnvironment): RunProfileState =
-        PDEApplicationCommandLineState(this, env).apply {
-            consoleBuilder =
-                TextConsoleBuilderFactory.getInstance().createBuilder(project, GlobalSearchScope.allScope(project))
+      try {
+        if (SystemInfo.isMac) parameters.vmParametersList.add("-XstartOnFirstThread")
+
+        parameters.classPath.clear()
+        parameters.classPath.add(target.launcherJar!!)
+
+        if (target.launcher != null) {
+          parameters.programParametersList.addAll("-launcher", target.launcher)
         }
 
-    private inner class PDEApplicationCommandLineState(
-        configuration: PDETargetRunConfiguration, environment: ExecutionEnvironment?
-    ) : JavaApplicationCommandLineState<PDETargetRunConfiguration>(
-        configuration, environment
-    ) {
-        override fun createJavaParameters(): JavaParameters {
-            val parameters: JavaParameters = super.createJavaParameters()
+        parameters.programParametersList.addAll("-name", "Eclipse")
+        parameters.programParametersList.addAll("-showsplash", "600")
 
-            if (cleanRuntimeDir && configServiceDelegate.dataPath.exists()) {
-                try {
-                    configServiceDelegate.dataPath.deleteRecursively()
-                } finally {
-                    configServiceDelegate.dataPath.delete()
-                }
-            }
+        parameters.programParametersList.addAll("-application", application)
 
-            try {
-                if (SystemInfo.isMac) parameters.vmParametersList.add("-XstartOnFirstThread")
+        val properties =
+          target.locations.map { File(it.location, "configuration/config.ini") }.firstOrNull(File::exists)
+            ?.inputStream()?.use { Properties().apply { load(it) } } ?: Properties()
+        LaunchConfigGenerator.storeConfigIniFile(configServiceDelegate, properties)
+        LaunchConfigGenerator.storeDevProperties(configServiceDelegate)
+        LaunchConfigGenerator.storeBundleInfo(configServiceDelegate)
 
-                parameters.classPath.clear()
-                parameters.classPath.add(target.launcherJar!!)
+        parameters.programParametersList.addAll("-data", configServiceDelegate.dataPath.absolutePath)
+        parameters.programParametersList.addAll(
+          "-configuration", configServiceDelegate.configurationDirectory.protocolUrl
+        )
+        parameters.programParametersList.addAll("-dev", configServiceDelegate.devPropertiesFile.protocolUrl)
 
-                if (target.launcher != null) {
-                    parameters.programParametersList.addAll("-launcher", target.launcher)
-                }
+        parameters.programParametersList.add("-consoleLog")
+      } catch (e: Exception) {
+        thisLogger().error(e.message, e)
+        throw e
+      }
 
-                parameters.programParametersList.addAll("-name", "Eclipse")
-                parameters.programParametersList.addAll("-showsplash", "600")
-
-                parameters.programParametersList.addAll("-application", application)
-
-                val properties =
-                    target.locations.map { File(it.location, "configuration/config.ini") }.firstOrNull(File::exists)
-                        ?.inputStream()?.use { Properties().apply { load(it) } } ?: Properties()
-                LaunchConfigGenerator.storeConfigIniFile(configServiceDelegate, properties)
-                LaunchConfigGenerator.storeDevProperties(configServiceDelegate)
-                LaunchConfigGenerator.storeBundleInfo(configServiceDelegate)
-
-                parameters.programParametersList.addAll("-data", configServiceDelegate.dataPath.absolutePath)
-                parameters.programParametersList.addAll(
-                    "-configuration", configServiceDelegate.configurationDirectory.protocolUrl
-                )
-                parameters.programParametersList.addAll("-dev", configServiceDelegate.devPropertiesFile.protocolUrl)
-
-                parameters.programParametersList.add("-consoleLog")
-            } catch (e: Exception) {
-                thisLogger().error(e.message, e)
-                throw e
-            }
-
-            return parameters
-        }
+      return parameters
     }
+  }
 
-    private val configServiceDelegate = object : ConfigService {
-        override val product: String get() = this@PDETargetRunConfiguration.product ?: ""
-        override val application: String get() = this@PDETargetRunConfiguration.application ?: ""
+  private val configServiceDelegate = object : ConfigService {
+    override val product: String get() = this@PDETargetRunConfiguration.product ?: ""
+    override val application: String get() = this@PDETargetRunConfiguration.application ?: ""
 
-        override val dataPath: File
-            get() = File(
-                compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
-            )
-        override val installArea: File
-            get() = (target.launcher?.toFile() ?: target.launcherJar!!.toFile().parentFile).parentFile
-        override val projectDirectory: File get() = project.presentableUrl!!.toFile()
+    override val dataPath: File
+      get() = File(
+        compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
+      )
+    override val installArea: File
+      get() = (target.launcher?.toFile() ?: target.launcherJar!!.toFile().parentFile).parentFile
+    override val projectDirectory: File get() = project.presentableUrl!!.toFile()
 
-        override val libraries: List<File>
-            get() = BundleManagementService.getInstance(project).getBundles().map { it.file }
+    override val libraries: List<File>
+      get() = BundleManagementService.getInstance(project).getBundles().map { it.file }
 
-        override val devModules: List<DevModule>
-            get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
+    override val devModules: List<DevModule>
+      get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
 
-        override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
-            LocalFileSystem.getInstance().findFileByIoFile(jarFileOrDirectory)?.let { cache.getManifest(it) }
+    override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
+      LocalFileSystem.getInstance().findFileByIoFile(jarFileOrDirectory)?.let { cache.getManifest(it) }
 
-        override fun startUpLevel(bundleSymbolicName: String): Int = target.startupLevels[bundleSymbolicName] ?: 4
-        override fun isAutoStartUp(bundleSymbolicName: String): Boolean =
-            target.startupLevels.containsKey(bundleSymbolicName)
-    }
+    override fun startUpLevel(bundleSymbolicName: String): Int = target.startupLevels[bundleSymbolicName] ?: 4
+    override fun isAutoStartUp(bundleSymbolicName: String): Boolean =
+      target.startupLevels.containsKey(bundleSymbolicName)
+  }
 }

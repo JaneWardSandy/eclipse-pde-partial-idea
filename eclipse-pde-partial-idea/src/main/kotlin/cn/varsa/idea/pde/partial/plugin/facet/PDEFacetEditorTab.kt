@@ -16,165 +16,165 @@ import javax.swing.*
 import javax.swing.event.*
 
 class PDEFacetEditorTab(
-    private val configuration: PDEFacetConfiguration,
-    private val context: FacetEditorContext,
-    private val validatorsManager: FacetValidatorsManager
+  private val configuration: PDEFacetConfiguration,
+  private val context: FacetEditorContext,
+  private val validatorsManager: FacetValidatorsManager
 ) : FacetEditorTab(), PanelWithAnchor {
-    private val oldCheckList = hashSetOf<String>()
-    private var myAnchor: JComponent? = null
-    private var isInitialized = false
-    private var enableValidation = false
+  private val oldCheckList = hashSetOf<String>()
+  private var myAnchor: JComponent? = null
+  private var isInitialized = false
+  private var enableValidation = false
 
-    private val panel = BorderLayoutPanel()
+  private val panel = BorderLayoutPanel()
 
-    private val compilerClassesTextField = JBTextField()
-    private val compilerClassesComponent = LabeledComponent.create(
-        compilerClassesTextField, message("facet.tab.compilerClassesOutputDirectory"), BorderLayout.WEST
-    )
+  private val compilerClassesTextField = JBTextField()
+  private val compilerClassesComponent = LabeledComponent.create(
+    compilerClassesTextField, message("facet.tab.compilerClassesOutputDirectory"), BorderLayout.WEST
+  )
 
-    private val compilerTestClassesTextField = JBTextField()
-    private val compilerTestClassesComponent = LabeledComponent.create(
-        compilerTestClassesTextField, message("facet.tab.compilerTestClassesOutputDirectory"), BorderLayout.WEST
-    )
+  private val compilerTestClassesTextField = JBTextField()
+  private val compilerTestClassesComponent = LabeledComponent.create(
+    compilerTestClassesTextField, message("facet.tab.compilerTestClassesOutputDirectory"), BorderLayout.WEST
+  )
 
-    private val binaryOutputList = CheckBoxList<String>().apply {
-        border = IdeBorderFactory.createTitledBorder(message("facet.tab.binaryList"), false, JBUI.insetsTop(8))
-            .setShowLine(true)
+  private val binaryOutputList = CheckBoxList<String>().apply {
+    border =
+      IdeBorderFactory.createTitledBorder(message("facet.tab.binaryList"), false, JBUI.insetsTop(8)).setShowLine(true)
+  }
+
+  init {
+    panel.addToTop(VerticalBox().apply {
+      border = IdeBorderFactory.createTitledBorder(message("facet.tab.compilerOutput"), false, JBUI.insetsTop(8))
+        .setShowLine(true)
+
+      add(compilerClassesComponent)
+      add(compilerTestClassesComponent)
+    })
+    panel.addToCenter(binaryOutputList)
+
+    myAnchor = UIUtil.mergeComponentsWithAnchor(compilerClassesComponent, compilerTestClassesComponent)
+  }
+
+  override fun apply() {
+    initializeIfNeeded()
+    validateOnce {
+      if (configuration.compilerClassesOutput != compilerClassesTextField.text) {
+        FacetChangeListener.notifyCompileOutputPathChanged(
+          context.module, configuration.compilerClassesOutput, compilerClassesTextField.text
+        )
+
+        configuration.compilerClassesOutput = compilerClassesTextField.text
+      }
+      if (configuration.compilerTestClassesOutput != compilerTestClassesTextField.text) {
+        FacetChangeListener.notifyCompileTestOutputPathChanged(
+          context.module, configuration.compilerTestClassesOutput, compilerTestClassesTextField.text
+        )
+
+        configuration.compilerTestClassesOutput = compilerTestClassesTextField.text
+      }
+
+      val checkedItems = binaryOutputList.checkedItems()
+      if (!checkedItems.let { it.containsAll(oldCheckList) && oldCheckList.containsAll(it) }) {
+        configuration.binaryOutput.clear()
+        configuration.binaryOutput += checkedItems
+
+        FacetChangeListener.notifyBinaryOutputChanged(context.module, oldCheckList, checkedItems)
+
+        oldCheckList.clear()
+        oldCheckList += configuration.binaryOutput
+      }
     }
+  }
 
-    init {
-        panel.addToTop(VerticalBox().apply {
-            border = IdeBorderFactory.createTitledBorder(message("facet.tab.compilerOutput"), false, JBUI.insetsTop(8))
-                .setShowLine(true)
+  override fun reset() {
+    initializeIfNeeded()
+    validateOnce {
+      compilerClassesTextField.text = configuration.compilerClassesOutput
+      compilerTestClassesTextField.text = configuration.compilerTestClassesOutput
 
-            add(compilerClassesComponent)
-            add(compilerTestClassesComponent)
-        })
-        panel.addToCenter(binaryOutputList)
+      binaryOutputList.apply {
+        reloadCheckList()
+        configuration.binaryOutput.forEach { setItemSelected(it, true) }
+      }
 
-        myAnchor = UIUtil.mergeComponentsWithAnchor(compilerClassesComponent, compilerTestClassesComponent)
+      oldCheckList.clear()
+      oldCheckList += configuration.binaryOutput
     }
+  }
 
-    override fun apply() {
-        initializeIfNeeded()
-        validateOnce {
-            if (configuration.compilerClassesOutput != compilerClassesTextField.text) {
-                FacetChangeListener.notifyCompileOutputPathChanged(
-                    context.module, configuration.compilerClassesOutput, compilerClassesTextField.text
-                )
+  override fun getDisplayName(): String = message("facet.tab.displayName")
+  override fun createComponent(): JComponent = panel
 
-                configuration.compilerClassesOutput = compilerClassesTextField.text
-            }
-            if (configuration.compilerTestClassesOutput != compilerTestClassesTextField.text) {
-                FacetChangeListener.notifyCompileTestOutputPathChanged(
-                    context.module, configuration.compilerTestClassesOutput, compilerTestClassesTextField.text
-                )
+  override fun isModified(): Boolean =
+    isInitialized && (configuration.compilerClassesOutput != compilerClassesTextField.text || configuration.compilerTestClassesOutput != compilerTestClassesTextField.text || !binaryOutputList.checkedItems()
+      .let { it.containsAll(oldCheckList) && oldCheckList.containsAll(it) })
 
-                configuration.compilerTestClassesOutput = compilerTestClassesTextField.text
-            }
+  override fun getAnchor(): JComponent? = myAnchor
+  override fun setAnchor(anchor: JComponent?) {
+    this.myAnchor = anchor
 
-            val checkedItems = binaryOutputList.checkedItems()
-            if (!checkedItems.let { it.containsAll(oldCheckList) && oldCheckList.containsAll(it) }) {
-                configuration.binaryOutput.clear()
-                configuration.binaryOutput += checkedItems
+    compilerClassesComponent.anchor = anchor
+    compilerTestClassesComponent.anchor = anchor
+  }
 
-                FacetChangeListener.notifyBinaryOutputChanged(context.module, oldCheckList, checkedItems)
+  override fun onTabEntering() {
+    initializeIfNeeded()
+  }
 
-                oldCheckList.clear()
-                oldCheckList += configuration.binaryOutput
-            }
-        }
+  private fun reloadCheckList() {
+    binaryOutputList.apply {
+      clear()
+      context.module.getModuleDir().toFile().listFiles()?.map { it.name }.also { setItems(it, null) }
     }
+  }
 
-    override fun reset() {
-        initializeIfNeeded()
-        validateOnce {
-            compilerClassesTextField.text = configuration.compilerClassesOutput
-            compilerTestClassesTextField.text = configuration.compilerTestClassesOutput
+  private fun initializeIfNeeded() {
+    if (isInitialized) return
 
-            binaryOutputList.apply {
-                reloadCheckList()
-                configuration.binaryOutput.forEach { setItemSelected(it, true) }
-            }
+    validatorsManager.registerValidator(ArgumentConsistencyValidator(compilerClassesTextField))
+    validatorsManager.registerValidator(ArgumentConsistencyValidator(compilerTestClassesTextField))
 
-            oldCheckList.clear()
-            oldCheckList += configuration.binaryOutput
-        }
+    compilerClassesTextField.validateOnChange()
+    compilerTestClassesTextField.validateOnChange()
+
+    isInitialized = true
+    reset()
+  }
+
+  private fun validateOnce(body: () -> Unit) {
+    enableValidation = false
+    body()
+    enableValidation = true
+    doValidate()
+  }
+
+  private fun doValidate() {
+    if (enableValidation) {
+      validatorsManager.validate()
     }
+  }
 
-    override fun getDisplayName(): String = message("facet.tab.displayName")
-    override fun createComponent(): JComponent = panel
+  private fun JTextField.validateOnChange() {
+    document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) = doValidate()
+    })
+  }
 
-    override fun isModified(): Boolean =
-        isInitialized && (configuration.compilerClassesOutput != compilerClassesTextField.text || configuration.compilerTestClassesOutput != compilerTestClassesTextField.text || !binaryOutputList.checkedItems()
-            .let { it.containsAll(oldCheckList) && oldCheckList.containsAll(it) })
+  private fun CheckBoxList<String>.checkedItems() =
+    (0 until itemsCount).mapNotNull(this::getItemAt).filter(this::isItemSelected).distinct().toSet()
 
-    override fun getAnchor(): JComponent? = myAnchor
-    override fun setAnchor(anchor: JComponent?) {
-        this.myAnchor = anchor
+  inner class ArgumentConsistencyValidator(private val textField: JBTextField) : FacetEditorValidator() {
+    override fun check(): ValidationResult = with(textField.text) {
+      if (isBlank()) return ValidationResult(message("facet.tab.valid.notBlank"))
+      if (startsWith('/')) return ValidationResult(message("facet.tab.valid.notRelative"))
+      if (startsWith('.') || startsWith('~')) return ValidationResult(message("facet.tab.valid.startString"))
 
-        compilerClassesComponent.anchor = anchor
-        compilerTestClassesComponent.anchor = anchor
+      val sequence = splitToSequence('\\', '/')
+      if (sequence.contains(".") || sequence.contains("..") || sequence.contains("~")) return ValidationResult(
+        message("facet.tab.valid.notDirectory")
+      )
+
+      return ValidationResult.OK
     }
-
-    override fun onTabEntering() {
-        initializeIfNeeded()
-    }
-
-    private fun reloadCheckList() {
-        binaryOutputList.apply {
-            clear()
-            context.module.getModuleDir().toFile().listFiles()?.map { it.name }.also { setItems(it, null) }
-        }
-    }
-
-    private fun initializeIfNeeded() {
-        if (isInitialized) return
-
-        validatorsManager.registerValidator(ArgumentConsistencyValidator(compilerClassesTextField))
-        validatorsManager.registerValidator(ArgumentConsistencyValidator(compilerTestClassesTextField))
-
-        compilerClassesTextField.validateOnChange()
-        compilerTestClassesTextField.validateOnChange()
-
-        isInitialized = true
-        reset()
-    }
-
-    private fun validateOnce(body: () -> Unit) {
-        enableValidation = false
-        body()
-        enableValidation = true
-        doValidate()
-    }
-
-    private fun doValidate() {
-        if (enableValidation) {
-            validatorsManager.validate()
-        }
-    }
-
-    private fun JTextField.validateOnChange() {
-        document.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) = doValidate()
-        })
-    }
-
-    private fun CheckBoxList<String>.checkedItems() =
-        (0 until itemsCount).mapNotNull(this::getItemAt).filter(this::isItemSelected).distinct().toSet()
-
-    inner class ArgumentConsistencyValidator(private val textField: JBTextField) : FacetEditorValidator() {
-        override fun check(): ValidationResult = with(textField.text) {
-            if (isBlank()) return ValidationResult(message("facet.tab.valid.notBlank"))
-            if (startsWith('/')) return ValidationResult(message("facet.tab.valid.notRelative"))
-            if (startsWith('.') || startsWith('~')) return ValidationResult(message("facet.tab.valid.startString"))
-
-            val sequence = splitToSequence('\\', '/')
-            if (sequence.contains(".") || sequence.contains("..") || sequence.contains("~")) return ValidationResult(
-                message("facet.tab.valid.notDirectory")
-            )
-
-            return ValidationResult.OK
-        }
-    }
+  }
 }

@@ -7,43 +7,42 @@ import tornadofx.*
 import kotlin.system.*
 
 class WishesWizard : Wizard("Wishes", "Eclipse PDE Partial Remote Launcher") {
-    private val configControl: ConfigControl by inject()
+  private val configControl: ConfigControl by inject()
 
-    override val canGoBack: BooleanExpression = hasPrevious and configControl.rmiRunningProperty.not()
-    override val canGoNext: BooleanExpression =
-        hasNext and currentPageComplete and configControl.rmiRunningProperty.not()
-    override val canFinish: BooleanExpression = hasNext.not() and allPagesComplete
+  override val canGoBack: BooleanExpression = hasPrevious and configControl.rmiRunningProperty.not()
+  override val canGoNext: BooleanExpression = hasNext and currentPageComplete and configControl.rmiRunningProperty.not()
+  override val canFinish: BooleanExpression = hasNext.not() and allPagesComplete
 
-    init {
-        graphic = resources.imageview("/icon.png")
+  init {
+    graphic = resources.imageview("/icon.png")
 
-        cancelButtonTextProperty.value = "Close"
-        finishButtonTextProperty.bind(configControl.rmiRunningProperty.stringBinding { if (it == true) "Stop" else "Start" })
+    cancelButtonTextProperty.value = "Close"
+    finishButtonTextProperty.bind(configControl.rmiRunningProperty.stringBinding { if (it == true) "Stop" else "Start" })
 
-        Runtime.getRuntime().addShutdownHook(Thread {
-            runLater { fire(LauncherStopEvent) }
-        })
+    Runtime.getRuntime().addShutdownHook(Thread {
+      runLater { fire(LauncherStopEvent) }
+    })
 
-        add(RunConfigView::class)
-        add(LibraryView::class)
-        add(NamingView::class)
-        add(ProgressView::class)
-    }
+    add(RunConfigView::class)
+    add(LibraryView::class)
+    add(NamingView::class)
+    add(ProgressView::class)
+  }
 
-    // on finish button press
-    override fun onSave() {
-        super.onSave()
+  // on finish button press
+  override fun onSave() {
+    super.onSave()
 
-        // stop closing wizard
-        isComplete = false
+    // stop closing wizard
+    isComplete = false
 
-        if (configControl.rmiRunning) fire(LauncherStopEvent)
-        else fire(LauncherStartEvent)
-    }
+    if (configControl.rmiRunning) fire(LauncherStopEvent)
+    else fire(LauncherStartEvent)
+  }
 
-    override fun onCancel() {
-        fire(LauncherStopEvent)
-        super.onCancel()
-        exitProcess(0)
-    }
+  override fun onCancel() {
+    fire(LauncherStopEvent)
+    super.onCancel()
+    exitProcess(0)
+  }
 }

@@ -18,129 +18,129 @@ import org.osgi.framework.Constants.*
 import java.io.*
 
 object ModuleHelper {
-    private val logger = thisLogger()
+  private val logger = thisLogger()
 
-    // Compile output path
-    fun resetCompileOutputPath(module: Module) {
-        val facet = PDEFacet.getInstance(module) ?: return
-        setCompileOutputPath(
-            module,
-            "${module.getModuleDir()}/${facet.configuration.compilerClassesOutput}",
-            "${module.getModuleDir()}/${facet.configuration.compilerTestClassesOutput}"
-        )
+  // Compile output path
+  fun resetCompileOutputPath(module: Module) {
+    val facet = PDEFacet.getInstance(module) ?: return
+    setCompileOutputPath(
+      module,
+      "${module.getModuleDir()}/${facet.configuration.compilerClassesOutput}",
+      "${module.getModuleDir()}/${facet.configuration.compilerTestClassesOutput}"
+    )
+  }
+
+  fun setCompileOutputPath(module: Module, compilerOutputPath: String, compilerOutputPathForTest: String) {
+    PDEFacet.getInstance(module) ?: return
+    ModuleRootModificationUtil.modifyModel(module) {
+      setCompileOutputPath(
+        it, compilerOutputPath, compilerOutputPathForTest
+      )
+    }
+  }
+
+  private fun setCompileOutputPath(
+    model: ModifiableRootModel, compilerOutputPath: String, compilerOutputPathForTest: String
+  ): Boolean {
+    PDEFacet.getInstance(model.module) ?: return false
+    val extension = model.getModuleExtension(CompilerModuleExtension::class.java) ?: return false
+
+    extension.isExcludeOutput = true
+    extension.inheritCompilerOutputPath(false)
+    extension.setCompilerOutputPath(
+      VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, compilerOutputPath)
+    )
+    extension.setCompilerOutputPathForTests(
+      VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, compilerOutputPathForTest)
+    )
+
+    return true
+  }
+
+  // Artifact
+  fun resetCompileArtifact(module: Module) {
+    val facet = PDEFacet.getInstance(module) ?: return
+    setCompileArtifact(module, addBinary = facet.configuration.binaryOutput)
+  }
+
+  fun setCompileArtifact(
+    module: Module, addBinary: Set<String> = emptySet(), removeBinary: Set<String> = emptySet()
+  ) {
+    PDEFacet.getInstance(module) ?: return
+    if (addBinary.isEmpty() && removeBinary.isEmpty()) return
+
+    val cacheService = BundleManifestCacheService.getInstance(module.project)
+    readCompute { cacheService.getManifest(module) } ?: return
+
+    val model = readCompute { ArtifactManager.getInstance(module.project).createModifiableModel() }
+    try {
+      if (setCompileArtifact(module, model, addBinary, removeBinary)) {
+        applicationInvokeAndWait { if (!module.project.isDisposed) writeCompute(model::commit) }
+      }
+    } finally {
+      model.dispose()
+    }
+  }
+
+  private fun setCompileArtifact(
+    module: Module,
+    model: ModifiableArtifactModel,
+    addBinary: Set<String> = emptySet(),
+    removeBinary: Set<String> = emptySet()
+  ): Boolean {
+    val cacheService = BundleManifestCacheService.getInstance(module.project)
+    val manifest = readCompute { cacheService.getManifest(module) } ?: return false
+
+    val factory = PackagingElementFactory.getInstance()
+
+    val artifactName = "$ArtifactPrefix${module.name}"
+
+    val artifact = model.findArtifact(artifactName)?.let {
+      if (it.artifactType !is JarArtifactType) {
+        model.removeArtifact(it)
+        null
+      } else {
+        it
+      }
+    }?.let { model.getOrCreateModifiableArtifact(it) } ?: model.addArtifact(
+      artifactName, JarArtifactType.getInstance()
+    )
+
+    artifact.outputPath?.toFile()?.takeIf { it.name != Artifacts && it.parentFile.name == Artifacts }?.also {
+      artifact.outputPath = it.parentFile.canonicalPath
+      logger.info("Change artifact output path to: ${artifact.outputPath}")
     }
 
-    fun setCompileOutputPath(module: Module, compilerOutputPath: String, compilerOutputPathForTest: String) {
-        PDEFacet.getInstance(module) ?: return
-        ModuleRootModificationUtil.modifyModel(module) {
-            setCompileOutputPath(
-                it, compilerOutputPath, compilerOutputPathForTest
-            )
-        }
+    artifact.rootElement.apply {
+      rename("${manifest.bundleSymbolicName?.key}_${manifest.bundleVersion}.jar")
+      addOrFindChild(factory.createModuleOutput(module))
+
+      removeBinary.mapNotNull { findCompositeChild(it) }.also { removeChildren(it) }
+      addBinary.map { File(module.getModuleDir(), it) }.filter { it.exists() }
+        .filter { findCompositeChild(it.name) == null }.map {
+          if (it.isFile) {
+            factory.createFileCopy(it.canonicalPath, null)
+          } else {
+            factory.createDirectoryCopyWithParentDirectories(it.canonicalPath, it.name)
+          }
+        }.forEach { addOrFindChild(it) }
     }
 
-    private fun setCompileOutputPath(
-        model: ModifiableRootModel, compilerOutputPath: String, compilerOutputPathForTest: String
-    ): Boolean {
-        PDEFacet.getInstance(model.module) ?: return false
-        val extension = model.getModuleExtension(CompilerModuleExtension::class.java) ?: return false
+    logger.info("Eclipse PDE Partial Bundle artifact changed: $artifactName, addBinary: $addBinary, removeBinary: $removeBinary")
+    return true
+  }
 
-        extension.isExcludeOutput = true
-        extension.inheritCompilerOutputPath(false)
-        extension.setCompilerOutputPath(
-            VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, compilerOutputPath)
-        )
-        extension.setCompilerOutputPathForTests(
-            VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, compilerOutputPathForTest)
-        )
+  fun setupManifestFile(module: Module) {
+    PDEFacet.getInstance(module) ?: return
+    val directory = module.rootManager.contentRoots.firstOrNull() ?: return
 
-        return true
-    }
+    val metaInfDir = directory.findChild(MetaInf)?.also { it.refresh(false, false) }?.takeIf { it.isValid }
+      ?: directory.createChildDirectory(null, MetaInf)
+    val manifestMfFile = metaInfDir.findChild(ManifestMf)?.takeIf { it.isValid }
 
-    // Artifact
-    fun resetCompileArtifact(module: Module) {
-        val facet = PDEFacet.getInstance(module) ?: return
-        setCompileArtifact(module, addBinary = facet.configuration.binaryOutput)
-    }
-
-    fun setCompileArtifact(
-        module: Module, addBinary: Set<String> = emptySet(), removeBinary: Set<String> = emptySet()
-    ) {
-        PDEFacet.getInstance(module) ?: return
-        if (addBinary.isEmpty() && removeBinary.isEmpty()) return
-
-        val cacheService = BundleManifestCacheService.getInstance(module.project)
-        readCompute { cacheService.getManifest(module) } ?: return
-
-        val model = readCompute { ArtifactManager.getInstance(module.project).createModifiableModel() }
-        try {
-            if (setCompileArtifact(module, model, addBinary, removeBinary)) {
-                applicationInvokeAndWait { if (!module.project.isDisposed) writeCompute(model::commit) }
-            }
-        } finally {
-            model.dispose()
-        }
-    }
-
-    private fun setCompileArtifact(
-        module: Module,
-        model: ModifiableArtifactModel,
-        addBinary: Set<String> = emptySet(),
-        removeBinary: Set<String> = emptySet()
-    ): Boolean {
-        val cacheService = BundleManifestCacheService.getInstance(module.project)
-        val manifest = readCompute { cacheService.getManifest(module) } ?: return false
-
-        val factory = PackagingElementFactory.getInstance()
-
-        val artifactName = "$ArtifactPrefix${module.name}"
-
-        val artifact = model.findArtifact(artifactName)?.let {
-            if (it.artifactType !is JarArtifactType) {
-                model.removeArtifact(it)
-                null
-            } else {
-                it
-            }
-        }?.let { model.getOrCreateModifiableArtifact(it) } ?: model.addArtifact(
-            artifactName, JarArtifactType.getInstance()
-        )
-
-        artifact.outputPath?.toFile()?.takeIf { it.name != Artifacts && it.parentFile.name == Artifacts }?.also {
-            artifact.outputPath = it.parentFile.canonicalPath
-            logger.info("Change artifact output path to: ${artifact.outputPath}")
-        }
-
-        artifact.rootElement.apply {
-            rename("${manifest.bundleSymbolicName?.key}_${manifest.bundleVersion}.jar")
-            addOrFindChild(factory.createModuleOutput(module))
-
-            removeBinary.mapNotNull { findCompositeChild(it) }.also { removeChildren(it) }
-            addBinary.map { File(module.getModuleDir(), it) }.filter { it.exists() }
-                .filter { findCompositeChild(it.name) == null }.map {
-                    if (it.isFile) {
-                        factory.createFileCopy(it.canonicalPath, null)
-                    } else {
-                        factory.createDirectoryCopyWithParentDirectories(it.canonicalPath, it.name)
-                    }
-                }.forEach { addOrFindChild(it) }
-        }
-
-        logger.info("Eclipse PDE Partial Bundle artifact changed: $artifactName, addBinary: $addBinary, removeBinary: $removeBinary")
-        return true
-    }
-
-    fun setupManifestFile(module: Module) {
-        PDEFacet.getInstance(module) ?: return
-        val directory = module.rootManager.contentRoots.firstOrNull() ?: return
-
-        val metaInfDir = directory.findChild(MetaInf)?.also { it.refresh(false, false) }?.takeIf { it.isValid }
-            ?: directory.createChildDirectory(null, MetaInf)
-        val manifestMfFile = metaInfDir.findChild(ManifestMf)?.takeIf { it.isValid }
-
-        if (manifestMfFile != null) return
-        VfsUtil.saveText(
-            metaInfDir.createChildData(null, ManifestMf), """
+    if (manifestMfFile != null) return
+    VfsUtil.saveText(
+      metaInfDir.createChildData(null, ManifestMf), """
                 Manifest-Version: 1.0
                 $BUNDLE_MANIFESTVERSION: 2
                 $BUNDLE_NAME: ${module.name.substringAfterLast('.').uppercase()}
@@ -155,27 +155,27 @@ object ModuleHelper {
                 $BUNDLE_CLASSPATH: .
 
         """.trimIndent()
-        )
+    )
 
-        if (directory.findChild(PluginsXml).let { it == null || !it.isValid }) {
-            VfsUtil.saveText(
-                directory.createChildData(null, PluginsXml), """
+    if (directory.findChild(PluginsXml).let { it == null || !it.isValid }) {
+      VfsUtil.saveText(
+        directory.createChildData(null, PluginsXml), """
                     <?xml version="1.0" encoding="UTF-8"?>
                     <?eclipse version="3.4"?>
                     <plugin>
-                        
+
                         <extension point="org.eclipse.ui.commands">
                         </extension>
-                        
+
                         <extension point="org.eclipse.ui.menus">
                             <menuContribution locationURI="menu:org.eclipse.ui.main.menu?after=additions">
                             </menuContribution>
                         </extension>
-                        
+
                     </plugin>
-                    
+
             """.trimIndent()
-            )
-        }
+      )
     }
+  }
 }

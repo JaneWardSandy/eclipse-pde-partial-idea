@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.*
 
 class ResolveWorkspaceAction : AnAction() {
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.apply {
-            text = message("action.resolveWorkspace.text")
-            isEnabledAndVisible = e.project?.allPDEModules()?.isNotEmpty() ?: false
-        }
+  override fun update(e: AnActionEvent) {
+    e.presentation.apply {
+      text = message("action.resolveWorkspace.text")
+      isEnabledAndVisible = e.project?.allPDEModules()?.isNotEmpty() ?: false
     }
+  }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        e.project?.also { TargetDefinitionService.getInstance(it).backgroundResolve(it) }
-    }
+  override fun actionPerformed(e: AnActionEvent) {
+    e.project?.also { TargetDefinitionService.getInstance(it).backgroundResolve(it) }
+  }
 }

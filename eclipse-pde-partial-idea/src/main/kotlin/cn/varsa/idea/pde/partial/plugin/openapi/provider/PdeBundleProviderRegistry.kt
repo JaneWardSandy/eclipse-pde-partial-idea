@@ -6,20 +6,20 @@ import java.io.*
 
 class PdeBundleProviderRegistry {
 
-    companion object {
-        val instance: PdeBundleProviderRegistry
-            get() = ApplicationManager.getApplication().getService(PdeBundleProviderRegistry::class.java)
-    }
+  companion object {
+    val instance: PdeBundleProviderRegistry
+      get() = ApplicationManager.getApplication().getService(PdeBundleProviderRegistry::class.java)
+  }
 
-    fun resolveLocation(
-        rootDirectory: File,
-        location: TargetLocationDefinition,
-        processFeature: (File) -> Unit = {},
-        processBundle: (File) -> Unit
-    ) = TargetBundleProvider.EP_NAME.extensionList.forEach {
-        if (it.resolveDirectory(rootDirectory, processFeature, processBundle)) {
-            location.type = it.type
-            return
-        }
+  fun resolveLocation(
+    rootDirectory: File,
+    location: TargetLocationDefinition,
+    processFeature: (File) -> Unit = {},
+    processBundle: (File) -> Unit
+  ) = TargetBundleProvider.EP_NAME.extensionList.forEach {
+    if (it.resolveDirectory(rootDirectory, processFeature, processBundle)) {
+      location.type = it.type
+      return
     }
+  }
 }

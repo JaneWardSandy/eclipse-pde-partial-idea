@@ -14,103 +14,103 @@ import java.io.*
 import javax.xml.stream.*
 
 data class BundleDefinition(
-    val root: VirtualFile,
-    val file: File,
-    val location: TargetLocationDefinition,
-    val project: Project,
-    val dependencyScope: DependencyScope
+  val root: VirtualFile,
+  val file: File,
+  val location: TargetLocationDefinition,
+  val project: Project,
+  val dependencyScope: DependencyScope
 ) {
-    val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
+  val manifest: BundleManifest? get() = BundleManifestCacheService.getInstance(project).getManifest(root)
 
-    val bundleSymbolicName: String
-        get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension.substringBeforeLast('_')
-    val bundleVersion: Version get() = manifest?.bundleVersion ?: Version.emptyVersion
+  val bundleSymbolicName: String
+    get() = manifest?.bundleSymbolicName?.key ?: file.nameWithoutExtension.substringBeforeLast('_')
+  val bundleVersion: Version get() = manifest?.bundleVersion ?: Version.emptyVersion
 
-    private val classPaths: Map<String, VirtualFile>
-        get() = mapOf("" to root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
-            ?.map { it to root.findFileByRelativePath(it) }?.filterNot { it.second == null || it.second!!.isDirectory }
-            ?.associate { it.first to it.second!! } ?: emptyMap())
+  private val classPaths: Map<String, VirtualFile>
+    get() = mapOf("" to root) + (manifest?.bundleClassPath?.keys?.filterNot { it == "." }
+      ?.map { it to root.findFileByRelativePath(it) }?.filterNot { it.second == null || it.second!!.isDirectory }
+      ?.associate { it.first to it.second!! } ?: emptyMap())
 
-    val delegateClassPathFile: Map<String, VirtualFile>
-        get() = classPaths.mapValues {
-            val originFile = it.value
+  val delegateClassPathFile: Map<String, VirtualFile>
+    get() = classPaths.mapValues {
+      val originFile = it.value
 
-            val rootEntry = JarFileSystem.getInstance().getRootByEntry(originFile)
-            if (rootEntry != null && rootEntry != originFile) {
-                val name =
-                    "${PathUtilRt.suggestFileName("${root.name}${originFile.presentableUrl.substringAfter(rootEntry.presentableUrl)}")}.${originFile.extension}"
+      val rootEntry = JarFileSystem.getInstance().getRootByEntry(originFile)
+      if (rootEntry != null && rootEntry != originFile) {
+        val name =
+          "${PathUtilRt.suggestFileName("${root.name}${originFile.presentableUrl.substringAfter(rootEntry.presentableUrl)}")}.${originFile.extension}"
 
-                val projectFile = LocalFileSystem.getInstance().findFileByPath(project.presentableUrl!!)!!
-                val outFile = readCompute { projectFile.findChild("out") } ?: writeComputeAndWait {
-                    projectFile.createChildDirectory(this, "out")
-                }
-                val libFile = readCompute { outFile.findChild("tmp_lib") } ?: writeComputeAndWait {
-                    outFile.createChildDirectory(this, "tmp_lib")
-                }
-                val virtualFile = readCompute { libFile.findChild(name) } ?: writeComputeAndWait {
-                    libFile.createChildData(this, name)
-                }
-
-                if ((virtualFile.modificationStamp != originFile.modificationStamp || virtualFile.timeStamp != originFile.timeStamp) && virtualFile.length != originFile.length) {
-                    writeComputeAndWait {
-                        virtualFile.getOutputStream(virtualFile, originFile.modificationStamp, originFile.timeStamp)
-                            .use { ous -> originFile.inputStream.use { ins -> ins.copyTo(ous) } }
-                    }
-                }
-
-                virtualFile
-            } else {
-                originFile
-            }
+        val projectFile = LocalFileSystem.getInstance().findFileByPath(project.presentableUrl!!)!!
+        val outFile = readCompute { projectFile.findChild("out") } ?: writeComputeAndWait {
+          projectFile.createChildDirectory(this, "out")
+        }
+        val libFile = readCompute { outFile.findChild("tmp_lib") } ?: writeComputeAndWait {
+          outFile.createChildDirectory(this, "tmp_lib")
+        }
+        val virtualFile = readCompute { libFile.findChild(name) } ?: writeComputeAndWait {
+          libFile.createChildData(this, name)
         }
 
-    var sourceBundle: BundleDefinition? = null
+        if ((virtualFile.modificationStamp != originFile.modificationStamp || virtualFile.timeStamp != originFile.timeStamp) && virtualFile.length != originFile.length) {
+          writeComputeAndWait {
+            virtualFile.getOutputStream(virtualFile, originFile.modificationStamp, originFile.timeStamp)
+              .use { ous -> originFile.inputStream.use { ins -> ins.copyTo(ous) } }
+          }
+        }
 
-    val canonicalName: String get() = "$bundleSymbolicName-$bundleVersion"
-    override fun toString(): String = canonicalName
+        virtualFile
+      } else {
+        originFile
+      }
+    }
+
+  var sourceBundle: BundleDefinition? = null
+
+  val canonicalName: String get() = "$bundleSymbolicName-$bundleVersion"
+  override fun toString(): String = canonicalName
 }
 
 data class FeatureDefinition(
-    val root: VirtualFile, val file: File, val location: TargetLocationDefinition, val project: Project
+  val root: VirtualFile, val file: File, val location: TargetLocationDefinition, val project: Project
 ) {
-    var id: String = ""
-        private set
-    var version: Version = Version.emptyVersion
-        private set
+  var id: String = ""
+    private set
+  var version: Version = Version.emptyVersion
+    private set
 
-    val plugins = hashMapOf<String, Version>()
+  val plugins = hashMapOf<String, Version>()
 
-    init {
-        root.validFileOrRequestResolve(project)?.let {
-            if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
-                JarFileSystem.getInstance().getJarRootForLocalFile(it)
-            } else {
-                it
+  init {
+    root.validFileOrRequestResolve(project)?.let {
+      if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {
+        JarFileSystem.getInstance().getJarRootForLocalFile(it)
+      } else {
+        it
+      }
+    }?.findFileByRelativePath(FeatureXml)?.validFileOrRequestResolve(project)?.inputStream?.use {
+      val reader = XMLInputFactory.newInstance().createXMLStreamReader(it)
+      try {
+        while (reader.hasNext()) {
+          if (reader.next() == XMLStreamConstants.START_ELEMENT) {
+            when (reader.localName) {
+              "feature" -> {
+                id = reader.getAttributeValue("", "id")
+                version = Version.parseVersion(reader.getAttributeValue("", "version"))
+              }
+              "plugin" -> {
+                plugins[reader.getAttributeValue("", "id")] =
+                  Version.parseVersion(reader.getAttributeValue("", "version"))
+              }
             }
-        }?.findFileByRelativePath(FeatureXml)?.validFileOrRequestResolve(project)?.inputStream?.use {
-            val reader = XMLInputFactory.newInstance().createXMLStreamReader(it)
-            try {
-                while (reader.hasNext()) {
-                    if (reader.next() == XMLStreamConstants.START_ELEMENT) {
-                        when (reader.localName) {
-                            "feature" -> {
-                                id = reader.getAttributeValue("", "id")
-                                version = Version.parseVersion(reader.getAttributeValue("", "version"))
-                            }
-                            "plugin" -> {
-                                plugins[reader.getAttributeValue("", "id")] =
-                                    Version.parseVersion(reader.getAttributeValue("", "version"))
-                            }
-                        }
-                    }
-                }
-            } finally {
-                reader.close()
-            }
+          }
         }
+      } finally {
+        reader.close()
+      }
     }
+  }
 
-    override fun toString(): String = "$id-$version"
+  override fun toString(): String = "$id-$version"
 }
 
 val Pair<String?, Version>.asCanonicalName: String get() = "$first-$second"

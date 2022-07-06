@@ -5,14 +5,14 @@ import org.slf4j.bridge.*
 import tornadofx.*
 
 fun main(args: Array<String>) {
-    SLF4JBridgeHandler.removeHandlersForRootLogger()
-    SLF4JBridgeHandler.install()
+  SLF4JBridgeHandler.removeHandlersForRootLogger()
+  SLF4JBridgeHandler.install()
 
-    Application.launch(MainLauncherApp::class.java, *args)
+  Application.launch(MainLauncherApp::class.java, *args)
 }
 
 class MainLauncherApp : App(WishesWizard::class) {
-    init {
-        setStageIcon(resources.image("/icon.png"))
-    }
+  init {
+    setStageIcon(resources.image("/icon.png"))
+  }
 }

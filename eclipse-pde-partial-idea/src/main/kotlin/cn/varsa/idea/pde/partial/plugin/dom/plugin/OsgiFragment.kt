@@ -5,10 +5,10 @@ import com.intellij.util.xml.*
 
 @DefinesXml
 interface OsgiFragment : PluginDomElement {
-    companion object {
-        const val tagName = "fragment"
-    }
+  companion object {
+    const val tagName = "fragment"
+  }
 
-    @SubTagList("extension-point") fun getExtensionPoints(): List<ExtensionPoint>
-    @SubTagList("extension") fun getExtensions(): List<Extension>
+  @SubTagList("extension-point") fun getExtensionPoints(): List<ExtensionPoint>
+  @SubTagList("extension") fun getExtensions(): List<Extension>
 }

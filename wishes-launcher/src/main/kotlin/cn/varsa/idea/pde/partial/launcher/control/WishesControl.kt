@@ -10,95 +10,96 @@ import java.io.*
 import java.util.*
 
 class WishesControl : Controller() {
-    private val configControl: ConfigControl by inject()
-    private val loggerControl: LoggerControl by inject()
+  private val configControl: ConfigControl by inject()
+  private val loggerControl: LoggerControl by inject()
 
-    private val setup = JavaCommandLineSetup()
+  private val setup = JavaCommandLineSetup()
 
-    var handler: ProcessHandler? = null
+  var handler: ProcessHandler? = null
 
-    fun generateData(parameters: JavaCommandParameters) {
-        parameters.mainClass = "org.eclipse.equinox.launcher.Main"
-        parameters.workingDirectory = configControl.runtimeDirectory
-        parameters.charset = configControl.osCharset.name()
+  fun generateData(parameters: JavaCommandParameters) {
+    parameters.mainClass = "org.eclipse.equinox.launcher.Main"
+    parameters.workingDirectory = configControl.runtimeDirectory
+    parameters.charset = configControl.osCharset.name()
 
-        parameters.classPath.add(configControl.launcherJar)
+    parameters.classPath.add(configControl.launcherJar)
 
-        if (configControl.launcher.isNotBlank()) {
-            parameters.programParameters.addAll("-launcher", configControl.launcher)
-        }
-
-        parameters.programParameters.addAll("-data", configControl.dataPath.absolutePath)
-        parameters.programParameters.addAll("-configuration", configControl.configurationDirectory.protocolUrl)
-        parameters.programParameters.addAll("-dev", configControl.devPropertiesFile.protocolUrl)
-
-        setup.setupJavaExePath(configControl.javaExe)
-        setup.setupCommandLine(parameters)
-
-        val properties = configControl.launcher.let(::File).let { File(it.parentFile, "configuration/config.ini") }
-            .takeIf(File::exists)?.inputStream()?.use { Properties().apply { load(it) } } ?: Properties()
-        LaunchConfigGenerator.storeConfigIniFile(configControl, properties)
-        LaunchConfigGenerator.storeDevProperties(configControl)
-        LaunchConfigGenerator.storeBundleInfo(configControl)
+    if (configControl.launcher.isNotBlank()) {
+      parameters.programParameters.addAll("-launcher", configControl.launcher)
     }
 
-    fun clean() {
-        if (configControl.dataPath.exists()) {
-            try {
-                configControl.dataPath.deleteRecursively()
-            } finally {
-                configControl.dataPath.delete()
-            }
-        }
+    parameters.programParameters.addAll("-data", configControl.dataPath.absolutePath)
+    parameters.programParameters.addAll("-configuration", configControl.configurationDirectory.protocolUrl)
+    parameters.programParameters.addAll("-dev", configControl.devPropertiesFile.protocolUrl)
+
+    setup.setupJavaExePath(configControl.javaExe)
+    setup.setupCommandLine(parameters)
+
+    val properties =
+      configControl.launcher.let(::File).let { File(it.parentFile, "configuration/config.ini") }.takeIf(File::exists)
+        ?.inputStream()?.use { Properties().apply { load(it) } } ?: Properties()
+    LaunchConfigGenerator.storeConfigIniFile(configControl, properties)
+    LaunchConfigGenerator.storeDevProperties(configControl)
+    LaunchConfigGenerator.storeBundleInfo(configControl)
+  }
+
+  fun clean() {
+    if (configControl.dataPath.exists()) {
+      try {
+        configControl.dataPath.deleteRecursively()
+      } finally {
+        configControl.dataPath.delete()
+      }
     }
+  }
 
-    fun launch() {
-        if (configControl.portalRunning) return
+  fun launch() {
+    if (configControl.portalRunning) return
 
-        handler = ProcessHandler(setup.commandLine).apply {
-            addProcessListener(object : ProcessListener {
-                override fun onProcessStart() {
-                    fire(ProcessStartEvent)
-                    runLater { configControl.portalRunning = true }
-                }
-
-                override fun onProcessWillTerminate(willBeDestroyed: Boolean) {
-                    fire(ProcessWillTerminateEvent(willBeDestroyed))
-                }
-
-                override fun onProcessTerminated(exitCode: Int) {
-                    fire(ProcessTerminatedEvent(exitCode))
-                    removeProcessListener(this)
-                    handler = null
-
-                    destroy()
-                }
-
-                override fun onTextAvailable(text: String, type: ProcessOutputType) {
-                    if (type.isStdout()) loggerControl.logger.info(text)
-                    if (type.isStderr()) loggerControl.logger.warn(text)
-
-                    if (text.contains("Listening for transport .+ at address: [\\d]+".toRegex())) {
-                        runLater { configControl.jdwpRunning = true }
-                    }
-                }
-            })
-
-            if (isStartNotified.not()) startNotify()
+    handler = ProcessHandler(setup.commandLine).apply {
+      addProcessListener(object : ProcessListener {
+        override fun onProcessStart() {
+          fire(ProcessStartEvent)
+          runLater { configControl.portalRunning = true }
         }
+
+        override fun onProcessWillTerminate(willBeDestroyed: Boolean) {
+          fire(ProcessWillTerminateEvent(willBeDestroyed))
+        }
+
+        override fun onProcessTerminated(exitCode: Int) {
+          fire(ProcessTerminatedEvent(exitCode))
+          removeProcessListener(this)
+          handler = null
+
+          destroy()
+        }
+
+        override fun onTextAvailable(text: String, type: ProcessOutputType) {
+          if (type.isStdout()) loggerControl.logger.info(text)
+          if (type.isStderr()) loggerControl.logger.warn(text)
+
+          if (text.contains("Listening for transport .+ at address: [\\d]+".toRegex())) {
+            runLater { configControl.jdwpRunning = true }
+          }
+        }
+      })
+
+      if (isStartNotified.not()) startNotify()
     }
+  }
 
-    fun destroy() {
-        handler?.apply {
-            if (!isProcessTerminated) {
-                destroyProcess()
-            }
-        }
-        handler = null
-
-        runLater {
-            configControl.portalRunning = false
-            configControl.jdwpRunning = false
-        }
+  fun destroy() {
+    handler?.apply {
+      if (!isProcessTerminated) {
+        destroyProcess()
+      }
     }
+    handler = null
+
+    runLater {
+      configControl.portalRunning = false
+      configControl.jdwpRunning = false
+    }
+  }
 }

@@ -8,7 +8,7 @@ import com.intellij.util.xml.highlighting.*
 import javax.swing.*
 
 class FragmentDescriptorDomFileDescription :
-    DomFileDescription<OsgiFragment>(OsgiFragment::class.java, OsgiFragment.tagName) {
-    override fun getFileIcon(flags: Int): Icon = AllIcons.Nodes.Plugin
-    override fun createAnnotator(): DomElementsAnnotator = ElementOccurLimitAnnotator()
+  DomFileDescription<OsgiFragment>(OsgiFragment::class.java, OsgiFragment.tagName) {
+  override fun getFileIcon(flags: Int): Icon = AllIcons.Nodes.Plugin
+  override fun createAnnotator(): DomElementsAnnotator = ElementOccurLimitAnnotator()
 }

@@ -16,45 +16,45 @@ fun Module.updateModel(task: Consumer<in ModifiableRootModel>) = ModuleRootModif
 fun VirtualFile.findModule(project: Project) = ModuleUtilCore.findModuleForFile(this, project)
 
 fun Module.findLibrary(predicate: (Library) -> Boolean): Library? =
-    ModuleRootManager.getInstance(this).orderEntries.mapNotNull { it as? LibraryOrderEntry }.mapNotNull { it.library }
-        .firstOrNull(predicate)
+  ModuleRootManager.getInstance(this).orderEntries.mapNotNull { it as? LibraryOrderEntry }.mapNotNull { it.library }
+    .firstOrNull(predicate)
 
 fun Module.isBundleRequiredOrFromReExport(symbolName: String, version: Set<Version> = emptySet()): Boolean =
-    BundleManifestCacheService.getInstance(project).getManifest(this)
-        ?.isBundleRequiredOrFromReExport(project, this, symbolName, version) ?: false
+  BundleManifestCacheService.getInstance(project).getManifest(this)
+    ?.isBundleRequiredOrFromReExport(project, this, symbolName, version) ?: false
 
 val Module.bundleRequiredOrFromReExportOrderedList: LinkedHashSet<Pair<String, Version>>
-    get() {
-        val cacheService = BundleManifestCacheService.getInstance(project)
-        val managementService = BundleManagementService.getInstance(project)
+  get() {
+    val cacheService = BundleManifestCacheService.getInstance(project)
+    val managementService = BundleManagementService.getInstance(project)
 
-        val result = linkedSetOf<Pair<String, Version>>()
+    val result = linkedSetOf<Pair<String, Version>>()
 
-        val manifest = cacheService.getManifest(this) ?: return result
+    val manifest = cacheService.getManifest(this) ?: return result
 
-        val modulesManifest = project.allPDEModules(this).mapNotNull { cacheService.getManifest(it) }
-            .associate { it.bundleSymbolicName?.key to (it.bundleVersion to it) }.toMutableMap()
+    val modulesManifest = project.allPDEModules(this).mapNotNull { cacheService.getManifest(it) }
+      .associate { it.bundleSymbolicName?.key to (it.bundleVersion to it) }.toMutableMap()
 
-        fun processBSN(
-            exportBundle: String, range: VersionRange, onEach: (Map.Entry<String, VersionRange>) -> Unit
-        ) {
-            managementService.getBundlesByBSN(exportBundle, range)
-                ?.let { result += it.bundleSymbolicName to it.bundleVersion }
+    fun processBSN(
+      exportBundle: String, range: VersionRange, onEach: (Map.Entry<String, VersionRange>) -> Unit
+    ) {
+      managementService.getBundlesByBSN(exportBundle, range)
+        ?.let { result += it.bundleSymbolicName to it.bundleVersion }
 
-            modulesManifest[exportBundle]?.takeIf { it.first in range }
-                ?.also { modulesManifest -= exportBundle }?.second?.also { result += exportBundle to it.bundleVersion }
-                ?.requiredBundleAndVersion()?.forEach { onEach(it) }
-        }
-
-        fun cycleBSN(exportBundle: String, range: VersionRange) {
-            processBSN(exportBundle, range) { cycleBSN(it.key, it.value) }
-
-            managementService.getLibReExportRequired(exportBundle, range)?.forEach { (bsn, reqRange) ->
-                processBSN(bsn, reqRange) { cycleBSN(it.key, it.value) }
-            }
-        }
-
-        manifest.requiredBundleAndVersion().forEach { cycleBSN(it.key, it.value) }
-
-        return result
+      modulesManifest[exportBundle]?.takeIf { it.first in range }
+        ?.also { modulesManifest -= exportBundle }?.second?.also { result += exportBundle to it.bundleVersion }
+        ?.requiredBundleAndVersion()?.forEach { onEach(it) }
     }
+
+    fun cycleBSN(exportBundle: String, range: VersionRange) {
+      processBSN(exportBundle, range) { cycleBSN(it.key, it.value) }
+
+      managementService.getLibReExportRequired(exportBundle, range)?.forEach { (bsn, reqRange) ->
+        processBSN(bsn, reqRange) { cycleBSN(it.key, it.value) }
+      }
+    }
+
+    manifest.requiredBundleAndVersion().forEach { cycleBSN(it.key, it.value) }
+
+    return result
+  }

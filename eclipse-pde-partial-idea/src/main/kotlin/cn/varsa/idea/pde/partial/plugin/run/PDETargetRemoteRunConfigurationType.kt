@@ -6,10 +6,10 @@ import com.intellij.icons.*
 import javax.swing.*
 
 class PDETargetRemoteRunConfigurationType : ConfigurationType {
-    override fun getDisplayName(): String = message("run.remote.configType.displayName")
-    override fun getConfigurationTypeDescription(): String = message("run.remote.configType.description")
-    override fun getIcon(): Icon = AllIcons.RunConfigurations.RemoteDebug
-    override fun getId(): String = "cn.varsa.idea.pde.partial.plugin.run.PDETargetRemoteRunConfigurationType"
-    override fun getConfigurationFactories(): Array<ConfigurationFactory> =
-        arrayOf(PDETargetRemoteRunConfigurationFactory(this))
+  override fun getDisplayName(): String = message("run.remote.configType.displayName")
+  override fun getConfigurationTypeDescription(): String = message("run.remote.configType.description")
+  override fun getIcon(): Icon = AllIcons.RunConfigurations.RemoteDebug
+  override fun getId(): String = "cn.varsa.idea.pde.partial.plugin.run.PDETargetRemoteRunConfigurationType"
+  override fun getConfigurationFactories(): Array<ConfigurationFactory> =
+    arrayOf(PDETargetRemoteRunConfigurationFactory(this))
 }

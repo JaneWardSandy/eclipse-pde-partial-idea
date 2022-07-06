@@ -5,7 +5,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.startup.*
 
 class PostStartupActivity : StartupActivity {
-    override fun runActivity(project: Project) {
-        TargetDefinitionService.getInstance(project).backgroundResolve(project)
-    }
+  override fun runActivity(project: Project) {
+    TargetDefinitionService.getInstance(project).backgroundResolve(project)
+  }
 }

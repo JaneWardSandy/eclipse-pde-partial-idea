@@ -10,33 +10,33 @@ import com.intellij.packaging.artifacts.*
 import com.intellij.util.Function
 
 class ModuleChangedListener : ModuleListener {
-    override fun moduleRemoved(project: Project, module: Module) {
-        PDEFacet.getInstance(module) ?: return
+  override fun moduleRemoved(project: Project, module: Module) {
+    PDEFacet.getInstance(module) ?: return
 
-        val model = readCompute { ArtifactManager.getInstance(project).createModifiableModel() }
-        try {
-            model.findArtifact("$ArtifactPrefix${module.name}")?.also { model.removeArtifact(it) }
+    val model = readCompute { ArtifactManager.getInstance(project).createModifiableModel() }
+    try {
+      model.findArtifact("$ArtifactPrefix${module.name}")?.also { model.removeArtifact(it) }
 
-            applicationInvokeAndWait { if (!project.isDisposed) writeRun(model::commit) }
-        } finally {
-            model.dispose()
-        }
+      applicationInvokeAndWait { if (!project.isDisposed) writeRun(model::commit) }
+    } finally {
+      model.dispose()
     }
+  }
 
-    override fun modulesRenamed(
-        project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>
-    ) {
-        modules.filter { PDEFacet.getInstance(it) != null }.forEach { module ->
-            val model = readCompute { ArtifactManager.getInstance(project).createModifiableModel() }
-            try {
-                model.findArtifact("$ArtifactPrefix${oldNameProvider.`fun`(module)}")?.also { model.removeArtifact(it) }
+  override fun modulesRenamed(
+    project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>
+  ) {
+    modules.filter { PDEFacet.getInstance(it) != null }.forEach { module ->
+      val model = readCompute { ArtifactManager.getInstance(project).createModifiableModel() }
+      try {
+        model.findArtifact("$ArtifactPrefix${oldNameProvider.`fun`(module)}")?.also { model.removeArtifact(it) }
 
-                applicationInvokeAndWait { if (!project.isDisposed) writeRun(model::commit) }
-            } finally {
-                model.dispose()
-            }
+        applicationInvokeAndWait { if (!project.isDisposed) writeRun(model::commit) }
+      } finally {
+        model.dispose()
+      }
 
-            ModuleHelper.resetCompileArtifact(module)
-        }
+      ModuleHelper.resetCompileArtifact(module)
     }
+  }
 }

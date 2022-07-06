@@ -5,10 +5,10 @@ import com.intellij.util.xml.*
 
 @DefinesXml
 interface OsgiPlugin : PluginDomElement {
-    companion object {
-        const val tagName = "plugin"
-    }
+  companion object {
+    const val tagName = "plugin"
+  }
 
-    @SubTagList("extension-point") fun getExtensionPoints(): List<ExtensionPoint>
-    @SubTagList("extension") fun getExtensions(): List<Extension>
+  @SubTagList("extension-point") fun getExtensionPoints(): List<ExtensionPoint>
+  @SubTagList("extension") fun getExtensions(): List<Extension>
 }

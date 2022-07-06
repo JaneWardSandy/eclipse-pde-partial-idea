@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.*
 
 class ExsdFileTypeDetector : FileTypeRegistry.FileTypeDetector {
-    override fun getDesiredContentPrefixLength(): Int = 0
-    override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? =
-        if (file.extension?.lowercase() == "exsd") XmlFileType.INSTANCE else null
+  override fun getDesiredContentPrefixLength(): Int = 0
+  override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? =
+    if (file.extension?.lowercase() == "exsd") XmlFileType.INSTANCE else null
 }

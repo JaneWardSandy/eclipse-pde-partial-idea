@@ -8,6 +8,6 @@ import com.intellij.util.xml.highlighting.*
 import javax.swing.*
 
 class PluginDescriptorDomFileDescription : DomFileDescription<OsgiPlugin>(OsgiPlugin::class.java, OsgiPlugin.tagName) {
-    override fun getFileIcon(flags: Int): Icon = AllIcons.Nodes.Plugin
-    override fun createAnnotator(): DomElementsAnnotator = ElementOccurLimitAnnotator()
+  override fun getFileIcon(flags: Int): Icon = AllIcons.Nodes.Plugin
+  override fun createAnnotator(): DomElementsAnnotator = ElementOccurLimitAnnotator()
 }

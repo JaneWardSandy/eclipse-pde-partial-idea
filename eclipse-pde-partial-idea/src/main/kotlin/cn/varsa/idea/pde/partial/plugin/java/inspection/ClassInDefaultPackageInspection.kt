@@ -7,16 +7,16 @@ import com.intellij.codeInspection.*
 import com.intellij.psi.*
 
 class ClassInDefaultPackageInspection : AbstractOsgiVisitor() {
-    override fun buildVisitor(facet: PDEFacet, holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        object : PsiElementVisitor() {
-            override fun visitFile(file: PsiFile) {
-                (file as? PsiClassOwner)?.takeIf { it.packageName.isBlank() }?.classes?.takeIf { it.isNotEmpty() }
-                    ?.firstOrNull()?.also {
-                        val identifier = unwrap(it.nameIdentifier)
-                        if (identifier != null && isValidElement(identifier)) {
-                            holder.registerProblem(identifier, message("inspection.hint.classInDefaultPackage"))
-                        }
-                    }
+  override fun buildVisitor(facet: PDEFacet, holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    object : PsiElementVisitor() {
+      override fun visitFile(file: PsiFile) {
+        (file as? PsiClassOwner)?.takeIf { it.packageName.isBlank() }?.classes?.takeIf { it.isNotEmpty() }
+          ?.firstOrNull()?.also {
+            val identifier = unwrap(it.nameIdentifier)
+            if (identifier != null && isValidElement(identifier)) {
+              holder.registerProblem(identifier, message("inspection.hint.classInDefaultPackage"))
             }
-        }
+          }
+      }
+    }
 }

@@ -9,72 +9,72 @@ import java.io.*
 import java.nio.charset.*
 
 class RunConfigView : View("Basic Configuration") {
-    private val configControl: ConfigControl by inject()
-    private val validationContext = ValidationContext()
+  private val configControl: ConfigControl by inject()
+  private val validationContext = ValidationContext()
 
-    override val root: Parent = form {
-        fieldset("Run Configuration") {
-            fileField(
-                "Java Executor", configControl.javaExeProperty, arrayOf(
-                    FileChooser.ExtensionFilter("Java.exe", "java.exe", "Java.exe"),
-                    FileChooser.ExtensionFilter("Java", "java", "Java")
-                ), validationContext
-            )
-            directoryField("Runtime directory", configControl.runtimeDirectoryProperty, validationContext)
-            directoryField("Project root", configControl.projectRootProperty, validationContext) {
-                when {
-                    File(it, ".idea").exists().not() -> error("Only support IntelliJ IDEA project")
-                    else -> null
-                }
-            }
+  override val root: Parent = form {
+    fieldset("Run Configuration") {
+      fileField(
+        "Java Executor", configControl.javaExeProperty, arrayOf(
+          FileChooser.ExtensionFilter("Java.exe", "java.exe", "Java.exe"),
+          FileChooser.ExtensionFilter("Java", "java", "Java")
+        ), validationContext
+      )
+      directoryField("Runtime directory", configControl.runtimeDirectoryProperty, validationContext)
+      directoryField("Project root", configControl.projectRootProperty, validationContext) {
+        when {
+          File(it, ".idea").exists().not() -> error("Only support IntelliJ IDEA project")
+          else -> null
         }
+      }
+    }
 
-        fieldset("Charset") {
-            field("IDEA") {
-                combobox(configControl.ideaCharsetProperty, Charset.availableCharsets().values.toList()) {
-                    cellFormat { text = it.name() }
-                }
-            }
-            field("System") {
-                combobox(configControl.osCharsetProperty, Charset.availableCharsets().values.toList()) {
-                    cellFormat { text = it.name() }
-                }
-            }
+    fieldset("Charset") {
+      field("IDEA") {
+        combobox(configControl.ideaCharsetProperty, Charset.availableCharsets().values.toList()) {
+          cellFormat { text = it.name() }
         }
-
-        completeWhen(validationContext::valid)
+      }
+      field("System") {
+        combobox(configControl.osCharsetProperty, Charset.availableCharsets().values.toList()) {
+          cellFormat { text = it.name() }
+        }
+      }
     }
 
-    override fun onDock() {
-        super.onDock()
-        configControl.javaExe = config.string("javaExe", "")
-        configControl.runtimeDirectory = config.string("runtimeDirectory", "")
-        configControl.projectRoot = config.string("projectRoot", "")
+    completeWhen(validationContext::valid)
+  }
 
-        configControl.ideaCharset = config.string("charset")?.let {
-            try {
-                Charset.forName(it)
-            } catch (e: UnsupportedCharsetException) {
-                null
-            }
-        } ?: Charset.defaultCharset()
+  override fun onDock() {
+    super.onDock()
+    configControl.javaExe = config.string("javaExe", "")
+    configControl.runtimeDirectory = config.string("runtimeDirectory", "")
+    configControl.projectRoot = config.string("projectRoot", "")
 
-        configControl.osCharset = config.string("osCharset")?.let {
-            try {
-                Charset.forName(it)
-            } catch (e: UnsupportedCharsetException) {
-                null
-            }
-        } ?: Charset.defaultCharset()
-    }
+    configControl.ideaCharset = config.string("charset")?.let {
+      try {
+        Charset.forName(it)
+      } catch (e: UnsupportedCharsetException) {
+        null
+      }
+    } ?: Charset.defaultCharset()
 
-    override fun onSave() {
-        super.onSave()
-        config["javaExe"] = configControl.javaExe
-        config["runtimeDirectory"] = configControl.runtimeDirectory
-        config["projectRoot"] = configControl.projectRoot
-        config["charset"] = configControl.ideaCharset.name()
-        config["osCharset"] = configControl.osCharset.name()
-        config.save()
-    }
+    configControl.osCharset = config.string("osCharset")?.let {
+      try {
+        Charset.forName(it)
+      } catch (e: UnsupportedCharsetException) {
+        null
+      }
+    } ?: Charset.defaultCharset()
+  }
+
+  override fun onSave() {
+    super.onSave()
+    config["javaExe"] = configControl.javaExe
+    config["runtimeDirectory"] = configControl.runtimeDirectory
+    config["projectRoot"] = configControl.projectRoot
+    config["charset"] = configControl.ideaCharset.name()
+    config["osCharset"] = configControl.osCharset.name()
+    config.save()
+  }
 }

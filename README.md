@@ -7,7 +7,8 @@
 ## Download
 
 The plugin is available in
-the [JetBrains Plugin Repository](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial), so you can download it
+the [JetBrains Plugin Repository](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial), so you can download
+it
 directly from your IDE.
 
 ## Issues or questions?

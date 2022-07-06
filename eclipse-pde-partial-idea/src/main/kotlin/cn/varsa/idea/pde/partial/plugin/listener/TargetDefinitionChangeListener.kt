@@ -5,11 +5,11 @@ import com.intellij.util.messages.*
 import java.util.*
 
 interface TargetDefinitionChangeListener : EventListener {
-    fun locationsChanged(project: Project)
+  fun locationsChanged(project: Project)
 
-    companion object {
-        private val topic = Topic("Eclipse Target Definition Changes", TargetDefinitionChangeListener::class.java)
+  companion object {
+    private val topic = Topic("Eclipse Target Definition Changes", TargetDefinitionChangeListener::class.java)
 
-        fun notifyLocationsChanged(project: Project) = project.messageBus.syncPublisher(topic).locationsChanged(project)
-    }
+    fun notifyLocationsChanged(project: Project) = project.messageBus.syncPublisher(topic).locationsChanged(project)
+  }
 }

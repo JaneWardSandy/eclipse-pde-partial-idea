@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.*
+
 plugins {
   kotlin("jvm") version "1.7.10"
 
@@ -9,7 +11,7 @@ plugins {
 }
 
 group = "cn.varsa"
-version = "2.0.0-SNAPSHOT"
+version = findProperty("pluginVersion").toString()
 
 repositories {
   mavenLocal()
@@ -35,27 +37,23 @@ subprojects {
   }
 
   tasks {
-    compileJava {
-      sourceCompatibility = "11"
-      targetCompatibility = "11"
+    val javaSettings: JavaCompile.() -> Unit = {
+      sourceCompatibility = findProperty("javaVersion").toString()
+      targetCompatibility = findProperty("javaVersion").toString()
+      options.encoding = "UTF-8"
     }
-    compileTestJava {
-      sourceCompatibility = "11"
-      targetCompatibility = "11"
-    }
-    compileKotlin {
+    val kotlinSettings: KotlinCompile.() -> Unit = {
       kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = findProperty("javaVersion").toString()
         apiVersion = "1.7"
         languageVersion = "1.7"
       }
     }
-    compileTestKotlin {
-      kotlinOptions {
-        jvmTarget = "11"
-        apiVersion = "1.7"
-        languageVersion = "1.7"
-      }
-    }
+
+    compileJava(javaSettings)
+    compileTestJava(javaSettings)
+
+    compileKotlin(kotlinSettings)
+    compileTestKotlin(kotlinSettings)
   }
 }

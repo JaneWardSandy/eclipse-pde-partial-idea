@@ -1,0 +1,12 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>cn.varsa.idea.eclipse.pde.partial</id>
+  <name>Eclipse PDE Partial</name>
+  <category>JVM Frameworks</category>
+  <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <xi:include href="/META-INF/eclipse-pde-partial-idea-plugin-kotlin.xml"/>
+  <xi:include href="/META-INF/eclipse-pde-partial-idea-plugin-gradle.xml"/>
+  <xi:include href="/META-INF/eclipse-pde-partial-idea-plugin-maven.xml"/>
+</idea-plugin>

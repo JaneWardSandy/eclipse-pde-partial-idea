@@ -32,7 +32,7 @@ subprojects {
   }
 
   dependencies {
-    implementation(kotlin("stdlib"))
+    implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
   }
 
@@ -47,6 +47,18 @@ subprojects {
         jvmTarget = findProperty("javaVersion").toString()
         apiVersion = "1.7"
         languageVersion = "1.7"
+        freeCompilerArgs = listOf(
+          "-Xno-call-assertions",
+          "-Xno-receiver-assertions",
+          "-Xno-param-assertions",
+          "-Xjvm-default=all",
+          "-Xallow-kotlin-package",
+          "-opt-in=kotlin.ExperimentalStdlibApi",
+          "-opt-in=kotlin.ExperimentalUnsignedTypes",
+          "-opt-in=kotlin.contracts.ExperimentalContracts",
+          "-XXLanguage:+InlineClasses",
+          "-XXLanguage:+UnitConversion"
+        )
       }
     }
 

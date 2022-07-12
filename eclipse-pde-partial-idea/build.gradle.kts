@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+  implementation(project(":partial-common"))
   subprojects.forEach { pluginProject -> implementation(project(":$name:${pluginProject.name}")) }
 }
 
@@ -30,8 +31,7 @@ tasks {
     changeNotes.set(versionChange.readText(Charsets.UTF_8))
   }
   publishPlugin {
-    val ideaPluginToken: String by rootProject.extra
-    token.set(ideaPluginToken)
+    token.set(findProperty("ideaPluginToken").toString())
   }
 }
 

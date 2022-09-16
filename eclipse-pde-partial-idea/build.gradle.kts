@@ -4,12 +4,11 @@ plugins {
 }
 
 dependencies {
-  implementation(kotlin("stdlib"))
   implementation(project(":common"))
 }
 
 intellij {
-  version.set("2021.3.1")
+  version.set("2022.2.2")
   plugins.set(listOf("java", "org.jetbrains.kotlin"))
 
   downloadSources.set(true)
@@ -17,7 +16,7 @@ intellij {
 
 tasks {
   patchPluginXml {
-    sinceBuild.set("213")
+    sinceBuild.set("222")
     untilBuild.set("")
 
     val projectPath = rootProject.projectDir.path
@@ -39,15 +38,15 @@ tasks {
   }
 
   compileJava {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
   }
 
   compileKotlin {
     kotlinOptions {
-      jvmTarget = "11"
-      apiVersion = "1.6"
-      languageVersion = "1.6"
+      jvmTarget = "17"
+      apiVersion = "1.7"
+      languageVersion = "1.7"
     }
   }
 }

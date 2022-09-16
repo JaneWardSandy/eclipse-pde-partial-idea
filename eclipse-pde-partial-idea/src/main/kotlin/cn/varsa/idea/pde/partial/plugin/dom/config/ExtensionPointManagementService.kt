@@ -8,7 +8,6 @@ import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
-import org.jetbrains.kotlin.utils.addToStdlib.*
 
 class ExtensionPointManagementService(private val project: Project) : BackgroundResolvable {
   companion object {
@@ -65,7 +64,7 @@ class ExtensionPointManagementService(private val project: Project) : Background
   }
 
   fun getExtensionPoint(pointID: String): ExtensionPointDefinition? =
-    (epPoint2ExsdPath[pointID] ?: project.allPDEModules().firstNotNullResult {
+    (epPoint2ExsdPath[pointID] ?: project.allPDEModules().firstNotNullOfOrNull {
       xmlCacheService.getXmlInfo(it)?.epPoint2ExsdPath?.get(pointID)
     })?.let { pointCacheService.getExtensionPoint(it) }
 

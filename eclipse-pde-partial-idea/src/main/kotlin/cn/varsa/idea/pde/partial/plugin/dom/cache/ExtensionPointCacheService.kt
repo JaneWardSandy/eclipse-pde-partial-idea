@@ -11,7 +11,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.util.*
 import com.jetbrains.rd.util.*
-import org.jetbrains.kotlin.utils.addToStdlib.*
 import java.io.*
 
 class ExtensionPointCacheService(private val project: Project) {
@@ -48,7 +47,7 @@ class ExtensionPointCacheService(private val project: Project) {
     return bundleManagementService.getBundlesByBSN(urlFragments[0])?.values?.firstNotNullOfOrNull { bundle ->
       loadExtensionPoint(bundle.root, entry) ?: bundle.sourceBundle?.let { loadExtensionPoint(it.root, entry) }
     } ?: project.allPDEModules()
-      .firstOrNull { cacheService.getManifest(it)?.bundleSymbolicName?.key == urlFragments[0] }?.moduleRootManager?.contentRoots?.firstNotNullResult {
+      .firstOrNull { cacheService.getManifest(it)?.bundleSymbolicName?.key == urlFragments[0] }?.moduleRootManager?.contentRoots?.firstNotNullOfOrNull {
         loadExtensionPoint(it, entry)
       }
   }

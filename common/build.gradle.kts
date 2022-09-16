@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-  implementation(kotlin("stdlib"))
-  implementation(kotlin("reflect"))
+  compileOnly(kotlin("stdlib"))
+  compileOnly(kotlin("reflect"))
 }
 
 tasks {

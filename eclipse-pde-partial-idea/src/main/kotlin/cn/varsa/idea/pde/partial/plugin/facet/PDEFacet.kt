@@ -20,13 +20,15 @@ class PDEFacet(
   }
 
   override fun initFacet() {
-    ModuleHelper.setupManifestFile(module)
-    ModuleHelper.resetCompileOutputPath(module)
-    ModuleHelper.resetCompileArtifact(module)
     object : BackgroundResolvable {
       override fun resolve(project: Project, indicator: ProgressIndicator) {
         indicator.checkCanceled()
         indicator.text = "Reset module settings"
+
+        ModuleHelper.setupManifestFile(module)
+        ModuleHelper.resetCompileOutputPath(module)
+        ModuleHelper.resetCompileArtifact(module)
+
         PdeLibraryResolverRegistry.instance.resolveModule(module, indicator)
       }
     }.backgroundResolve(module.project)

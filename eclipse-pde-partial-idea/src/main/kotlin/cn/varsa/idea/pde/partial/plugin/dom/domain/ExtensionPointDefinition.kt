@@ -13,7 +13,6 @@ import com.intellij.util.*
 import org.jdom.*
 import org.jdom.filter2.*
 import org.jdom.xpath.*
-import org.jetbrains.kotlin.utils.addToStdlib.*
 import java.io.*
 
 class ExtensionPointDefinition {
@@ -115,7 +114,7 @@ class ExtensionPointDefinition {
           thisLogger().warn("Schema not existed for ${definition.point} at location $schemaLocation")
         }
       }
-    }.firstNotNullResult { findRefElement(it, ref, project, cacheService, includeVisited) }
+    }.firstNotNullOfOrNull { findRefElement(it, ref, project, cacheService, includeVisited) }
   }
 
   override fun equals(other: Any?): Boolean {

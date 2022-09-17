@@ -1,0 +1,8 @@
+<idea-plugin>
+  <id>cn.varsa.idea.eclipse.pde.partial</id>
+  <name>Eclipse PDE Partial</name>
+  <category>JVM Frameworks</category>
+  <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
+
+  <depends>com.intellij.modules.platform</depends>
+</idea-plugin>

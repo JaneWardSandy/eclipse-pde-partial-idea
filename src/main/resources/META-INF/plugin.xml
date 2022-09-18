@@ -5,4 +5,8 @@
   <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
 
   <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.ManifestIndex"/>
+  </extensions>
 </idea-plugin>

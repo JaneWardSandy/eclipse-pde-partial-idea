@@ -8,7 +8,7 @@ import java.util.concurrent.locks.*
 import java.util.jar.*
 import kotlin.concurrent.*
 
-class BundleManifest(private val attribute: Map<String, String>) {
+class BundleManifest(val attribute: Map<String, String>) {
   constructor(manifest: Manifest) : this(manifest.mainAttributes.entries.associate { it.key.toString() to it.value.toString() })
 
   private val lock = ReentrantReadWriteLock()

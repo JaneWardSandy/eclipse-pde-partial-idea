@@ -21,7 +21,7 @@ class VersionRange(
 
     val anyVersionRange: VersionRange = VersionRange(true, Version.emptyVersion)
 
-    operator fun invoke(range: String): VersionRange {
+    fun parse(range: String): VersionRange {
       var closedLeft: Boolean
       val closedRight: Boolean
       val endpointLeft: Version

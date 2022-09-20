@@ -5,4 +5,11 @@
   <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
 
   <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Core -->
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestNamesIndex"/>
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex"/>
+    <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestCacheService"/>
+  </extensions>
 </idea-plugin>

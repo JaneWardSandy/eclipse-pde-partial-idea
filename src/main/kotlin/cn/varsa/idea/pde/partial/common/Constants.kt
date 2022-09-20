@@ -36,14 +36,14 @@ object Constants {
     }
   }
 
+  object Eclipse {
+    const val ECLIPSE_EXTENSIBLE_API = "Eclipse-ExtensibleAPI"
+    const val ECLIPSE_SOURCE_BUNDLE = "Eclipse-SourceBundle"
+  }
+
   object OSGI {
     const val SYSTEM_BUNDLE = "system.bundle"
     const val ORG_ECLIPSE_OSGI = "org.eclipse.osgi"
-
-    object Eclipse {
-      const val ECLIPSE_EXTENSIBLE_API = "Eclipse-ExtensibleAPI"
-      const val ECLIPSE_SOURCE_BUNDLE = "Eclipse-SourceBundle"
-    }
 
     object Header {
       /**

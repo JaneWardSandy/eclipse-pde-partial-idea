@@ -6,31 +6,34 @@ import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
+import com.jetbrains.rd.util.*
 import org.jetbrains.kotlin.idea.core.util.*
 import org.jetbrains.lang.manifest.*
 import java.io.*
 import java.util.jar.*
 
-object ManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>() {
-  val KEY: ID<Int, BundleManifest> = ID.create(ManifestIndex::class.java.canonicalName)
-  private val LOG = Logger.getInstance(ManifestIndex::class.java)
+object BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>() {
+  val KEY: ID<Int, BundleManifest> = ID.create(BundleManifestIndex::class.java.canonicalName)
+  private val LOG = thisLogger()
 
-  override fun getName() = KEY
-  override fun dependsOnFileContent() = true
-  override fun getVersion() = 2
-  override fun getIndexer() = INDEXER
-  override fun getValueExternalizer() = Externalizer
-  override fun getInputFilter() = FileBasedIndex.InputFilter { virtualFile ->
-    virtualFile.fileType is ManifestFileType && virtualFile.name == Constants.Partial.File.MANIFEST_MF
+  override fun getName(): ID<Int, BundleManifest> = KEY
+  override fun dependsOnFileContent(): Boolean = true
+  override fun getVersion(): Int = 2
+  override fun getIndexer(): SingleEntryIndexer<BundleManifest> = INDEXER
+  override fun getValueExternalizer(): DataExternalizer<BundleManifest> = Externalizer
+  override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { virtualFile ->
+    virtualFile.isInLocalFileSystem && virtualFile.fileType is ManifestFileType && virtualFile.name == Constants.Partial.File.MANIFEST_MF
   }
 
   private val INDEXER = object : SingleEntryIndexer<BundleManifest>(false) {
     override fun computeValue(inputData: FileContent): BundleManifest? = try {
       if (inputData.fileType is ManifestFileType) {
-        val manifest = Manifest(ByteArrayInputStream(inputData.content))
+        val manifest = Manifest(inputData.content.inputStream())
         BundleManifest(manifest)
       } else null
     } catch (e: ProcessCanceledException) {
+      throw e
+    } catch (e: CancellationException) {
       throw e
     } catch (e: Throwable) {
       LOG.warn("Error while indexing file ${inputData.fileName}: ${e.message}")

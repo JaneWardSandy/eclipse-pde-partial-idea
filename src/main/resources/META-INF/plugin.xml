@@ -7,6 +7,9 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.ManifestIndex"/>
+    <!-- Core -->
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestNamesIndex"/>
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex"/>
+    <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestCacheService"/>
   </extensions>
 </idea-plugin>

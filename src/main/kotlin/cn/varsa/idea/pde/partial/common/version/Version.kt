@@ -14,7 +14,7 @@ class Version(
 
     val emptyVersion = Version(0)
 
-    operator fun invoke(version: String): Version {
+    fun parse(version: String): Version {
       if (version.isBlank()) return emptyVersion
 
       val trimVersion = version.trim()

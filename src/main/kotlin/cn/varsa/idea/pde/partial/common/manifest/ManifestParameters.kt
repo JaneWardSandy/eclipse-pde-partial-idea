@@ -2,46 +2,53 @@ package cn.varsa.idea.pde.partial.common.manifest
 
 import cn.varsa.idea.pde.partial.common.util.*
 
-class ManifestParameters(value: String) {
-  private val _attributes: MutableMap<String, ParameterAttributes> = mutableMapOf()
-  val attributes: Map<String, ParameterAttributes> = _attributes
+data class ManifestParameters(val attributes: Map<String, ParameterAttributes>) {
 
-  init {
-    val qt = QuotedTokenizer(value, ";=,")
-    var del: Char
+  companion object Factory {
+    fun parse(value: String): ManifestParameters {
+      val attributes = mutableMapOf<String, ParameterAttributes>()
 
-    do {
-      val attribute = mutableMapOf<String, String>()
-      val directive = mutableMapOf<String, String>()
-      val aliases = mutableListOf<String>()
-      val name = qt.nextToken(",;")
+      val qt = QuotedTokenizer(value, ";=,")
+      var del: Char
 
-      del = qt.separator
-      if (name.isNullOrBlank()) {
-        if (name == null) break
-      } else {
-        aliases += name
+      do {
+        val attribute = mutableMapOf<String, String>()
+        val directive = mutableMapOf<String, String>()
+        val aliases = mutableListOf<String>()
+        val name = qt.nextToken(",;")
 
-        while (del == ';') {
-          val adName = qt.nextToken()
-          if (qt.separator.also { del = it } != '=') {
-            if (!adName.isNullOrBlank()) aliases += adName
-          } else {
-            val adValue = qt.nextToken() ?: ""
-            del = qt.separator
+        del = qt.separator
+        if (name.isNullOrBlank()) {
+          if (name == null) break
+        } else {
+          aliases += name
 
-            if (adName.isNullOrBlank()) continue
-            if (adName.endsWith(':')) {
-              directive[adName.dropLast(1)] = adValue
+          while (del == ';') {
+            val adName = qt.nextToken()
+            if (qt.separator.also { del = it } != '=') {
+              if (!adName.isNullOrBlank()) aliases += adName
             } else {
-              attribute[adName] = adValue
+              val adValue = qt.nextToken() ?: ""
+              del = qt.separator
+
+              if (adName.isNullOrBlank()) continue
+              if (adName.endsWith(':')) {
+                directive[adName.dropLast(1)] = adValue
+              } else {
+                attribute[adName] = adValue
+              }
             }
           }
-        }
 
-        val attrs = ParameterAttributes(attribute, directive)
-        aliases.forEach { _attributes[it] = attrs }
-      }
-    } while (del == ',')
+          val attrs = ParameterAttributes(attribute, directive)
+          aliases.forEach { attributes[it] = attrs }
+        }
+      } while (del == ',')
+
+      return ManifestParameters(attributes)
+    }
   }
+
+  override fun toString(): String =
+    attributes.entries.joinToString(",${System.lineSeparator()}") { (key, attrs) -> "$key$attrs" }
 }

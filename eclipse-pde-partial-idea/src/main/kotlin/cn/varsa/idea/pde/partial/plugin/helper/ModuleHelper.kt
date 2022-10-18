@@ -135,12 +135,13 @@ object ModuleHelper {
     val directory = module.rootManager.contentRoots.firstOrNull() ?: return
 
     val metaInfDir = directory.findChild(MetaInf)?.also { it.refresh(false, false) }?.takeIf { it.isValid }
-      ?: directory.createChildDirectory(null, MetaInf)
+      ?: writeComputeAndWait { directory.createChildDirectory(null, MetaInf) }
     val manifestMfFile = metaInfDir.findChild(ManifestMf)?.takeIf { it.isValid }
 
     if (manifestMfFile != null) return
-    VfsUtil.saveText(
-      metaInfDir.createChildData(null, ManifestMf), """
+    writeRunAndWait {
+      VfsUtil.saveText(
+        metaInfDir.createChildData(null, ManifestMf), """
                 Manifest-Version: 1.0
                 $BUNDLE_MANIFESTVERSION: 2
                 $BUNDLE_NAME: ${module.name.substringAfterLast('.').uppercase()}
@@ -155,11 +156,13 @@ object ModuleHelper {
                 $BUNDLE_CLASSPATH: .
 
         """.trimIndent()
-    )
+      )
+    }
 
     if (directory.findChild(PluginsXml).let { it == null || !it.isValid }) {
-      VfsUtil.saveText(
-        directory.createChildData(null, PluginsXml), """
+      writeRunAndWait {
+        VfsUtil.saveText(
+          directory.createChildData(null, PluginsXml), """
                     <?xml version="1.0" encoding="UTF-8"?>
                     <?eclipse version="3.4"?>
                     <plugin>
@@ -175,7 +178,8 @@ object ModuleHelper {
                     </plugin>
 
             """.trimIndent()
-      )
+        )
+      }
     }
   }
 }

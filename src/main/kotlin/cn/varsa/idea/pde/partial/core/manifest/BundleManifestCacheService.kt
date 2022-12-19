@@ -13,6 +13,11 @@ import com.intellij.util.indexing.*
 
 class BundleManifestCacheService(private val project: Project) {
 
+  companion object {
+    @JvmStatic fun getInstance(project: Project): BundleManifestCacheService =
+      project.getService(BundleManifestCacheService::class.java)
+  }
+
   fun getBundleManifest(psiClass: PsiClass): BundleManifest? = getBundleManifest(psiClass.containingFile)
 
   fun getBundleManifest(item: PsiFileSystemItem): BundleManifest? {

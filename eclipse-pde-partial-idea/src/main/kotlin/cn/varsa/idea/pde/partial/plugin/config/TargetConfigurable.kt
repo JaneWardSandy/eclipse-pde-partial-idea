@@ -100,7 +100,6 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     ListSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
   }
 
-  private val contentTreeModel = DefaultTreeModel(ShadowLocationRoot)
   private val contentTree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer(true) {
     override fun customizeRenderer(
       tree: JTree, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean
@@ -126,7 +125,9 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
       }
       SpeedSearchUtil.applySpeedSearchHighlighting(tree, textRenderer, false, selected)
     }
-  }, null).apply { model = contentTreeModel }
+  }, ShadowLocationRoot)
+  private val contentTreeModel = contentTree.model as DefaultTreeModel
+
   private val sourceVersionField = ComboBox<BundleDefinition>().apply {
     renderer = ColoredListCellRendererWithSpeedSearch<BundleDefinition> { value ->
       value?.canonicalName?.also { append(it) }
@@ -675,7 +676,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     val sourceVersions = hashMapOf<String, HashSet<BundleDefinition>>()
     val locations get() = children?.map { it as ShadowLocation } ?: emptyList()
 
-    fun sort() = children?.also { Collections.sort(it, Comparator.comparing(TreeNode::toString)) }
+    fun sort() = children?.sortBy { it.toString() }
 
     fun addLocation(location: TargetLocationDefinition): ShadowLocation = ShadowLocation(location).apply {
       val bundleMap = hashMapOf<String, ShadowBundle>()

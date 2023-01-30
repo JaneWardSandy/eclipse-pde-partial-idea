@@ -25,8 +25,7 @@ tasks {
   }
 
   publishPlugin {
-    val ideaPluginToken: String by rootProject.extra
-    token.set(ideaPluginToken)
+    token.set(System.getenv("PUBLISH_TOKEN"))
   }
 
   runIde {

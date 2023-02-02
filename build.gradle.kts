@@ -6,9 +6,9 @@ plugins {
   // Java support
   id("java")
   // Kotlin support
-  id("org.jetbrains.kotlin.jvm") version "1.7.21"
+  id("org.jetbrains.kotlin.jvm") version "1.8.0"
   // Gradle IntelliJ Plugin
-  id("org.jetbrains.intellij") version "1.10.0"
+  id("org.jetbrains.intellij") version "1.12.0"
   // Gradle Changelog Plugin
   id("org.jetbrains.changelog") version "2.0.0"
   // Gradle Qodana Plugin
@@ -44,8 +44,8 @@ intellij {
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {
-  version.set(properties("pluginVersion"))
   groups.set(emptyList())
+  repositoryUrl.set(properties("pluginRepositoryUrl"))
 }
 
 // Configure Gradle Qodana Plugin - read more: https://github.com/JetBrains/gradle-qodana-plugin
@@ -54,6 +54,11 @@ qodana {
   reportPath.set(projectDir.resolve("build/reports/inspections").canonicalPath)
   saveReport.set(true)
   showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
+}
+
+// Configure Gradle Kover Plugin - read more: https://github.com/Kotlin/kotlinx-kover#configuration
+kover.xmlReport {
+  onCheck.set(true)
 }
 
 tasks {
@@ -79,9 +84,12 @@ tasks {
 
     // Get the latest available change notes from the changelog file
     changeNotes.set(provider {
-      changelog.renderItem(
-        changelog.run { getOrNull(properties("pluginVersion")) ?: getLatest() }, Changelog.OutputType.HTML
-      )
+      with(changelog) {
+        renderItem(
+          getOrNull(properties("pluginVersion")) ?: runCatching { getLatest() }.getOrElse { getUnreleased() },
+          Changelog.OutputType.HTML,
+        )
+      }
     })
   }
 

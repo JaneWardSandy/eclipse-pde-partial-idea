@@ -7,10 +7,9 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
-import com.intellij.psi.search.*
-import com.intellij.util.*
 import com.intellij.util.indexing.*
 
+// fixme 2023/02/04: Is it still necessary to exist?
 class BundleManifestCacheService(private val project: Project) {
 
   companion object {
@@ -62,12 +61,5 @@ class BundleManifestCacheService(private val project: Project) {
   }
 
   private fun getManifestByFile(manifestFile: VirtualFile): BundleManifest? = if (DumbService.isDumb(project)) null
-  else FileBasedIndex.getInstance().getSingleEntryIndexData(BundleManifestIndex.KEY, manifestFile, project)
-
-  private fun getManifestFiles(
-    symbolName: String,
-    processor: Processor<VirtualFile>,
-    filter: GlobalSearchScope = GlobalSearchScope.projectScope(project),
-  ): Boolean = if (DumbService.isDumb(project)) false
-  else FileBasedIndex.getInstance().getFilesWithKey(BundleManifestNamesIndex.KEY, setOf(symbolName), processor, filter)
+  else FileBasedIndex.getInstance().getSingleEntryIndexData(BundleManifestIndex.id, manifestFile, project)
 }

@@ -8,11 +8,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Core Manifest -->
-    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestNamesIndex"/>
     <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex"/>
     <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestCacheService"/>
-
-    <!-- Core Config -->
-    <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.config.PartialConfig"/>
+    <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestManager"/>
   </extensions>
 </idea-plugin>

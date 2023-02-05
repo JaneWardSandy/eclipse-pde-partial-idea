@@ -1,6 +1,7 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
 import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
+import cn.varsa.idea.pde.partial.common.version.Version
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
@@ -21,14 +22,30 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
     fun getInstance(project: Project): BundleManifestManager = project.getService(BundleManifestManager::class.java)
   }
 
-  private val calculationUpdate = object : Update("") {
+  private val calculationUpdate = object : Update("calculation") {
     override fun run() = doRunCalculation()
   }
 
-  private val calculationToProcess = mutableSetOf<BundleManifest>()
-  private val calculationQueue = MergingUpdateQueue("", 500, true, null, this, null, false)
-  private val mutex = ReentrantLock()
-  private val manifestData = BundleManifestData()
+  private val queueMutex = ReentrantLock()
+  private val calculationToProcess = hashMapOf<VirtualFile, BundleManifest>()
+  private val calculationQueue = MergingUpdateQueue(
+    "BundleManifestCalculationQueue",
+    500,
+    true,
+    null,
+    this,
+    null,
+    false,
+  )
+
+  private val file2Manifest = hashMapOf<VirtualFile, BundleManifest>()
+
+  /**
+   * Bundle-SymbolicName(BSN) to versions
+   *
+   * It may happen that the BSN and version are the same but in different Bundles, which should not be directly overwritten
+   */
+  private val bundles = hashMapOf<String, HashMap<Version, HashSet<BundleManifest>>>()
 
   init {
     BundleManifestIndex.getInstance()?.addListener(this, this)
@@ -40,7 +57,7 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
   }
 
   override fun manifestUpdated(file: VirtualFile, manifest: BundleManifest) {
-    mutex.withLock { calculationToProcess.add(manifest) }
+    queueMutex.withLock { calculationToProcess[file] = manifest }
     calculationQueue.queue(calculationUpdate)
   }
 
@@ -50,15 +67,33 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
   private fun doRunCalculation() {
     if (LightEdit.owns(project)) return
 
-    val calculationToProcess = mutex.withLock {
-      val set = calculationToProcess.toSet()
+    val calculationToProcess = queueMutex.withLock {
+      val set = calculationToProcess.toMap()
       calculationToProcess.clear()
       set
     }
     if (calculationToProcess.isEmpty()) return
 
     logger.debug { "Starting manifest dependencies calculation: $calculationToProcess" }
-    for (manifest in calculationToProcess) manifestData.updateManifest(manifest)
+    for ((file, manifest) in calculationToProcess) {
+      val bsn = manifest.bundleSymbolicName?.key ?: return
+      val version = manifest.bundleVersion
+
+      val oldManifest = file2Manifest[file]
+      if (oldManifest != null && (oldManifest.bundleSymbolicName?.key != bsn || oldManifest.bundleVersion != version)) {
+        val oldBSN = checkNotNull(oldManifest.bundleSymbolicName?.key) { "BSN should not be null" }
+
+        val versionMap = checkNotNull(bundles[oldBSN]) { "BSN versions should not be null" }
+        val manifests = checkNotNull(versionMap[oldManifest.bundleVersion]) { "BSN manifests should not be null" }
+
+        manifests.remove(oldManifest)
+        if (manifests.isEmpty()) versionMap.remove(oldManifest.bundleVersion)
+        if (versionMap.isEmpty()) bundles.remove(oldBSN)
+      }
+
+      file2Manifest[file] = manifest
+      bundles.getOrPut(bsn) { hashMapOf() }.getOrPut(version) { hashSetOf() }.add(manifest)
+    }
   }
 
   // todo 2023/01/04: bundle removed

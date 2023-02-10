@@ -12,5 +12,16 @@
     <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex"/>
     <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestCacheService"/>
     <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestManager"/>
+
+    <moduleService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.ModuleManifestManager"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup
+        displayType="STICKY_BALLOON"
+        id="cn.varsa.idea.pde.partial.notification.important"
+        isLogByDefault="true"
+        bundle="messages.Notification"
+        key="group.important"/>
   </extensions>
 </idea-plugin>

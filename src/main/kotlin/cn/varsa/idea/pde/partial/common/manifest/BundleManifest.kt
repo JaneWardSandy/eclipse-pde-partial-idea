@@ -18,35 +18,46 @@ data class BundleManifest(val attribute: Map<String, String>) {
     parameterCache.getOrPut(header) { attribute[header]?.let { ManifestParameters.parse(it) } }
   }
 
+  /** @see Constants.OSGI.Header.REQUIRE_BUNDLE */
   val requireBundle: ManifestParameters?
     get() = getParameters(Constants.OSGI.Header.REQUIRE_BUNDLE)
 
+  /** @see Constants.OSGI.Header.IMPORT_PACKAGE */
   val importPackage: ManifestParameters?
     get() = getParameters(Constants.OSGI.Header.IMPORT_PACKAGE)
 
+  /** @see Constants.OSGI.Header.EXPORT_PACKAGE */
   val exportPackage: ManifestParameters?
     get() = getParameters(Constants.OSGI.Header.EXPORT_PACKAGE)
 
+  /** @see Constants.OSGI.Header.BUNDLE_CLASSPATH */
   val bundleClassPath: ManifestParameters?
     get() = getParameters(Constants.OSGI.Header.BUNDLE_CLASSPATH)
 
+  /** @see Constants.OSGI.Header.BUNDLE_ACTIVATOR */
   val bundleActivator: String?
     get() = attribute[Constants.OSGI.Header.BUNDLE_ACTIVATOR]
 
+  /** @see Constants.OSGI.Header.BUNDLE_REQUIREDEXECUTIONENVIRONMENT */
   val bundleRequiredExecutionEnvironment: ManifestParameters?
     get() = getParameters(Constants.OSGI.Header.BUNDLE_REQUIREDEXECUTIONENVIRONMENT)
 
+  /** @see Constants.OSGI.Header.BUNDLE_SYMBOLICNAME */
   val bundleSymbolicName: Map.Entry<String, ParameterAttributes>?
     get() = getParameters(Constants.OSGI.Header.BUNDLE_SYMBOLICNAME)?.attributes?.firstOrNull()
 
+  /** @see Constants.OSGI.Header.FRAGMENT_HOST */
   val fragmentHost: Map.Entry<String, ParameterAttributes>?
     get() = getParameters(Constants.OSGI.Header.FRAGMENT_HOST)?.attributes?.firstOrNull()
 
+  /** @see Constants.OSGI.Header.BUNDLE_VERSION */
   val bundleVersion: Version by lazy { attribute[Constants.OSGI.Header.BUNDLE_VERSION].parseVersion() }
 
+  /** @see Constants.Eclipse.ECLIPSE_SOURCE_BUNDLE */
   val eclipseSourceBundle: Map.Entry<String, ParameterAttributes>?
     get() = getParameters(Constants.Eclipse.ECLIPSE_SOURCE_BUNDLE)?.attributes?.firstOrNull()
 
+  /** @see Constants.Eclipse.ECLIPSE_EXTENSIBLE_API */
   val eclipseExtensibleAPI: Boolean
     get() = attribute[Constants.Eclipse.ECLIPSE_EXTENSIBLE_API].toBoolean()
 

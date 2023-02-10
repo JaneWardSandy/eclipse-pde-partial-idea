@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -15,6 +16,7 @@ import com.jetbrains.rd.util.CancellationException
 import org.jetbrains.lang.manifest.ManifestFileType
 import java.io.DataInput
 import java.io.DataOutput
+import java.util.*
 import java.util.jar.Manifest
 
 class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>() {
@@ -25,11 +27,6 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
 
     fun getInstance() = EXTENSION_POINT_NAME.findExtension(BundleManifestIndex::class.java)
   }
-
-  private val dispatcher = EventDispatcher.create(BundleManifestIndexListener::class.java)
-
-  fun addListener(parentDisposable: Disposable, listener: BundleManifestIndexListener) =
-    dispatcher.addListener(listener, parentDisposable)
 
   override fun getName(): ID<Int, BundleManifest> = id
   override fun dependsOnFileContent(): Boolean = true
@@ -72,5 +69,13 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
 
   override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { virtualFile ->
     virtualFile.isInLocalFileSystem && virtualFile.fileType is ManifestFileType && virtualFile.name == Constants.Partial.File.MANIFEST_MF
+  }
+
+  private val dispatcher = EventDispatcher.create(ManifestIndexedListener::class.java)
+  fun addListener(parentDisposable: Disposable, listener: ManifestIndexedListener) =
+    dispatcher.addListener(listener, parentDisposable)
+
+  fun interface ManifestIndexedListener : EventListener {
+    fun manifestUpdated(file: VirtualFile, manifest: BundleManifest)
   }
 }

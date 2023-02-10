@@ -2,19 +2,25 @@ package cn.varsa.idea.pde.partial.core.manifest
 
 import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
 import cn.varsa.idea.pde.partial.common.version.Version
+import cn.varsa.idea.pde.partial.common.version.VersionRange
+import cn.varsa.idea.pde.partial.core.extension.reExportRequiredBundles
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class BundleManifestManager(private val project: Project) : Disposable, BundleManifestIndexListener,
+class BundleManifestManager(private val project: Project) : Disposable, BundleManifestIndex.ManifestIndexedListener,
                                                             DumbService.DumbModeListener {
   companion object {
     private val logger = thisLogger()
@@ -22,12 +28,11 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
     fun getInstance(project: Project): BundleManifestManager = project.getService(BundleManifestManager::class.java)
   }
 
-  private val calculationUpdate = object : Update("calculation") {
-    override fun run() = doRunCalculation()
-  }
+  private val projectFileIndex = ProjectFileIndex.getInstance(project)
 
   private val queueMutex = ReentrantLock()
   private val calculationToProcess = hashMapOf<VirtualFile, BundleManifest>()
+  private val calculationUpdate = DisposableUpdate.createDisposable(this, "calculation") { doRunCalculation() }
   private val calculationQueue = MergingUpdateQueue(
     "BundleManifestCalculationQueue",
     500,
@@ -43,9 +48,17 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
   /**
    * Bundle-SymbolicName(BSN) to versions
    *
-   * It may happen that the BSN and version are the same but in different Bundles, which should not be directly overwritten
+   * Note that the module is not included
    */
-  private val bundles = hashMapOf<String, HashMap<Version, HashSet<BundleManifest>>>()
+  private val bsn2bundles = hashMapOf<String, HashMap<Version, BundleManifest>>()
+
+  /**
+   * Manifest to it's re-exported bundles
+   *
+   * Note that the module is not included
+   */
+  private val bundle2ReExportBundles = hashMapOf<BundleManifest, Map<String, VersionRange>>()
+  private val bundle2Module = hashMapOf<BundleManifest, Module>()
 
   init {
     BundleManifestIndex.getInstance()?.addListener(this, this)
@@ -53,16 +66,20 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
   }
 
   override fun dispose() {
-    // current nothing to dispose
+    calculationToProcess.clear()
+    file2Manifest.clear()
+    bsn2bundles.clear()
+    bundle2ReExportBundles.clear()
+    bundle2Module.clear()
   }
+
+  override fun enteredDumbMode() = calculationQueue.suspend()
+  override fun exitDumbMode() = calculationQueue.resume()
 
   override fun manifestUpdated(file: VirtualFile, manifest: BundleManifest) {
     queueMutex.withLock { calculationToProcess[file] = manifest }
     calculationQueue.queue(calculationUpdate)
   }
-
-  override fun enteredDumbMode() = calculationQueue.suspend()
-  override fun exitDumbMode() = calculationQueue.resume()
 
   private fun doRunCalculation() {
     if (LightEdit.owns(project)) return
@@ -79,21 +96,50 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
       val bsn = manifest.bundleSymbolicName?.key ?: return
       val version = manifest.bundleVersion
 
-      val oldManifest = file2Manifest[file]
-      if (oldManifest != null && (oldManifest.bundleSymbolicName?.key != bsn || oldManifest.bundleVersion != version)) {
-        val oldBSN = checkNotNull(oldManifest.bundleSymbolicName?.key) { "BSN should not be null" }
+      val module = projectFileIndex.getModuleForFile(file)
+      if (module != null) {
+        bundle2Module[manifest] = module
+        dispatcher.multicaster.moduleManifestUpdated(module, file, manifest)
+      } else {
+        val oldManifest = file2Manifest[file]
+        if (oldManifest != null) {
+          bundle2ReExportBundles -= oldManifest
 
-        val versionMap = checkNotNull(bundles[oldBSN]) { "BSN versions should not be null" }
-        val manifests = checkNotNull(versionMap[oldManifest.bundleVersion]) { "BSN manifests should not be null" }
+          if (oldManifest.bundleSymbolicName?.key != bsn || oldManifest.bundleVersion != version) {
+            val oldBSN = checkNotNull(oldManifest.bundleSymbolicName?.key) { "BSN should not be null" }
 
-        manifests.remove(oldManifest)
-        if (manifests.isEmpty()) versionMap.remove(oldManifest.bundleVersion)
-        if (versionMap.isEmpty()) bundles.remove(oldBSN)
+            val versionMap = checkNotNull(bsn2bundles[oldBSN]) { "BSN versions should not be null" }
+            val manifests = checkNotNull(versionMap[oldManifest.bundleVersion]) { "BSN manifests should not be null" }
+
+            versionMap -= oldManifest.bundleVersion
+            if (versionMap.isEmpty()) bsn2bundles -= oldBSN
+          }
+        }
+
+        file2Manifest[file] = manifest
+        bsn2bundles.getOrPut(bsn) { hashMapOf() }[version] = manifest
+        bundle2ReExportBundles[manifest] = manifest.reExportRequiredBundles() ?: emptyMap()
       }
-
-      file2Manifest[file] = manifest
-      bundles.getOrPut(bsn) { hashMapOf() }.getOrPut(version) { hashSetOf() }.add(manifest)
     }
+
+    dispatcher.multicaster.manifestUpdated(calculationToProcess.values)
+  }
+
+
+  fun getBundlesByBSN(bsn: String, version: Version) = bsn2bundles[bsn]?.get(version)
+  fun getBundlesByBSN(bsn: String, range: VersionRange) =
+    bsn2bundles[bsn]?.filterKeys { it in range }?.maxByOrNull { it.key }?.value
+
+  fun getSelfExportedBundles(manifest: BundleManifest) = bundle2ReExportBundles[manifest]
+
+
+  private val dispatcher = EventDispatcher.create(ManifestIndexedListener::class.java)
+  fun addListener(parentDisposable: Disposable, listener: ManifestIndexedListener) =
+    dispatcher.addListener(listener, parentDisposable)
+
+  interface ManifestIndexedListener : EventListener {
+    fun moduleManifestUpdated(module: Module, file: VirtualFile, manifest: BundleManifest) {}
+    fun manifestUpdated(manifests: Collection<BundleManifest>) {}
   }
 
   // todo 2023/01/04: bundle removed

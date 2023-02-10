@@ -1,6 +1,8 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
 import cn.varsa.idea.pde.partial.common.Constants
+import cn.varsa.idea.pde.partial.common.extension.readString
+import cn.varsa.idea.pde.partial.common.extension.writeString
 import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -10,8 +12,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.jetbrains.rd.util.CancellationException
-import org.jetbrains.kotlin.idea.core.util.readString
-import org.jetbrains.kotlin.idea.core.util.writeString
 import org.jetbrains.lang.manifest.ManifestFileType
 import java.io.DataInput
 import java.io.DataOutput

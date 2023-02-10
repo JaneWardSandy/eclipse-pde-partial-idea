@@ -1,1 +1,1 @@
-rootProject.name = "eclipse-pde-partial"
+rootProject.name = "eclipse-pde-partial-idea"

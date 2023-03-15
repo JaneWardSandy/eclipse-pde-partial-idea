@@ -8,7 +8,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.2.2")
+  version.set("2022.3.3")
   plugins.set(listOf("java", "org.jetbrains.kotlin"))
 
   downloadSources.set(true)
@@ -16,7 +16,7 @@ intellij {
 
 tasks {
   patchPluginXml {
-    sinceBuild.set("222")
+    sinceBuild.set("223")
     untilBuild.set("")
 
     val projectPath = rootProject.projectDir.path

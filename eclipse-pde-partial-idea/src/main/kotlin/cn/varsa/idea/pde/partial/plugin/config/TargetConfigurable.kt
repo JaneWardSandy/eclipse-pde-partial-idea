@@ -112,9 +112,11 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
             SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
           )
         }
+
         is ShadowFeature -> {
           textRenderer.append(value.toString())
         }
+
         is ShadowBundle -> {
           textRenderer.append(value.bundle.canonicalName)
 
@@ -140,7 +142,12 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
 
   init {
     // Target tab
-    val reloadActionButton = object : AnActionButton(message("config.target.reload"), AllIcons.Actions.Refresh) {
+    val reloadActionButton = object : AnAction(message("config.target.reload"), null, AllIcons.Actions.Refresh) {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      override fun update(e: AnActionEvent) {
+        e.presentation.isEnabled = locationList.isSelectionEmpty.not()
+      }
+
       override fun actionPerformed(e: AnActionEvent) = locationList.selectedValue.let {
         it.backgroundResolve(project, onFinished = {
           locationModified += it to it
@@ -148,8 +155,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         })
       }
     }.apply {
-      isEnabled = false
-      locationList.addListSelectionListener { isEnabled = locationList.isSelectionEmpty.not() }
+      locationList.addListSelectionListener {
+        val event = AnActionEvent.createFromDataContext("", null) {}
+        update(event)
+      }
     }
 
     val launcherPanel = VerticalBox().apply {
@@ -186,13 +195,16 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     ).addToCenter(
       ToolbarDecorator.createDecorator(contentTree).disableAddAction().disableRemoveAction().disableUpDownActions()
         .addExtraActions(
-          object : AnActionButton(message("config.target.reload"), AllIcons.Actions.Refresh) {
+          object : AnAction(message("config.target.reload"), null, AllIcons.Actions.Refresh) {
+            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
             override fun actionPerformed(e: AnActionEvent) = reloadContentList()
           },
-          object : AnActionButton(message("config.content.reload"), AllIcons.Actions.ForceRefresh) {
+          object : AnAction(message("config.content.reload"), null, AllIcons.Actions.ForceRefresh) {
+            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
             override fun actionPerformed(e: AnActionEvent) = reloadContentListByDefaultRule()
           },
-          object : AnActionButton(message("config.content.validate"), AllIcons.Diff.GutterCheckBoxSelected) {
+          object : AnAction(message("config.content.validate"), null, AllIcons.Diff.GutterCheckBoxSelected) {
+            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
             override fun actionPerformed(e: AnActionEvent) = ValidateAndResolveBundleDependencies().show()
           },
         ).createPanel()
@@ -705,10 +717,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         add(feature)
       }
       bundleMap.values.filter { it.bundle !in featuredBundle }.takeIf { it.isNotEmpty() }?.also { unFeaturedBundles ->
-          val feature = ShadowFeature(this, "Non-featured", Version.emptyVersion)
-          unFeaturedBundles.forEach { feature.add(it) }
-          add(feature)
-        }
+        val feature = ShadowFeature(this, "Non-featured", Version.emptyVersion)
+        unFeaturedBundles.forEach { feature.add(it) }
+        add(feature)
+      }
 
       bundles.forEach { bundle ->
         bundle.sourceBundle =

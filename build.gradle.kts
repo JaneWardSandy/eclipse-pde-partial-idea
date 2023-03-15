@@ -1,15 +1,12 @@
 plugins {
-  kotlin("jvm") version "1.7.10"
+  kotlin("jvm") version "1.8.0"
 
-  kotlin("kapt") version "1.7.10" apply false
-  id("org.jetbrains.intellij") version "1.9.0" apply false
-
-  id("org.openjfx.javafxplugin") version "0.0.11" apply false
-  id("org.beryx.jlink") version "2.24.4" apply false
+  kotlin("kapt") version "1.8.0" apply false
+  id("org.jetbrains.intellij") version "1.12.0" apply false
 }
 
 group = "cn.varsa"
-version = "1.5.2"
+version = "1.6.0"
 
 repositories {
   mavenLocal()
@@ -24,7 +21,6 @@ tasks.register("pack") {
   group = "partial"
 
   dependsOn(tasks.getByPath(":eclipse-pde-partial-idea:buildPlugin"))
-  dependsOn(tasks.getByPath(":wishes-launcher:jlinkZip"))
 }
 
 subprojects {

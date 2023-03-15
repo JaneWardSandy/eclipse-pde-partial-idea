@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
-import com.intellij.util.*
 import org.jdom.*
 import org.jdom.filter2.*
 import org.jdom.xpath.*

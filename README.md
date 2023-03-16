@@ -104,3 +104,11 @@ instance of IntelliJ IDEA with the plugin installed
 ![](https://plugins.jetbrains.com/files/16761/screenshot_6f8c358a-c0a6-424a-8a7f-acf5dcf08154)
 
 ![](https://plugins.jetbrains.com/files/16761/screenshot_70882df8-07e4-410e-92ac-2c492883f54e)
+
+## Thanks
+
+Development powered by [JetBrains.](https://www.jetbrains.com/community/opensource/?utm_campaign=opensource&utm_content=approved&utm_medium=email&utm_source=newsletter&utm_term=jblogo#support&from=eclipse-pde-partial-idea)
+
+[![JetBrains Logo (Main) logo](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg)](https://www.jetbrains.com/?from=eclipse-pde-partial-idea)
+
+Whichever technologies you use, there's a JetBrains tool to match.

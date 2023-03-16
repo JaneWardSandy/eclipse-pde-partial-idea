@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*
 
 class ResolveWorkspaceAction : AnAction() {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   override fun update(e: AnActionEvent) {
     e.presentation.apply {
       text = message("action.resolveWorkspace.text")

@@ -1,21 +1,26 @@
 package cn.varsa.idea.pde.partial.plugin.helper
 
 import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.common.domain.*
-import cn.varsa.idea.pde.partial.common.support.*
-import cn.varsa.idea.pde.partial.plugin.cache.*
-import cn.varsa.idea.pde.partial.plugin.facet.*
+import cn.varsa.idea.pde.partial.common.domain.JavaVersions
+import cn.varsa.idea.pde.partial.common.support.toFile
+import cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService
+import cn.varsa.idea.pde.partial.plugin.facet.PDEFacet
 import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.diagnostic.*
-import com.intellij.openapi.module.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.roots.*
-import com.intellij.openapi.vfs.*
-import com.intellij.packaging.artifacts.*
-import com.intellij.packaging.elements.*
-import com.intellij.packaging.impl.artifacts.*
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.packaging.artifacts.ModifiableArtifactModel
+import com.intellij.packaging.elements.PackagingElementFactory
+import com.intellij.packaging.impl.artifacts.JarArtifactType
 import org.osgi.framework.Constants.*
-import java.io.*
+import java.io.File
 
 object ModuleHelper {
   private val logger = thisLogger()
@@ -23,26 +28,37 @@ object ModuleHelper {
   // Compile output path
   fun resetCompileOutputPath(module: Module) {
     val facet = PDEFacet.getInstance(module) ?: return
+    if (!facet.configuration.updateCompilerOutput) return
+
     setCompileOutputPath(
       module,
+      facet,
       "${module.getModuleDir()}/${facet.configuration.compilerClassesOutput}",
       "${module.getModuleDir()}/${facet.configuration.compilerTestClassesOutput}"
     )
   }
 
-  fun setCompileOutputPath(module: Module, compilerOutputPath: String, compilerOutputPathForTest: String) {
-    PDEFacet.getInstance(module) ?: return
+  fun setCompileOutputPath(
+    module: Module,
+    facet: PDEFacet,
+    compilerOutputPath: String,
+    compilerOutputPathForTest: String,
+  ) {
+    if (!facet.configuration.updateCompilerOutput) return
+
     ModuleRootModificationUtil.modifyModel(module) {
-      setCompileOutputPath(
-        it, compilerOutputPath, compilerOutputPathForTest
-      )
+      setCompileOutputPath(it, facet, compilerOutputPath, compilerOutputPathForTest)
     }
   }
 
   private fun setCompileOutputPath(
-    model: ModifiableRootModel, compilerOutputPath: String, compilerOutputPathForTest: String
+    model: ModifiableRootModel,
+    facet: PDEFacet,
+    compilerOutputPath: String,
+    compilerOutputPathForTest: String,
   ): Boolean {
-    PDEFacet.getInstance(model.module) ?: return false
+    if (!facet.configuration.updateCompilerOutput) return false
+
     val extension = model.getModuleExtension(CompilerModuleExtension::class.java) ?: return false
 
     extension.isExcludeOutput = true
@@ -60,13 +76,18 @@ object ModuleHelper {
   // Artifact
   fun resetCompileArtifact(module: Module) {
     val facet = PDEFacet.getInstance(module) ?: return
-    setCompileArtifact(module, addBinary = facet.configuration.binaryOutput)
+    if (!facet.configuration.updateArtifacts) return
+
+    setCompileArtifact(module, facet, addBinary = facet.configuration.binaryOutput)
   }
 
   fun setCompileArtifact(
-    module: Module, addBinary: Set<String> = emptySet(), removeBinary: Set<String> = emptySet()
+    module: Module,
+    facet: PDEFacet,
+    addBinary: Set<String> = emptySet(),
+    removeBinary: Set<String> = emptySet(),
   ) {
-    PDEFacet.getInstance(module) ?: return
+    if (!facet.configuration.updateArtifacts) return
     if (addBinary.isEmpty() && removeBinary.isEmpty()) return
 
     val cacheService = BundleManifestCacheService.getInstance(module.project)

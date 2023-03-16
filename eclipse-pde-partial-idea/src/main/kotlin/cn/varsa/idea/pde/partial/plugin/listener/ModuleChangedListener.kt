@@ -1,17 +1,21 @@
 package cn.varsa.idea.pde.partial.plugin.listener
 
-import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.plugin.facet.*
-import cn.varsa.idea.pde.partial.plugin.helper.*
-import cn.varsa.idea.pde.partial.plugin.support.*
-import com.intellij.openapi.module.*
-import com.intellij.openapi.project.*
-import com.intellij.packaging.artifacts.*
+import cn.varsa.idea.pde.partial.common.ArtifactPrefix
+import cn.varsa.idea.pde.partial.plugin.facet.PDEFacet
+import cn.varsa.idea.pde.partial.plugin.helper.ModuleHelper
+import cn.varsa.idea.pde.partial.plugin.support.applicationInvokeAndWait
+import cn.varsa.idea.pde.partial.plugin.support.readCompute
+import cn.varsa.idea.pde.partial.plugin.support.writeRun
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.Project
+import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.util.Function
 
 class ModuleChangedListener : ModuleListener {
   override fun moduleRemoved(project: Project, module: Module) {
-    PDEFacet.getInstance(module) ?: return
+    val facet = PDEFacet.getInstance(module) ?: return
+    if (!facet.configuration.updateArtifacts) return
 
     val model = readCompute { ArtifactManager.getInstance(project).createModifiableModel() }
     try {
@@ -26,7 +30,10 @@ class ModuleChangedListener : ModuleListener {
   override fun modulesRenamed(
     project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>
   ) {
-    modules.filter { PDEFacet.getInstance(it) != null }.forEach { module ->
+    modules.mapNotNull {
+      val facet = PDEFacet.getInstance(it)
+      if (facet != null && facet.configuration.updateArtifacts) facet to it else null
+    }.forEach { (facet, module) ->
       val model = readCompute { ArtifactManager.getInstance(project).createModifiableModel() }
       try {
         model.findArtifact("$ArtifactPrefix${oldNameProvider.`fun`(module)}")?.also { model.removeArtifact(it) }

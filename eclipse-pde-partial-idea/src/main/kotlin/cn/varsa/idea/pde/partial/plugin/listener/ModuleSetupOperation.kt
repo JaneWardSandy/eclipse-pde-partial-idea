@@ -11,6 +11,7 @@ class ModuleSetupOperation : FacetChangeListener {
     val facet = PDEFacet.getInstance(module) ?: return
     ModuleHelper.setCompileOutputPath(
       module,
+      facet,
       "${module.getModuleDir()}/$newValue",
       "${module.getModuleDir()}/${facet.configuration.compilerTestClassesOutput}"
     )
@@ -20,12 +21,14 @@ class ModuleSetupOperation : FacetChangeListener {
     val facet = PDEFacet.getInstance(module) ?: return
     ModuleHelper.setCompileOutputPath(
       module,
+      facet,
       "${module.getModuleDir()}/${facet.configuration.compilerClassesOutput}",
       "${module.getModuleDir()}/$newValue"
     )
   }
 
   override fun binaryOutputChanged(module: Module, oldChecked: Set<String>, newChecked: Set<String>) {
-    ModuleHelper.setCompileArtifact(module, newChecked - oldChecked, oldChecked - newChecked)
+    val facet = PDEFacet.getInstance(module) ?: return
+    ModuleHelper.setCompileArtifact(module, facet, newChecked - oldChecked, oldChecked - newChecked)
   }
 }

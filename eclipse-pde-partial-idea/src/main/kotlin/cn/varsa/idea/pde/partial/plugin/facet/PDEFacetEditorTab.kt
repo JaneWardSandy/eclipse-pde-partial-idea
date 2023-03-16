@@ -27,6 +27,14 @@ class PDEFacetEditorTab(
 
   private val panel = BorderLayoutPanel()
 
+  private val updateArtifactsCheckbox = JBCheckBox()
+  private val updateArtifactsComponent =
+    LabeledComponent.create(updateArtifactsCheckbox, message("facet.tab.updateArtifacts"), BorderLayout.WEST)
+
+  private val updateCompilerOutputCheckbox = JBCheckBox()
+  private val updateCompilerOutputComponent =
+    LabeledComponent.create(updateCompilerOutputCheckbox, message("facet.tab.updateCompilerOutput"), BorderLayout.WEST)
+
   private val compilerClassesTextField = JBTextField()
   private val compilerClassesComponent = LabeledComponent.create(
     compilerClassesTextField, message("facet.tab.compilerClassesOutputDirectory"), BorderLayout.WEST
@@ -47,17 +55,31 @@ class PDEFacetEditorTab(
       border = IdeBorderFactory.createTitledBorder(message("facet.tab.compilerOutput"), false, JBUI.insetsTop(8))
         .setShowLine(true)
 
+      add(updateArtifactsComponent)
+      add(updateCompilerOutputComponent)
       add(compilerClassesComponent)
       add(compilerTestClassesComponent)
     })
     panel.addToCenter(binaryOutputList)
 
-    myAnchor = UIUtil.mergeComponentsWithAnchor(compilerClassesComponent, compilerTestClassesComponent)
+    myAnchor = UIUtil.mergeComponentsWithAnchor(
+      updateArtifactsComponent,
+      updateCompilerOutputComponent,
+      compilerClassesComponent,
+      compilerTestClassesComponent,
+    )
   }
 
   override fun apply() {
     initializeIfNeeded()
     validateOnce {
+      if (configuration.updateArtifacts != updateArtifactsCheckbox.isSelected) {
+        configuration.updateArtifacts = updateArtifactsCheckbox.isSelected
+      }
+      if (configuration.updateCompilerOutput != updateCompilerOutputCheckbox.isSelected) {
+        configuration.updateCompilerOutput = updateCompilerOutputCheckbox.isSelected
+      }
+
       if (configuration.compilerClassesOutput != compilerClassesTextField.text) {
         FacetChangeListener.notifyCompileOutputPathChanged(
           context.module, configuration.compilerClassesOutput, compilerClassesTextField.text
@@ -89,6 +111,9 @@ class PDEFacetEditorTab(
   override fun reset() {
     initializeIfNeeded()
     validateOnce {
+      updateArtifactsCheckbox.isSelected = configuration.updateArtifacts
+      updateCompilerOutputCheckbox.isSelected = configuration.updateCompilerOutput
+
       compilerClassesTextField.text = configuration.compilerClassesOutput
       compilerTestClassesTextField.text = configuration.compilerTestClassesOutput
 
@@ -106,12 +131,15 @@ class PDEFacetEditorTab(
   override fun createComponent(): JComponent = panel
 
   override fun isModified(): Boolean =
-    isInitialized && (configuration.compilerClassesOutput != compilerClassesTextField.text || configuration.compilerTestClassesOutput != compilerTestClassesTextField.text || !binaryOutputList.checkedItems()
+    isInitialized && (configuration.updateArtifacts != updateArtifactsCheckbox.isSelected || configuration.updateCompilerOutput != updateCompilerOutputCheckbox.isSelected || configuration.compilerClassesOutput != compilerClassesTextField.text || configuration.compilerTestClassesOutput != compilerTestClassesTextField.text || !binaryOutputList.checkedItems()
       .let { it.containsAll(oldCheckList) && oldCheckList.containsAll(it) })
 
   override fun getAnchor(): JComponent? = myAnchor
   override fun setAnchor(anchor: JComponent?) {
     this.myAnchor = anchor
+
+    updateArtifactsComponent.anchor = anchor
+    updateCompilerOutputComponent.anchor = anchor
 
     compilerClassesComponent.anchor = anchor
     compilerTestClassesComponent.anchor = anchor

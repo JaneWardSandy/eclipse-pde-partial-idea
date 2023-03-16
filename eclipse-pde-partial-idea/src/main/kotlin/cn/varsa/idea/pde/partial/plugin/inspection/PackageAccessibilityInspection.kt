@@ -146,9 +146,9 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
           }
 
         if (exportedPackageVersions.isEmpty()) {
-          problems += Problem.error(message("inspection.hint.packageNoExport",
-                                            packageName,
-                                            exporterHostBSN?.let { "Fragment: $exporterBSN(Host: $exporterHostBSN)" }
+          problems += Problem.warning(message("inspection.hint.packageNoExport",
+                                              packageName,
+                                              exporterHostBSN?.let { "Fragment: $exporterBSN(Host: $exporterHostBSN)" }
                                               ?: exporterBSN))
           return@forEach
         }
@@ -172,12 +172,12 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
         fixes += versions.map { it.toString() }.map { ver -> AccessibilityFix.requireBundleFix(bsn, ver) }
         fixes += AccessibilityFix.requireBundleFix(bsn)
 
-        problems += Problem.error(message("inspection.hint.packageAccessibility",
-                                          packageName,
-                                          exporterHostBSN?.let { "Fragment: $exporterBSN(Host: $exporterHostBSN)" }
+        problems += Problem.warning(message("inspection.hint.packageAccessibility",
+                                            packageName,
+                                            exporterHostBSN?.let { "Fragment: $exporterBSN(Host: $exporterHostBSN)" }
                                             ?: exporterBSN),
-                                  AccessibilityFix.importPackageFix(packageName),
-                                  *fixes.toTypedArray())
+                                    AccessibilityFix.importPackageFix(packageName),
+                                    *fixes.toTypedArray())
       }
 
       return problems
@@ -192,8 +192,8 @@ class Problem(
     fun weak(message: @InspectionMessage String, vararg fixes: LocalQuickFix): Problem =
       Problem(ProblemHighlightType.WEAK_WARNING, message, *fixes)
 
-    fun error(message: @InspectionMessage String, vararg fixes: LocalQuickFix): Problem =
-      Problem(ProblemHighlightType.ERROR, message, *fixes)
+    fun warning(message: @InspectionMessage String, vararg fixes: LocalQuickFix): Problem =
+      Problem(ProblemHighlightType.WARNING, message, *fixes)
   }
 }
 

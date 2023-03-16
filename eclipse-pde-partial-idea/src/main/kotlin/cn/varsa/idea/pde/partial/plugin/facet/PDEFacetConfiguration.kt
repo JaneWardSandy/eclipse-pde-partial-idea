@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.*
 class PDEFacetConfiguration : FacetConfiguration, ModificationTracker, PersistentStateComponent<PDEFacetConfiguration> {
   private val modificationCount = AtomicLong()
 
+  @Attribute var updateArtifacts = true
+  @Attribute var updateCompilerOutput = true
   @Attribute var compilerClassesOutput = "out/${CompilerModuleExtension.PRODUCTION}"
   @Attribute var compilerTestClassesOutput = "out/${CompilerModuleExtension.TEST}"
   @XCollection(elementName = "binary", style = XCollection.Style.v2) val binaryOutput =

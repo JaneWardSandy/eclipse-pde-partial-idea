@@ -12,6 +12,7 @@ import com.intellij.openapi.project.*
 
 class ResolveManifestAction : AnAction() {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   override fun update(e: AnActionEvent) {
     e.presentation.apply {
       text = EclipsePDEPartialBundles.message("action.resolveManifest.text")

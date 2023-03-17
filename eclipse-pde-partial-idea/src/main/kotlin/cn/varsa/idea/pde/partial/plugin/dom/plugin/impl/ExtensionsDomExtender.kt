@@ -107,10 +107,18 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
 
     override fun createClassReferenceProvider(
       genericDomValue: GenericDomValue<PsiClass>?,
-      context: ConvertContext?,
+      context: ConvertContext,
       extendClass: com.intellij.util.xml.ExtendClass?
-    ): JavaClassReferenceProvider = super.createClassReferenceProvider(genericDomValue, context, extendClass).apply {
-      setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, java.lang.Boolean.TRUE)
+    ): JavaClassReferenceProvider {
+      val provider = object : JavaClassReferenceProvider() {
+        override fun getScope(project: Project): GlobalSearchScope = getScope(context)
+        override fun getReferencesByString(
+          str: String?, position: PsiElement, offsetInPosition: Int
+        ): Array<PsiReference> = super.getReferencesByString(str?.substringBefore(':'), position, offsetInPosition)
+      }
+      provider.setOption(JavaClassReferenceProvider.ALLOW_DOLLAR_NAMES, java.lang.Boolean.TRUE)
+
+      return createJavaClassReferenceProvider(genericDomValue, extendClass, provider)
     }
   }
 }

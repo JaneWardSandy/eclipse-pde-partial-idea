@@ -1,12 +1,12 @@
 plugins {
-  kotlin("jvm") version "1.8.0"
+  kotlin("jvm") version "1.5.10"
 
-  kotlin("kapt") version "1.8.0" apply false
+  kotlin("kapt") version "1.5.10" apply false
   id("org.jetbrains.intellij") version "1.12.0" apply false
 }
 
 group = "cn.varsa"
-version = "1.6.0.1"
+version = "1.6.0.1-213"
 
 repositories {
   mavenLocal()

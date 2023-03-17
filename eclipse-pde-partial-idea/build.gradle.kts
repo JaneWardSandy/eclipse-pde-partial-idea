@@ -8,7 +8,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.3.3")
+  version.set("2021.3.3")
   plugins.set(listOf("java", "org.jetbrains.kotlin"))
 
   downloadSources.set(true)
@@ -16,8 +16,8 @@ intellij {
 
 tasks {
   patchPluginXml {
-    sinceBuild.set("223")
-    untilBuild.set("")
+    sinceBuild.set("213")
+    untilBuild.set("213.*")
 
     val projectPath = rootProject.projectDir.path
     pluginDescription.set(File("$projectPath/DESCRIPTION.html").readText(Charsets.UTF_8))
@@ -37,15 +37,15 @@ tasks {
   }
 
   compileJava {
-    sourceCompatibility = "17"
-    targetCompatibility = "17"
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
   }
 
   compileKotlin {
     kotlinOptions {
-      jvmTarget = "17"
-      apiVersion = "1.7"
-      languageVersion = "1.7"
+      jvmTarget = "11"
+      apiVersion = "1.5"
+      languageVersion = "1.5"
     }
   }
 }

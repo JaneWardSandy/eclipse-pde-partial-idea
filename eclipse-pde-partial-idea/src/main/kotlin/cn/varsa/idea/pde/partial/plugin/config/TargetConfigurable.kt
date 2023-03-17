@@ -26,7 +26,6 @@ import org.osgi.framework.*
 import org.osgi.framework.Constants.*
 import java.awt.*
 import java.awt.event.*
-import java.util.*
 import javax.swing.*
 import javax.swing.tree.*
 
@@ -142,12 +141,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
 
   init {
     // Target tab
-    val reloadActionButton = object : AnAction(message("config.target.reload"), null, AllIcons.Actions.Refresh) {
-      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-      override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = locationList.isSelectionEmpty.not()
-      }
-
+    val reloadActionButton = object : AnActionButton(message("config.target.reload"), null, AllIcons.Actions.Refresh) {
       override fun actionPerformed(e: AnActionEvent) = locationList.selectedValue.let {
         it.backgroundResolve(project, onFinished = {
           locationModified += it to it
@@ -155,10 +149,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         })
       }
     }.apply {
-      locationList.addListSelectionListener {
-        val event = AnActionEvent.createFromDataContext("", null) {}
-        update(event)
-      }
+      isEnabled = false
+      locationList.addListSelectionListener { isEnabled = locationList.isSelectionEmpty.not() }
     }
 
     val launcherPanel = VerticalBox().apply {
@@ -195,16 +187,13 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     ).addToCenter(
       ToolbarDecorator.createDecorator(contentTree).disableAddAction().disableRemoveAction().disableUpDownActions()
         .addExtraActions(
-          object : AnAction(message("config.target.reload"), null, AllIcons.Actions.Refresh) {
-            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+          object : AnActionButton(message("config.target.reload"), null, AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) = reloadContentList()
           },
-          object : AnAction(message("config.content.reload"), null, AllIcons.Actions.ForceRefresh) {
-            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+          object : AnActionButton(message("config.content.reload"), null, AllIcons.Actions.ForceRefresh) {
             override fun actionPerformed(e: AnActionEvent) = reloadContentListByDefaultRule()
           },
-          object : AnAction(message("config.content.validate"), null, AllIcons.Diff.GutterCheckBoxSelected) {
-            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+          object : AnActionButton(message("config.content.validate"), null, AllIcons.Diff.GutterCheckBoxSelected) {
             override fun actionPerformed(e: AnActionEvent) = ValidateAndResolveBundleDependencies().show()
           },
         ).createPanel()

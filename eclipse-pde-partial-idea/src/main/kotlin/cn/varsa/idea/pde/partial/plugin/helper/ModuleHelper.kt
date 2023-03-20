@@ -130,7 +130,7 @@ object ModuleHelper {
       } else {
         factory.createDirectoryCopyWithParentDirectories(it.canonicalPath, it.name)
       }
-    }.takeIf { it.isNotEmpty() }.also { rootElement.addOrFindChildren(it) }
+    }.also { rootElement.addOrFindChildren(it) }
 
     logger.info("Eclipse PDE Partial Bundle artifact changed: $artifactName, binaryOutput: $binaryOutput")
     return true

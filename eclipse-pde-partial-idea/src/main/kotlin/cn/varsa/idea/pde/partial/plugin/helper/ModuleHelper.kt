@@ -78,24 +78,22 @@ object ModuleHelper {
     val facet = PDEFacet.getInstance(module) ?: return
     if (!facet.configuration.updateArtifacts) return
 
-    setCompileArtifact(module, facet, addBinary = facet.configuration.binaryOutput)
+    setCompileArtifact(module, facet, facet.configuration.binaryOutput)
   }
 
   fun setCompileArtifact(
     module: Module,
     facet: PDEFacet,
-    addBinary: Set<String> = emptySet(),
-    removeBinary: Set<String> = emptySet(),
+    binaryOutput: Set<String> = emptySet(),
   ) {
     if (!facet.configuration.updateArtifacts) return
-    if (addBinary.isEmpty() && removeBinary.isEmpty()) return
 
     val cacheService = BundleManifestCacheService.getInstance(module.project)
     readCompute { cacheService.getManifest(module) } ?: return
 
     val model = readCompute { ArtifactManager.getInstance(module.project).createModifiableModel() }
     try {
-      if (setCompileArtifact(module, model, addBinary, removeBinary)) {
+      if (setCompileArtifact(module, model, binaryOutput)) {
         applicationInvokeAndWait { if (!module.project.isDisposed) writeCompute(model::commit) }
       }
     } finally {
@@ -106,48 +104,35 @@ object ModuleHelper {
   private fun setCompileArtifact(
     module: Module,
     model: ModifiableArtifactModel,
-    addBinary: Set<String> = emptySet(),
-    removeBinary: Set<String> = emptySet()
+    binaryOutput: Set<String> = emptySet(),
   ): Boolean {
     val cacheService = BundleManifestCacheService.getInstance(module.project)
     val manifest = readCompute { cacheService.getManifest(module) } ?: return false
-
     val factory = PackagingElementFactory.getInstance()
-
     val artifactName = "$ArtifactPrefix${module.name}"
+    logger.info("Re-build artifact structure for: $artifactName")
 
-    val artifact = model.findArtifact(artifactName)?.let {
-      if (it.artifactType !is JarArtifactType) {
-        model.removeArtifact(it)
-        null
-      } else {
-        it
-      }
-    }?.let { model.getOrCreateModifiableArtifact(it) } ?: model.addArtifact(
-      artifactName, JarArtifactType.getInstance()
-    )
+    model.findArtifact(artifactName)?.also { model.removeArtifact(it) }
+    val artifact = model.addArtifact(artifactName, JarArtifactType.getInstance())
 
     artifact.outputPath?.toFile()?.takeIf { it.name != Artifacts && it.parentFile.name == Artifacts }?.also {
       artifact.outputPath = it.parentFile.canonicalPath
       logger.info("Change artifact output path to: ${artifact.outputPath}")
     }
 
-    artifact.rootElement.apply {
-      rename("${manifest.bundleSymbolicName?.key}_${manifest.bundleVersion}.jar")
-      addOrFindChild(factory.createModuleOutput(module))
+    val rootElement = artifact.rootElement
+    rootElement.rename("${manifest.bundleSymbolicName?.key}_${manifest.bundleVersion}.jar")
 
-      removeBinary.mapNotNull { findCompositeChild(it) }.also { removeChildren(it) }
-      addBinary.map { File(module.getModuleDir(), it) }.filter { it.exists() }
-        .filter { findCompositeChild(it.name) == null }.map {
-          if (it.isFile) {
-            factory.createFileCopy(it.canonicalPath, null)
-          } else {
-            factory.createDirectoryCopyWithParentDirectories(it.canonicalPath, it.name)
-          }
-        }.forEach { addOrFindChild(it) }
-    }
+    rootElement.addOrFindChild(factory.createModuleOutput(module))
+    binaryOutput.map { File(module.getModuleDir(), it) }.filter { it.exists() }.map {
+      if (it.isFile) {
+        factory.createFileCopy(it.canonicalPath, null)
+      } else {
+        factory.createDirectoryCopyWithParentDirectories(it.canonicalPath, it.name)
+      }
+    }.takeIf { it.isNotEmpty() }.also { rootElement.addOrFindChildren(it) }
 
-    logger.info("Eclipse PDE Partial Bundle artifact changed: $artifactName, addBinary: $addBinary, removeBinary: $removeBinary")
+    logger.info("Eclipse PDE Partial Bundle artifact changed: $artifactName, binaryOutput: $binaryOutput")
     return true
   }
 

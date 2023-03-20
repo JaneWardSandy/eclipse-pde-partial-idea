@@ -29,6 +29,6 @@ class ModuleSetupOperation : FacetChangeListener {
 
   override fun binaryOutputChanged(module: Module, oldChecked: Set<String>, newChecked: Set<String>) {
     val facet = PDEFacet.getInstance(module) ?: return
-    ModuleHelper.setCompileArtifact(module, facet, newChecked - oldChecked, oldChecked - newChecked)
+    ModuleHelper.setCompileArtifact(module, facet, newChecked)
   }
 }

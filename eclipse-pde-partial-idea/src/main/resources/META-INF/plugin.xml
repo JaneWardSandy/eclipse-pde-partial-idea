@@ -26,7 +26,7 @@
         parentId="language"
         instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
 
-    <postStartupActivity implementation="cn.varsa.idea.pde.partial.plugin.startup.PostStartupActivity"/>
+    <postStartupActivity order="last" implementation="cn.varsa.idea.pde.partial.plugin.startup.PostStartupActivity"/>
 
     <facetType implementation="cn.varsa.idea.pde.partial.plugin.facet.PDEFacetType"/>
     <frameworkSupport implementation="cn.varsa.idea.pde.partial.plugin.framework.TcRacFrameworkSupportProvider"/>

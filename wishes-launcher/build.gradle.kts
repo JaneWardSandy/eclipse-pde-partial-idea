@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.*
-
 plugins {
   idea
   application
@@ -8,10 +6,6 @@ plugins {
   kotlin("jvm")
   kotlin("kapt")
 }
-
-val compileKotlin: KotlinCompile by tasks
-val compileJava: JavaCompile by tasks
-compileJava.destinationDir = compileKotlin.destinationDir
 
 modularity.disableEffectiveArgumentsAdjustment() // https://github.com/java9-modularity/gradle-modules-plugin/issues/165
 
@@ -25,7 +19,7 @@ dependencies {
   }
 
   implementation("org.slf4j:slf4j-api:2.0.0-alpha1")
-  implementation("ch.qos.logback:logback-classic:1.3.0-alpha4")
+  implementation("ch.qos.logback:logback-classic:1.3.0-beta0")
   implementation("org.slf4j:jcl-over-slf4j:2.0.0-alpha1")
   implementation("org.slf4j:jul-to-slf4j:2.0.0-alpha1")
   implementation("org.slf4j:log4j-over-slf4j:2.0.0-alpha1")
@@ -37,7 +31,7 @@ application {
 }
 
 javafx {
-  version = "11"
+  version = "17.0.7"
   modules("javafx.controls", "javafx.fxml", "javafx.web")
 }
 
@@ -77,17 +71,17 @@ plugins.withType<JavaPlugin>().configureEach {
 
 tasks {
   compileJava {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
     inputs.property("moduleName", "Wishes")
   }
 
   compileKotlin {
     kotlinOptions {
       freeCompilerArgs = listOf("-Xjsr305=strict")
-      jvmTarget = "11"
-      apiVersion = "1.6"
-      languageVersion = "1.6"
+      jvmTarget = "17"
+      apiVersion = "1.8"
+      languageVersion = "1.8"
     }
   }
 }

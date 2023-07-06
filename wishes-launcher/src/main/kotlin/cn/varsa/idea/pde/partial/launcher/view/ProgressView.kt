@@ -38,6 +38,7 @@ class ProgressView : View("Run") {
   override val root: Parent = form {
     fieldset("Overview") {
       field("Runtime directory") { label(configControl.runtimeDirectoryProperty) }
+      field("Runtime Data directory") { label(configControl.dataDirectoryProperty) }
       field("Project root") { label(configControl.projectRootProperty) }
       field("RMI naming") { label(configControl.rmiUrlProperty) }
       field("IP address") { label(hostIPProperty) }

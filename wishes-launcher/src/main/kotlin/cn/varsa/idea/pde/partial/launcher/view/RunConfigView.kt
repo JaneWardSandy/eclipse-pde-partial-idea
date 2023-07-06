@@ -21,6 +21,7 @@ class RunConfigView : View("Basic Configuration") {
         ), validationContext
       )
       directoryField("Runtime directory", configControl.runtimeDirectoryProperty, validationContext)
+      directoryField("Runtime Data directory", configControl.dataDirectoryProperty, validationContext)
       directoryField("Project root", configControl.projectRootProperty, validationContext) {
         when {
           File(it, ".idea").exists().not() -> error("Only support IntelliJ IDEA project")
@@ -49,6 +50,7 @@ class RunConfigView : View("Basic Configuration") {
     super.onDock()
     configControl.javaExe = config.string("javaExe", "")
     configControl.runtimeDirectory = config.string("runtimeDirectory", "")
+    configControl.dataDirectory = config.string("runtimeDataDirectory", "")
     configControl.projectRoot = config.string("projectRoot", "")
 
     configControl.ideaCharset = config.string("charset")?.let {
@@ -72,6 +74,7 @@ class RunConfigView : View("Basic Configuration") {
     super.onSave()
     config["javaExe"] = configControl.javaExe
     config["runtimeDirectory"] = configControl.runtimeDirectory
+    config["runtimeDataDirectory"] = configControl.dataDirectory
     config["projectRoot"] = configControl.projectRoot
     config["charset"] = configControl.ideaCharset.name()
     config["osCharset"] = configControl.osCharset.name()

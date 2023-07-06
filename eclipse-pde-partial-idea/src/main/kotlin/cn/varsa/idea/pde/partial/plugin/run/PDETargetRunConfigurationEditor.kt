@@ -26,11 +26,15 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
     renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
     ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
   }
+  private val dataDirectoryField = JBTextField()
 
   private val productComponent =
     LabeledComponent.create(productField, message("run.local.config.tab.configuration.product"), BorderLayout.WEST)
   private val applicationComponent = LabeledComponent.create(
     applicationField, message("run.local.config.tab.configuration.application"), BorderLayout.WEST
+  )
+  private val dataDirectoryComponent = LabeledComponent.create(
+    dataDirectoryField, message("run.local.config.tab.configuration.dataDirectory"), BorderLayout.WEST
   )
 
   private val jrePath = JrePathEditor(DefaultJreSelector.projectSdk(project))
@@ -41,6 +45,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
   init {
     panel.add(productComponent)
     panel.add(applicationComponent)
+    panel.add(dataDirectoryComponent)
     panel.add(JSeparator())
     panel.add(jrePath)
     panel.add(javaParameters)
@@ -49,7 +54,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
     panel.updateUI()
 
-    myAnchor = UIUtil.mergeComponentsWithAnchor(productComponent, applicationComponent, jrePath, javaParameters)
+    myAnchor = UIUtil.mergeComponentsWithAnchor(productComponent, applicationComponent, dataDirectoryComponent, jrePath, javaParameters)
   }
 
   override fun resetEditorFrom(configuration: PDETargetRunConfiguration) {
@@ -67,6 +72,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
       managementService.getApplications().sorted().forEach(this::addItem)
       item = configuration.application
     }
+    dataDirectoryField.text = configuration.dataDirectory
 
     configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     cleanRuntimeDir.isSelected = configuration.cleanRuntimeDir
@@ -79,6 +85,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
     configuration.product = productField.item
     configuration.application = applicationField.item
+    configuration.dataDirectory = dataDirectoryField.text
 
     configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     configuration.cleanRuntimeDir = cleanRuntimeDir.isSelected
@@ -91,6 +98,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
     productComponent.anchor = anchor
     applicationComponent.anchor = anchor
+    dataDirectoryComponent.anchor = anchor
     jrePath.anchor = anchor
     javaParameters.anchor = anchor
   }

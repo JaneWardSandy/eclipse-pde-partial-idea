@@ -35,6 +35,9 @@ class ConfigControl : Controller(), ConfigService {
   val runtimeDirectoryProperty = SimpleStringProperty("")
   var runtimeDirectory: String by runtimeDirectoryProperty
 
+  val dataDirectoryProperty = SimpleStringProperty("")
+  var dataDirectory: String by dataDirectoryProperty
+
   val projectRootProperty = SimpleStringProperty("")
   var projectRoot: String by projectRootProperty
 
@@ -66,7 +69,7 @@ class ConfigControl : Controller(), ConfigService {
   override var product: String = ""
   override var application: String = ""
 
-  override val dataPath: File get() = File(runtimeDirectory, "partial-runtime")
+  override val dataPath: File get() = File(dataDirectory)
   override val installArea: File
     get() = (launcher.takeIf(String::isNotBlank)?.toFile() ?: launcherJar.toFile().parentFile).parentFile
 

@@ -4,9 +4,12 @@ import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
+import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.openapi.resolver.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.facet.*
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
@@ -124,6 +127,11 @@ class BundleManagementService : BackgroundResolvable {
 
           indicator.text2 = "Reset module settings"
           val allPDEModules = project.allPDEModules()
+
+          project.modules.forEach { module ->
+            val allFacets = FacetManager.getInstance(module).allFacets.joinToString { "${it.typeId}-$it" }
+            thisLogger().info("Module: ${module.name}, In FacetByType: ${module in allPDEModules}, All Facets: $allFacets")
+          }
 
           val step = 0.5 / (allPDEModules.size + 1)
           allPDEModules.forEach {

@@ -36,6 +36,9 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
 
   var product: String? = "com.teamcenter.rac.aifrcp.product"
   var application: String? = "com.teamcenter.rac.aifrcp.application"
+  var dataDirectory: String = File(
+    compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
+  ).absolutePath
   var cleanRuntimeDir = false
 
   override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
@@ -53,6 +56,11 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     if (compiler == null) throw RuntimeConfigurationWarning(message("run.local.config.noCompiler", project.name))
     if (target.launcherJar == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncherJar"))
     if (product.isNullOrBlank() || application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
+
+    if (dataDirectory.isBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noDataDirectory"))
+
+    val dir = File(dataDirectory)
+    if (dir.isFile) throw RuntimeConfigurationWarning(message("run.local.config.dataDirectoryNotDirectory"))
   }
 
   override fun writeExternal(element: Element) {
@@ -60,6 +68,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     element.getOrCreate("partial").apply {
       setAttribute("product", product ?: "")
       setAttribute("application", application ?: "")
+      setAttribute("dataDirectory", dataDirectory)
       setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
     }
   }
@@ -69,6 +78,9 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     element.getChild("partial")?.also {
       product = it.getAttributeValue("product") ?: ""
       application = it.getAttributeValue("application") ?: ""
+      dataDirectory = it.getAttributeValue("dataDirectory") ?: File(
+        compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
+      ).absolutePath
       cleanRuntimeDir = it.getAttributeValue("cleanRuntimeDir", cleanRuntimeDir.toString()).toBoolean()
     }
   }
@@ -138,9 +150,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     override val application: String get() = this@PDETargetRunConfiguration.application ?: ""
 
     override val dataPath: File
-      get() = File(
-        compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
-      )
+      get() = File(dataDirectory)
     override val installArea: File
       get() = (target.launcher?.toFile() ?: target.launcherJar!!.toFile().parentFile).parentFile
     override val projectDirectory: File get() = project.presentableUrl!!.toFile()

@@ -20,11 +20,11 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
   private val productField = ComboBox<String>().apply {
     renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
-    ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    ComboboxSpeedSearch.installOn(this).setClearSearchOnNavigateNoMatch(true)
   }
   private val applicationField = ComboBox<String>().apply {
     renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
-    ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    ComboboxSpeedSearch.installOn(this).setClearSearchOnNavigateNoMatch(true)
   }
   private val dataDirectoryField = JBTextField()
 

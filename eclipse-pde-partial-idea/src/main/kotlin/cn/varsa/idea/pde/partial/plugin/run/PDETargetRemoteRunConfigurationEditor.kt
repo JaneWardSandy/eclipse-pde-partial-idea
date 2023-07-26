@@ -22,11 +22,11 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
 
   private val productField = ComboBox<String>().apply {
     renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
-    ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    ComboboxSpeedSearch.installOn(this).setClearSearchOnNavigateNoMatch(true)
   }
   private val applicationField = ComboBox<String>().apply {
     renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
-    ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    ComboboxSpeedSearch.installOn(this).setClearSearchOnNavigateNoMatch(true)
   }
 
   private val remoteHostTextField = JBTextField()
@@ -34,9 +34,9 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
   private val rmiNameTextField = JBTextField()
   private val remotePortSpinner = JBIntSpinner(5005, 1, Int.MAX_VALUE)
   private val timeoutInSecSpinner = JBIntSpinner(3, 1, 60)
-  private val jdkVersion = ComboBox(JDKVersionItem.values()).apply {
+  private val jdkVersion = ComboBox(JDKVersionItem.entries.toTypedArray()).apply {
     renderer = ColoredListCellRendererWithSpeedSearch.stringRender()
-    ComboboxSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    ComboboxSpeedSearch.installOn(this).setClearSearchOnNavigateNoMatch(true)
   }
   private val vmParametersEditor = RawCommandLineEditor()
   private val programParametersEditor = RawCommandLineEditor()
@@ -61,9 +61,7 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
   private val rmiPortComponent =
     LabeledComponent.create(rmiPortSpinner, message("run.remote.config.tab.wishes.rmiPort"), BorderLayout.WEST)
   private val timeoutInSecComponent = LabeledComponent.create(
-    timeoutInSecSpinner,
-    message("run.remote.config.tab.wishes.timeoutInSec"),
-    BorderLayout.WEST
+    timeoutInSecSpinner, message("run.remote.config.tab.wishes.timeoutInSec"), BorderLayout.WEST
   )
   private val jdkVersionComponent =
     LabeledComponent.create(jdkVersion, message("run.remote.config.tab.wishes.javaVersion"), BorderLayout.WEST)

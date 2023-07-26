@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection enabledByDefault="true" level="ERROR"
+                     language="JAVA"
                      bundle="messages.EclipsePDEPartialBundles_locale"
                      key="inspection.unregisteredActivator"
                      groupBundle="messages.EclipsePDEPartialBundles_locale"
@@ -8,6 +9,7 @@
                      shortName="PDEUnregisteredActivator"
                      implementationClass="cn.varsa.idea.pde.partial.plugin.java.inspection.UnregisteredActivatorInspection"/>
     <localInspection enabledByDefault="true" level="ERROR"
+                     language="JAVA"
                      bundle="messages.EclipsePDEPartialBundles_locale"
                      key="inspection.classInDefaultPackage"
                      groupBundle="messages.EclipsePDEPartialBundles_locale"
@@ -15,6 +17,7 @@
                      shortName="PDEClassInDefaultPackage"
                      implementationClass="cn.varsa.idea.pde.partial.plugin.java.inspection.ClassInDefaultPackageInspection"/>
     <localInspection enabledByDefault="true" level="ERROR"
+                     language="JAVA"
                      bundle="messages.EclipsePDEPartialBundles_locale"
                      key="inspection.javaPackageAccessibility"
                      groupBundle="messages.EclipsePDEPartialBundles_locale"
@@ -22,6 +25,7 @@
                      shortName="PDEJavaPackageAccessibility"
                      implementationClass="cn.varsa.idea.pde.partial.plugin.java.inspection.JavaPackageAccessibilityInspection"/>
     <localInspection enabledByDefault="true" level="ERROR"
+                     language="JAVA"
                      bundle="messages.EclipsePDEPartialBundles_locale"
                      key="inspection.wrongImportPackage"
                      groupBundle="messages.EclipsePDEPartialBundles_locale"

@@ -8,7 +8,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.3.3")
+  version.set("2023.2")
   plugins.set(listOf("java", "org.jetbrains.kotlin"))
 
   downloadSources.set(true)
@@ -16,7 +16,7 @@ intellij {
 
 tasks {
   patchPluginXml {
-    sinceBuild.set("223")
+    sinceBuild.set("232")
     untilBuild.set("")
 
     val projectPath = rootProject.projectDir.path
@@ -44,8 +44,8 @@ tasks {
   compileKotlin {
     kotlinOptions {
       jvmTarget = "17"
-      apiVersion = "1.7"
-      languageVersion = "1.7"
+      apiVersion = "1.9"
+      languageVersion = "1.9"
     }
   }
 }

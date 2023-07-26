@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.search.*
-import com.intellij.util.*
 import org.jdom.*
 import java.io.*
 import java.util.*
@@ -65,7 +64,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
 
   override fun writeExternal(element: Element) {
     super.writeExternal(element)
-    element.getOrCreate("partial").apply {
+    element.getOrCreateChild("partial").apply {
       setAttribute("product", product ?: "")
       setAttribute("application", application ?: "")
       setAttribute("dataDirectory", dataDirectory)

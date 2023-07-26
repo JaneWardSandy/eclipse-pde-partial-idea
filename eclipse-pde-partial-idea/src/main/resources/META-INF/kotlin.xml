@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection enabledByDefault="true" level="ERROR"
+                     language="kotlin"
                      bundle="messages.EclipsePDEPartialBundles_locale"
                      key="inspection.kotlinPackageAccessibility"
                      groupBundle="messages.EclipsePDEPartialBundles_locale"
@@ -8,6 +9,7 @@
                      shortName="PDEKotlinPackageAccessibility"
                      implementationClass="cn.varsa.idea.pde.partial.plugin.kotlin.inspection.KotlinPackageAccessibilityInspection"/>
     <localInspection enabledByDefault="true" level="ERROR"
+                     language="kotlin"
                      bundle="messages.EclipsePDEPartialBundles_locale"
                      key="inspection.kotlinImport"
                      groupBundle="messages.EclipsePDEPartialBundles_locale"

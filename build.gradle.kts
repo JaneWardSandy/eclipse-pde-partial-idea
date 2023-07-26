@@ -1,15 +1,15 @@
 plugins {
-  kotlin("jvm") version "1.8.0"
+  kotlin("jvm") version "1.9.0"
 
-  kotlin("kapt") version "1.8.0" apply false
-  id("org.jetbrains.intellij") version "1.12.0" apply false
+  kotlin("kapt") version "1.9.0" apply false
+  id("org.jetbrains.intellij") version "1.15.0" apply false
 
   id("org.openjfx.javafxplugin") version "0.0.14"
   id("org.beryx.jlink") version "2.26.0"
 }
 
 group = "cn.varsa"
-version = "1.6.2"
+version = "1.6.3"
 
 repositories {
   mavenLocal()

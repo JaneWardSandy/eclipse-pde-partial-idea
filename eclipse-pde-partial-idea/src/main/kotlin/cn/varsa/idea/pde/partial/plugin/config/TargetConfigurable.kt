@@ -77,7 +77,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         return selection
       }
     }.installOn(this)
-    ListSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    ListSpeedSearch.installOn(this).setClearSearchOnNavigateNoMatch(true)
   }
 
   private val startupModel = DefaultListModel<Pair<String, Int>>()
@@ -97,7 +97,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         return selection
       }
     }.installOn(this)
-    ListSpeedSearch(this).setClearSearchOnNavigateNoMatch(true)
+    ListSpeedSearch.installOn(this).setClearSearchOnNavigateNoMatch(true)
   }
 
   private val contentTree = CheckboxTree(object : CheckboxTree.CheckboxTreeCellRenderer(true) {
@@ -687,6 +687,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
   private object ShadowLocationRoot : CheckedTreeNode() {
     val sourceVersions = hashMapOf<String, HashSet<BundleDefinition>>()
     val locations get() = children?.map { it as ShadowLocation } ?: emptyList()
+
+    private fun readResolve(): Any = ShadowLocationRoot
 
     fun sort() = children?.sortBy { it.toString() }
 

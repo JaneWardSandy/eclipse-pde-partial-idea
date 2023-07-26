@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
-import com.intellij.util.*
 import com.intellij.util.execution.*
 import org.jdom.*
 import java.net.*
@@ -78,11 +77,11 @@ class PDETargetRemoteRunConfiguration(
     logFiles.firstOrNull { it.name == "Partial log" }?.pathPattern = "${project.presentableUrl}/out/log/partial.log"
     super<LocatableConfigurationBase>.writeExternal(element)
 
-    element.getOrCreate("portal").apply {
+    element.getOrCreateChild("portal").apply {
       setAttribute("product", product ?: "")
       setAttribute("application", application ?: "")
     }
-    element.getOrCreate("remote").apply {
+    element.getOrCreateChild("remote").apply {
       setAttribute("host", remoteHost)
 
       setAttribute("rmiPort", rmiPort.toString())
@@ -95,14 +94,14 @@ class PDETargetRemoteRunConfiguration(
       setAttribute("listeningTeardown", listeningTeardown.toString())
       setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
     }
-    element.getOrCreate("parameter").apply {
+    element.getOrCreateChild("parameter").apply {
       setAttribute("vmParameters", vmParameters)
       setAttribute("programParameters", programParameters)
       setAttribute("passParentEnvs", passParentEnvs.toString())
 
-      getOrCreate("envVariables").apply {
+      getOrCreateChild("envVariables").apply {
         envVariables.forEach { (key, value) ->
-          getOrCreate("option").apply {
+          getOrCreateChild("option").apply {
             setAttribute("name", key)
             setAttribute("value", value)
           }
@@ -127,7 +126,7 @@ class PDETargetRemoteRunConfiguration(
 
       remotePort = remote.getAttributeValue("remotePort", remotePort.toString()).toIntOrNull() ?: remotePort
       jdkVersion = remote.getAttributeValue("jdkVersion", "").run {
-        PDETargetRemoteRunConfigurationEditor.JDKVersionItem.values().firstOrNull { it.toString() == this }
+        PDETargetRemoteRunConfigurationEditor.JDKVersionItem.entries.firstOrNull { it.toString() == this }
       } ?: PDETargetRemoteRunConfigurationEditor.JDKVersionItem.JDK5to8
 
       listeningTeardown = remote.getAttributeValue("listeningTeardown", listeningTeardown.toString()).toBoolean()

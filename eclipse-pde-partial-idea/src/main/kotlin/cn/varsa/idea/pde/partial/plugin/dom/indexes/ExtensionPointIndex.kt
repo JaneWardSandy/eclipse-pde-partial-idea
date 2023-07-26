@@ -26,7 +26,7 @@ class ExtensionPointIndex : SingleEntryFileBasedIndexExtension<ExtensionPointDef
   override fun getVersion(): Int = 0
   override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
     file.fileType == XmlFileType.INSTANCE && file.extension == "exsd" && ProjectLocator.getInstance()
-      .getProjectsForFile(file).any { it.allPDEModules().isNotEmpty() }
+      .getProjectsForFile(file).any { it?.allPDEModules()?.isNotEmpty() == true }
   }
 
   private object ExtensionPointIndexer : SingleEntryIndexer<ExtensionPointDefinition>(false) {

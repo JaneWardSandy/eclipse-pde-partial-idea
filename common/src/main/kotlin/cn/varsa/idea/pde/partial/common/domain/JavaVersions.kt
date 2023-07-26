@@ -24,7 +24,7 @@ enum class JavaVersions(val major: Int, val ee: String, val filter: String) {
   UNKNOWN(Integer.MAX_VALUE, "<UNKNOWN>", "(osgi.ee=UNKNOWN)");
 
   companion object {
-    fun getJava(major: Int) = values().firstOrNull { it.major == major } ?: UNKNOWN
-    fun getJava(ee: String) = values().firstOrNull { it.ee == ee } ?: UNKNOWN
+    fun getJava(major: Int) = entries.firstOrNull { it.major == major } ?: UNKNOWN
+    fun getJava(ee: String) = entries.firstOrNull { it.ee == ee } ?: UNKNOWN
   }
 }

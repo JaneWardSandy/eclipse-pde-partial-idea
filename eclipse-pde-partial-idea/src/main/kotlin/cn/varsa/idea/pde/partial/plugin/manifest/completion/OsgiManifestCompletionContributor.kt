@@ -36,7 +36,7 @@ class OsgiManifestCompletionContributor : CompletionContributor() {
     extend(
       CompletionType.BASIC,
       clause(BUNDLE_REQUIREDEXECUTIONENVIRONMENT),
-      ValueProvider(*JavaVersions.values().map { it.ee }.toTypedArray())
+      ValueProvider(*JavaVersions.entries.map { it.ee }.toTypedArray())
     )
     extend(CompletionType.BASIC, clause(REQUIRE_BUNDLE), BundleNameProvider())
     extend(CompletionType.BASIC, clause(FRAGMENT_HOST), BundleNameProvider())

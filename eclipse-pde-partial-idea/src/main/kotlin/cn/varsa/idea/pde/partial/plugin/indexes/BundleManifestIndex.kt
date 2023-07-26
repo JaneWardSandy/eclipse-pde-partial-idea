@@ -26,7 +26,7 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
   override fun getVersion(): Int = 0
   override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
     file.fileType == ManifestFileType.INSTANCE && file.name == ManifestMf && ProjectLocator.getInstance()
-      .getProjectsForFile(file).any { it.allPDEModules().isNotEmpty() }
+      .getProjectsForFile(file).any { it?.allPDEModules()?.isNotEmpty() == true }
   }
 
   private object BundleManifestIndexer : SingleEntryIndexer<BundleManifest>(false) {

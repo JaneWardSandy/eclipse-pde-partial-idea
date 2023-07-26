@@ -21,6 +21,7 @@
 
     <!-- plugin.xml, fragment.xml validator -->
     <localInspection enabledByDefault="true" level="ERROR"
+                     language="XML"
                      bundle="messages.EclipsePDEPartialBundles_locale"
                      key="inspection.pluginUnresolvedReference"
                      groupBundle="messages.EclipsePDEPartialBundles_locale"

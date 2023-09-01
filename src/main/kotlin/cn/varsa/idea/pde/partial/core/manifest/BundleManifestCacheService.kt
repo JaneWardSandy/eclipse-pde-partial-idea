@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.core.manifest
 
 import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.manifest.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
@@ -10,6 +11,7 @@ import com.intellij.psi.*
 import com.intellij.util.indexing.*
 
 // fixme 2023/02/04: Is it still necessary to exist?
+@Service(Service.Level.PROJECT)
 class BundleManifestCacheService(private val project: Project) {
 
   companion object {

@@ -1,25 +1,23 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
-import cn.varsa.idea.pde.partial.common.version.Version
-import cn.varsa.idea.pde.partial.common.version.VersionRange
-import cn.varsa.idea.pde.partial.core.extension.reExportRequiredBundles
-import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.EventDispatcher
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import cn.varsa.idea.pde.partial.common.manifest.*
+import cn.varsa.idea.pde.partial.common.version.*
+import cn.varsa.idea.pde.partial.core.extension.*
+import com.intellij.ide.lightEdit.*
+import com.intellij.openapi.*
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.module.*
+import com.intellij.openapi.project.*
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.vfs.*
+import com.intellij.util.*
+import com.intellij.util.ui.update.*
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import java.util.concurrent.locks.*
+import kotlin.concurrent.*
 
+@Service(Service.Level.PROJECT)
 class BundleManifestManager(private val project: Project) : Disposable, BundleManifestIndex.ManifestIndexedListener,
                                                             DumbService.DumbModeListener {
   companion object {

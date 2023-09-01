@@ -1,23 +1,17 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
-import cn.varsa.idea.pde.partial.common.version.VersionRange
-import cn.varsa.idea.pde.partial.core.extension.notificationImportant
-import cn.varsa.idea.pde.partial.core.extension.requiredBundleBSNs
-import cn.varsa.idea.pde.partial.core.extension.requiredBundles
-import com.intellij.ProjectTopics
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.ModuleListener
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import cn.varsa.idea.pde.partial.common.manifest.*
+import cn.varsa.idea.pde.partial.common.version.*
+import cn.varsa.idea.pde.partial.core.extension.*
+import com.intellij.*
+import com.intellij.notification.*
+import com.intellij.openapi.*
+import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.module.*
+import com.intellij.openapi.project.*
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.vfs.*
+import com.intellij.util.ui.update.*
 
 class ModuleManifestManager(private val module: Module) : Disposable, ModuleRootListener, ModuleListener,
                                                           BundleManifestManager.ManifestIndexedListener,
@@ -74,7 +68,7 @@ class ModuleManifestManager(private val module: Module) : Disposable, ModuleRoot
   override fun exitDumbMode() = calculationQueue.resume()
 
   override fun rootsChanged(event: ModuleRootEvent) = updateDependencies()
-  override fun modulesAdded(project: Project, modules: MutableList<Module>) = updateDependencies()
+  override fun modulesAdded(project: Project, modules: MutableList<out Module>) = updateDependencies()
   override fun moduleRemoved(project: Project, module: Module) = updateDependencies()
   override fun manifestUpdated(manifests: Collection<BundleManifest>) = updateDependencies()
   override fun moduleManifestUpdated(module: Module, file: VirtualFile, manifest: BundleManifest) {

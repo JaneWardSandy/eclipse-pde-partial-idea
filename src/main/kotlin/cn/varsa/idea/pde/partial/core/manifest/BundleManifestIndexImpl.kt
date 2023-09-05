@@ -1,34 +1,20 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
 import cn.varsa.idea.pde.partial.common.Constants
-import cn.varsa.idea.pde.partial.common.extension.readString
-import cn.varsa.idea.pde.partial.common.extension.writeString
+import cn.varsa.idea.pde.partial.common.extension.*
 import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.EventDispatcher
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.jetbrains.rd.util.CancellationException
 import org.jetbrains.lang.manifest.ManifestFileType
-import java.io.DataInput
-import java.io.DataOutput
-import java.util.*
+import java.io.*
 import java.util.jar.Manifest
 
-class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>() {
-  object Util {
-    val id: ID<Int, BundleManifest> = ID.create(BundleManifestIndex::class.java.canonicalName)
-    fun getInstance() = EXTENSION_POINT_NAME.findExtension(BundleManifestIndex::class.java)
-  }
+class BundleManifestIndexImpl : SingleEntryFileBasedIndexExtension<BundleManifest>() {
 
-  private val logger = thisLogger()
-  private val dispatcher = EventDispatcher.create(ManifestIndexedListener::class.java)
-
-  override fun getName(): ID<Int, BundleManifest> = Util.id
+  override fun getName(): ID<Int, BundleManifest> = ID.create("BundleManifestIndex")
   override fun dependsOnFileContent(): Boolean = true
   override fun getVersion(): Int = 2
   override fun getIndexer(): SingleEntryIndexer<BundleManifest> = object : SingleEntryIndexer<BundleManifest>(false) {
@@ -36,10 +22,7 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
       if (inputData.fileType is ManifestFileType) {
         val manifest = BundleManifest(Manifest(inputData.content.inputStream()))
         if (manifest.bundleSymbolicName?.key.isNullOrBlank()) null
-        else {
-          dispatcher.multicaster.manifestUpdated(inputData.file, manifest)
-          manifest
-        }
+        else manifest
       } else null
     } catch (e: ProcessCanceledException) {
       throw e
@@ -74,10 +57,7 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
     virtualFile.fileType is ManifestFileType && virtualFile.name == Constants.Partial.File.MANIFEST_MF
   }
 
-  fun addListener(parentDisposable: Disposable, listener: ManifestIndexedListener) =
-    dispatcher.addListener(listener, parentDisposable)
-
-  fun interface ManifestIndexedListener : EventListener {
-    fun manifestUpdated(file: VirtualFile, manifest: BundleManifest)
+  companion object {
+    private val logger = thisLogger()
   }
 }

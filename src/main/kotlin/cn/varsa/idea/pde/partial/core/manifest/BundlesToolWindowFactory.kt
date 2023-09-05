@@ -91,8 +91,8 @@ class BundlesToolWindowFactory : ToolWindowFactory {
         model.removeAll()
 
         val index = FileBasedIndex.getInstance()
-        index.processAllKeys(BundleManifestIndex.Util.id, { key ->
-          index.processValues(BundleManifestIndex.Util.id, key, null, { file, manifest ->
+        index.processAllKeys(BundleManifestIndexImpl.Util.id, { key ->
+          index.processValues(BundleManifestIndexImpl.Util.id, key, null, { file, manifest ->
             model.add(file to manifest)
             true
           }, GlobalSearchScope.allScope(project))

@@ -12,15 +12,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Core Manifest -->
-    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex"/>
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndexImpl"/>
     <toolWindow
         id="BundlesToolWindow"
         secondary="true"
         icon="AllIcons.Actions.Minimap"
         anchor="right"
         factoryClass="cn.varsa.idea.pde.partial.core.manifest.BundlesToolWindowFactory"/>
-
-    <moduleService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.ModuleManifestManager"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

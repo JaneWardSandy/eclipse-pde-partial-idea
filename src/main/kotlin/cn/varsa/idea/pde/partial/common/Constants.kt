@@ -255,11 +255,11 @@ object Constants {
       const val REQUIRE_BUNDLE = "Require-Bundle"
 
       /**
-       * Manifest header attribute identifying a range of versions for a bundle
+       * Manifest header ATTRIBUTE identifying a range of versions for a bundle
        * specified in the `Require-Bundle` or `Fragment-Host` manifest
        * headers. The default value is `0.0.0`.
        *
-       * The attribute value is encoded in the Require-Bundle manifest header
+       * The ATTRIBUTE value is encoded in the Require-Bundle manifest header
        * like:
        *
        *`
@@ -268,8 +268,8 @@ object Constants {
        * Require-Bundle: com.acme.module.test; bundle-version="[1.0,2.0)"
        *`
        *
-       * The bundle-version attribute value uses a mathematical interval notation
-       * to specify a range of bundle versions. A bundle-version attribute value
+       * The bundle-version ATTRIBUTE value uses a mathematical interval notation
+       * to specify a range of bundle versions. A bundle-version ATTRIBUTE value
        * specified as a single version means a version range that includes any
        * bundle version greater than or equal to the specified version.
        *
@@ -306,10 +306,10 @@ object Constants {
       const val BUNDLE_MANIFESTVERSION = "Bundle-ManifestVersion"
 
       /**
-       * Manifest header attribute identifying the version of a package specified
+       * Manifest header ATTRIBUTE identifying the version of a package specified
        * in the Export-Package or Import-Package manifest header.
        *
-       * The attribute value is encoded in the Export-Package or Import-Package
+       * The ATTRIBUTE value is encoded in the Export-Package or Import-Package
        * manifest header like:
        *
        * `
@@ -323,10 +323,10 @@ object Constants {
       const val VERSION_ATTRIBUTE = "version"
 
       /**
-       * Manifest header attribute identifying the symbolic name of a bundle that
+       * Manifest header ATTRIBUTE identifying the symbolic name of a bundle that
        * exports a package specified in the Import-Package manifest header.
        *
-       * The attribute value is encoded in the Import-Package manifest header
+       * The ATTRIBUTE value is encoded in the Import-Package manifest header
        * like:
        *
        * `

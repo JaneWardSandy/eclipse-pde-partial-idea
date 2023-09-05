@@ -20,23 +20,26 @@ import java.util.*
 import java.util.jar.Manifest
 
 class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>() {
-  companion object {
-    private val logger = thisLogger()
-
+  object Util {
     val id: ID<Int, BundleManifest> = ID.create(BundleManifestIndex::class.java.canonicalName)
-
     fun getInstance() = EXTENSION_POINT_NAME.findExtension(BundleManifestIndex::class.java)
   }
 
-  override fun getName(): ID<Int, BundleManifest> = id
+  private val logger = thisLogger()
+  private val dispatcher = EventDispatcher.create(ManifestIndexedListener::class.java)
+
+  override fun getName(): ID<Int, BundleManifest> = Util.id
   override fun dependsOnFileContent(): Boolean = true
   override fun getVersion(): Int = 2
   override fun getIndexer(): SingleEntryIndexer<BundleManifest> = object : SingleEntryIndexer<BundleManifest>(false) {
     override fun computeValue(inputData: FileContent): BundleManifest? = try {
       if (inputData.fileType is ManifestFileType) {
         val manifest = BundleManifest(Manifest(inputData.content.inputStream()))
-        dispatcher.multicaster.manifestUpdated(inputData.file, manifest)
-        manifest
+        if (manifest.bundleSymbolicName?.key.isNullOrBlank()) null
+        else {
+          dispatcher.multicaster.manifestUpdated(inputData.file, manifest)
+          manifest
+        }
       } else null
     } catch (e: ProcessCanceledException) {
       throw e
@@ -68,10 +71,9 @@ class BundleManifestIndex : SingleEntryFileBasedIndexExtension<BundleManifest>()
   }
 
   override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { virtualFile ->
-    virtualFile.isInLocalFileSystem && virtualFile.fileType is ManifestFileType && virtualFile.name == Constants.Partial.File.MANIFEST_MF
+    virtualFile.fileType is ManifestFileType && virtualFile.name == Constants.Partial.File.MANIFEST_MF
   }
 
-  private val dispatcher = EventDispatcher.create(ManifestIndexedListener::class.java)
   fun addListener(parentDisposable: Disposable, listener: ManifestIndexedListener) =
     dispatcher.addListener(listener, parentDisposable)
 

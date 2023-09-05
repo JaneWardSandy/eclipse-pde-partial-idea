@@ -13,6 +13,6 @@ fun BundleManifest.requiredBundles() =
   requireBundle?.attributes?.mapValues { (_, attrs) -> attrs.attribute[Constants.OSGI.Header.BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
 
 /** @see Constants.OSGI.Header.VISIBILITY_REEXPORT */
-fun BundleManifest.reExportRequiredBundles() =
-  requireBundle?.attributes?.filterValues { it.directive[Constants.OSGI.Header.VISIBILITY_DIRECTIVE] == Constants.OSGI.Header.VISIBILITY_REEXPORT }
-    ?.mapValues { (_, attrs) -> attrs.attribute[Constants.OSGI.Header.BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }
+fun BundleManifest.reExportRequiredBundles() = requireBundle?.attributes
+  ?.filterValues { it.directive[Constants.OSGI.Header.VISIBILITY_DIRECTIVE] == Constants.OSGI.Header.VISIBILITY_REEXPORT }
+  ?.mapValues { (_, attrs) -> attrs.attribute[Constants.OSGI.Header.BUNDLE_VERSION_ATTRIBUTE].parseVersionRange() }

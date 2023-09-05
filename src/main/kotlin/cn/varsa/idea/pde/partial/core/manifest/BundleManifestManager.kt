@@ -1,21 +1,21 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.manifest.*
+import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
 import cn.varsa.idea.pde.partial.common.version.*
-import cn.varsa.idea.pde.partial.core.extension.*
-import com.intellij.ide.lightEdit.*
-import com.intellij.openapi.*
-import com.intellij.openapi.components.*
+import cn.varsa.idea.pde.partial.core.extension.reExportRequiredBundles
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.*
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.*
-import com.intellij.openapi.roots.*
-import com.intellij.openapi.vfs.*
-import com.intellij.util.*
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.update.*
 import java.util.*
-import java.util.concurrent.locks.*
-import kotlin.concurrent.*
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 @Service(Service.Level.PROJECT)
 class BundleManifestManager(private val project: Project) : Disposable, BundleManifestIndex.ManifestIndexedListener,
@@ -59,7 +59,7 @@ class BundleManifestManager(private val project: Project) : Disposable, BundleMa
   private val bundle2Module = hashMapOf<BundleManifest, Module>()
 
   init {
-    BundleManifestIndex.getInstance()?.addListener(this, this)
+    BundleManifestIndex.Util.getInstance()?.addListener(this, this)
     project.messageBus.connect().subscribe(DumbService.DUMB_MODE, this)
   }
 

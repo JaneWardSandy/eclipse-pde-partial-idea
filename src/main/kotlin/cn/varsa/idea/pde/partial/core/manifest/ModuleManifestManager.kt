@@ -1,16 +1,17 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.manifest.*
-import cn.varsa.idea.pde.partial.common.version.*
+import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
+import cn.varsa.idea.pde.partial.common.version.VersionRange
 import cn.varsa.idea.pde.partial.core.extension.*
-import com.intellij.*
-import com.intellij.notification.*
-import com.intellij.openapi.*
-import com.intellij.openapi.diagnostic.*
-import com.intellij.openapi.module.*
+import cn.varsa.idea.pde.partial.message.ManifestBundle
+import com.intellij.ProjectTopics
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.update.*
 
 class ModuleManifestManager(private val module: Module) : Disposable, ModuleRootListener, ModuleListener,
@@ -101,8 +102,9 @@ class ModuleManifestManager(private val module: Module) : Disposable, ModuleRoot
         cycleDetector.add(bsn)
 
         if (index > -1) {
-          cycleDependency += cycleDetector.subList(index, cycleDetector.size)
-            .joinToString(ManifestMessageBundle.message("detector.cycle.link"))
+          cycleDependency += cycleDetector
+            .subList(index, cycleDetector.size)
+            .joinToString(ManifestBundle.message("detector.cycle.link"))
 
           return
         }
@@ -129,8 +131,8 @@ class ModuleManifestManager(private val module: Module) : Disposable, ModuleRoot
 
       if (cycleDependency.isNotEmpty()) {
         notificationImportant().createNotification(
-          ManifestMessageBundle.message("detector.cycle.title"),
-          ManifestMessageBundle.message(
+          ManifestBundle.message("detector.cycle.title"),
+          ManifestBundle.message(
             "detector.cycle.leadMessage",
             cycleDependency.joinToString(System.lineSeparator(), System.lineSeparator()),
           ),

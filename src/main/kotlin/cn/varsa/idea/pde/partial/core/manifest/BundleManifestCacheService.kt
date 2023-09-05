@@ -1,21 +1,22 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.common.manifest.*
+import cn.varsa.idea.pde.partial.common.Constants
+import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.*
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
 
 // fixme 2023/02/04: Is it still necessary to exist?
 @Service(Service.Level.PROJECT)
 class BundleManifestCacheService(private val project: Project) {
 
   companion object {
-    @JvmStatic fun getInstance(project: Project): BundleManifestCacheService =
+    @JvmStatic
+    fun getInstance(project: Project): BundleManifestCacheService =
       project.getService(BundleManifestCacheService::class.java)
   }
 
@@ -63,5 +64,5 @@ class BundleManifestCacheService(private val project: Project) {
   }
 
   private fun getManifestByFile(manifestFile: VirtualFile): BundleManifest? = if (DumbService.isDumb(project)) null
-  else FileBasedIndex.getInstance().getSingleEntryIndexData(BundleManifestIndex.id, manifestFile, project)
+  else FileBasedIndex.getInstance().getSingleEntryIndexData(BundleManifestIndex.Util.id, manifestFile, project)
 }

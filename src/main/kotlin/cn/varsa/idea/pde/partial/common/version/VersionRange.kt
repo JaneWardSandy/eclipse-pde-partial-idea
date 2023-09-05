@@ -1,6 +1,6 @@
 package cn.varsa.idea.pde.partial.common.version
 
-import cn.varsa.idea.pde.partial.common.extension.*
+import cn.varsa.idea.pde.partial.common.extension.parseVersion
 import java.util.*
 
 class VersionRange(
@@ -11,15 +11,15 @@ class VersionRange(
 ) {
 
   companion object Factory {
-    private const val leftOpen = "("
-    private const val leftClose = "["
-    private const val leftDelimiters = "$leftOpen$leftClose"
-    private const val rightOpen = ")"
-    private const val rightClose = "]"
-    private const val rightDelimiters = "$rightOpen$rightClose"
-    private const val endpointDelimiter = ","
+    private const val LEFT_OPEN = "("
+    private const val LEFT_CLOSE = "["
+    private const val LEFT_DELIMITERS = "$LEFT_OPEN$LEFT_CLOSE"
+    private const val RIGHT_OPEN = ")"
+    private const val RIGHT_CLOSE = "]"
+    private const val RIGHT_DELIMITERS = "$RIGHT_OPEN$RIGHT_CLOSE"
+    private const val ENDPOINT_DELIMITER = ","
 
-    val anyVersionRange: VersionRange = VersionRange(true, Version.emptyVersion)
+    val ANY_VERSION_RANGE: VersionRange = VersionRange(true, Version.EMPTY_VERSION)
 
     fun parse(range: String): VersionRange {
       var closedLeft: Boolean
@@ -28,12 +28,12 @@ class VersionRange(
       val endpointRight: Version?
 
       try {
-        val tokenizer = StringTokenizer(range, leftDelimiters, true)
+        val tokenizer = StringTokenizer(range, LEFT_DELIMITERS, true)
         var token = tokenizer.nextToken().trim() // whitespace or left delim
         if (token.isEmpty()) token = tokenizer.nextToken() // leading whitespace, goto left delim
 
-        closedLeft = leftClose == token
-        if (!closedLeft && leftOpen != token) {
+        closedLeft = LEFT_CLOSE == token
+        if (!closedLeft && LEFT_OPEN != token) {
           // first token is not a delimiter, so it must be "at-least"
           // there must be no more tokens
           require(!tokenizer.hasMoreTokens()) { "Invalid range \"$range\": invalid format" }
@@ -43,13 +43,13 @@ class VersionRange(
           endpointLeft = token.parseVersion()
           endpointRight = null
         } else {
-          endpointLeft = tokenizer.nextToken(endpointDelimiter).parseVersion()
+          endpointLeft = tokenizer.nextToken(ENDPOINT_DELIMITER).parseVersion()
           tokenizer.nextToken() // consume comma
-          endpointRight = tokenizer.nextToken(rightDelimiters).parseVersion()
+          endpointRight = tokenizer.nextToken(RIGHT_DELIMITERS).parseVersion()
           token = tokenizer.nextToken() // right delim
 
-          closedRight = rightClose == token
-          require(closedRight || rightOpen == token) { "Invalid range \"$range\": invalid format" }
+          closedRight = RIGHT_CLOSE == token
+          require(closedRight || RIGHT_OPEN == token) { "Invalid range \"$range\": invalid format" }
 
           if (tokenizer.hasMoreTokens()) { // any more tokens have to be whitespace
             token = tokenizer.nextToken("").trim()
@@ -93,11 +93,11 @@ class VersionRange(
 
   override fun toString(): String = if (right == null) left.toString()
   else buildString {
-    if (leftClosed) append(leftClose) else append(leftOpen)
+    if (leftClosed) append(LEFT_CLOSE) else append(LEFT_OPEN)
     append(left)
-    append(endpointDelimiter)
+    append(ENDPOINT_DELIMITER)
     append(right)
-    if (rightClosed) append(rightClose) else append(rightOpen)
+    if (rightClosed) append(RIGHT_CLOSE) else append(RIGHT_OPEN)
   }
 
   override fun hashCode(): Int = if (isEmpty()) 31

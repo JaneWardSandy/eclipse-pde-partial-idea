@@ -8,10 +8,10 @@ import org.jetbrains.annotations.*
 object ManifestBundle : DynamicBundle(BUNDLE) {
   @JvmStatic
   @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = getMessage(key, params)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = getMessage(key, *params)
 
   @JvmStatic
   @Nls
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) =
-    getLazyMessage(key, params)
+    getLazyMessage(key, *params)
 }

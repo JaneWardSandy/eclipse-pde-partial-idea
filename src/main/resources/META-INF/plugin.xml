@@ -11,7 +11,6 @@
   <resource-bundle>messages.ToolWindow</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Core Manifest -->
     <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndexImpl"/>
     <toolWindow
         id="BundlesToolWindow"
@@ -19,6 +18,12 @@
         icon="AllIcons.Actions.Minimap"
         anchor="right"
         factoryClass="cn.varsa.idea.pde.partial.core.manifest.BundlesToolWindowFactory"/>
+
+    <completion.contributor
+        language="Manifest"
+        implementationClass="cn.varsa.idea.pde.partial.manifest.completion.BasicBundleManifestCompletionContributor"/>
+    <manifest.parser.provider
+        implementation="cn.varsa.idea.pde.partial.manifest.lang.BasicBundleManifestHeaderParserProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -27,6 +32,6 @@
         id="cn.varsa.idea.pde.partial.notification.important"
         isLogByDefault="true"
         bundle="messages.Notification"
-        key="group.important"/>
+        key="notification.group.important"/>
   </extensions>
 </idea-plugin>

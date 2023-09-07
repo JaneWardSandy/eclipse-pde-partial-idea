@@ -3,25 +3,21 @@ package cn.varsa.idea.pde.partial.core.manifest
 import cn.varsa.idea.pde.partial.common.Constants
 import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.*
-import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.*
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
-import javax.swing.JList
-import javax.swing.ListSelectionModel
+import javax.swing.*
 
 class BundlesToolWindowFactory : ToolWindowFactory {
 
@@ -91,8 +87,8 @@ class BundlesToolWindowFactory : ToolWindowFactory {
         model.removeAll()
 
         val index = FileBasedIndex.getInstance()
-        index.processAllKeys(BundleManifestIndexImpl.Util.id, { key ->
-          index.processValues(BundleManifestIndexImpl.Util.id, key, null, { file, manifest ->
+        index.processAllKeys(BundleManifestIndex.NAME, { key ->
+          index.processValues(BundleManifestIndex.NAME, key, null, { file, manifest ->
             model.add(file to manifest)
             true
           }, GlobalSearchScope.allScope(project))

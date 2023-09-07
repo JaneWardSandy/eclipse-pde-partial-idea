@@ -51,7 +51,7 @@ data class BundleManifest(val attribute: Map<String, String>) {
     get() = getParameters(Constants.OSGI.Header.FRAGMENT_HOST)?.attributes?.firstOrNull()
 
   /** @see Constants.OSGI.Header.BUNDLE_VERSION */
-  val bundleVersion: Version by lazy { attribute[Constants.OSGI.Header.BUNDLE_VERSION].parseVersion() }
+  val bundleVersion: Version = attribute[Constants.OSGI.Header.BUNDLE_VERSION].parseVersion()
 
   /** @see Constants.Eclipse.ECLIPSE_SOURCE_BUNDLE */
   val eclipseSourceBundle: Map.Entry<String, ParameterAttributes>?

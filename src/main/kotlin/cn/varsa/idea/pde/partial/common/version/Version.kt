@@ -23,16 +23,19 @@ class Version(
       var qualifier = ""
 
       try {
-        val tokenizer = StringTokenizer(trimVersion, SEPARATOR)
+        val tokenizer = StringTokenizer(trimVersion, SEPARATOR, true)
         major = parseInt(tokenizer.nextToken(), trimVersion)
 
         if (tokenizer.hasMoreTokens()) {
+          tokenizer.nextToken() // consume delimiter
           minor = parseInt(tokenizer.nextToken(), trimVersion)
 
           if (tokenizer.hasMoreTokens()) {
+            tokenizer.nextToken() // consume delimiter
             micro = parseInt(tokenizer.nextToken(), trimVersion)
 
             if (tokenizer.hasMoreTokens()) {
+              tokenizer.nextToken() // consume delimiter
               qualifier = tokenizer.nextToken("") // remaining string
 
               require(!tokenizer.hasMoreTokens()) { "Invalid version \"$trimVersion\": invalid format" }

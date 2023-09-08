@@ -1,4 +1,6 @@
-# Changelog
+<!-- Keep a Changelog guide -> https://keepachangelog.com -->
+
+# Eclipse PDE Partial Changelog
 
 ## [Unreleased]
 

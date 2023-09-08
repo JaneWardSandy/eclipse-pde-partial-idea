@@ -14,7 +14,7 @@ fun String.equalAny(vararg others: String, ignoreCase: Boolean = false): Boolean
 
 fun String.unquote(): String = when {
   length < 2 -> this
-  indexOf('\'') < 0 && indexOf('\"') < 0 && indexOf('`') < 0 -> this
-  surroundingWith('\'') || surroundingWith('\"') || surroundingWith('`') -> substring(1, length - 1)
+  indexOf('\'') < 0 && indexOf('"') < 0 && indexOf('`') < 0 -> this
+  surroundingWith('\'') || surroundingWith('"') || surroundingWith('`') -> substring(1, length - 1)
   else -> this
 }

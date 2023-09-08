@@ -10,12 +10,11 @@ class Version(
 ) : Comparable<Version> {
 
   companion object Factory {
-    private const val separator = "."
-
-    val emptyVersion = Version(0)
+    private const val SEPARATOR = "."
+    val EMPTY_VERSION: Version = Version(0)
 
     fun parse(version: String): Version {
-      if (version.isBlank()) return emptyVersion
+      if (version.isBlank()) return EMPTY_VERSION
 
       val trimVersion = version.trim()
       val major: Int
@@ -24,16 +23,19 @@ class Version(
       var qualifier = ""
 
       try {
-        val tokenizer = StringTokenizer(trimVersion, separator)
+        val tokenizer = StringTokenizer(trimVersion, SEPARATOR, true)
         major = parseInt(tokenizer.nextToken(), trimVersion)
 
         if (tokenizer.hasMoreTokens()) {
+          tokenizer.nextToken() // consume delimiter
           minor = parseInt(tokenizer.nextToken(), trimVersion)
 
           if (tokenizer.hasMoreTokens()) {
+            tokenizer.nextToken() // consume delimiter
             micro = parseInt(tokenizer.nextToken(), trimVersion)
 
             if (tokenizer.hasMoreTokens()) {
+              tokenizer.nextToken() // consume delimiter
               qualifier = tokenizer.nextToken("") // remaining string
 
               require(!tokenizer.hasMoreTokens()) { "Invalid version \"$trimVersion\": invalid format" }
@@ -66,7 +68,7 @@ class Version(
   }
 
   override fun toString(): String =
-    "$major$separator$minor$separator$micro${if (qualifier.isNotBlank()) "$separator$qualifier" else ""}"
+    "$major$SEPARATOR$minor$SEPARATOR$micro${if (qualifier.isNotBlank()) "$SEPARATOR$qualifier" else ""}"
 
   override fun hashCode(): Int =
     listOf(17, major, minor, micro, qualifier.hashCode()).fold(1) { acc, next -> 31 * acc + next }

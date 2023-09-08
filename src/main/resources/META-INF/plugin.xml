@@ -7,10 +7,31 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.java</depends>
 
+  <resource-bundle>messages.Notification</resource-bundle>
+  <resource-bundle>messages.ToolWindow</resource-bundle>
+
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Core Manifest -->
-    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex"/>
-    <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestCacheService"/>
-    <projectService serviceImplementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestManager"/>
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndexImpl"/>
+    <toolWindow
+        id="BundlesToolWindow"
+        secondary="true"
+        icon="AllIcons.Actions.Minimap"
+        anchor="right"
+        factoryClass="cn.varsa.idea.pde.partial.core.manifest.BundlesToolWindowFactory"/>
+
+    <completion.contributor
+        language="Manifest"
+        implementationClass="cn.varsa.idea.pde.partial.manifest.completion.BasicBundleManifestCompletionContributor"/>
+    <manifest.parser.provider
+        implementation="cn.varsa.idea.pde.partial.manifest.lang.BasicBundleManifestHeaderParserProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup
+        displayType="STICKY_BALLOON"
+        id="cn.varsa.idea.pde.partial.notification.important"
+        isLogByDefault="true"
+        bundle="messages.Notification"
+        key="notification.group.important"/>
   </extensions>
 </idea-plugin>

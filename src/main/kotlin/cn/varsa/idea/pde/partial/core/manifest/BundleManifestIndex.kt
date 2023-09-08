@@ -13,6 +13,8 @@ object BundleManifestIndex {
 
   @ApiStatus.Internal val NAME: ID<String, BundleManifest> = ID.create("BundleManifestIndex")
 
+  fun requireReIndexes() = FileBasedIndex.getInstance().requestRebuild(NAME)
+
   fun getAllSymbolicName(project: Project): Set<String> {
     val names = CollectionFactory.createSmallMemoryFootprintSet<String>()
     processAllSymbolicName(GlobalSearchScope.allScope(project)) {
@@ -31,7 +33,7 @@ object BundleManifestIndex {
     return manifests
   }
 
-  fun getAllManifestBySymbolicNames(names: Set<String>, project: Project): Map<VirtualFile, BundleManifest> {
+  fun getAllManifestBySymbolicNames(names: Collection<String>, project: Project): Map<VirtualFile, BundleManifest> {
     val manifests = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, BundleManifest>()
     processAllManifestsBySymbolicNames(names, GlobalSearchScope.allScope(project)) { file, manifest ->
       manifests[file] = manifest
@@ -54,7 +56,7 @@ object BundleManifestIndex {
   }
 
   fun processAllManifestsBySymbolicNames(
-    bundleSymbolicNames: Set<String>,
+    bundleSymbolicNames: Collection<String>,
     scope: GlobalSearchScope,
     filter: IdFilter? = null,
     processor: FileBasedIndex.ValueProcessor<BundleManifest>,

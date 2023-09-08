@@ -1,6 +1,6 @@
 package cn.varsa.idea.pde.partial.manifest.completion
 
-import cn.varsa.idea.pde.partial.manifest.psi.AssignmentExpression
+import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.patterns.*
 import com.intellij.psi.PsiElement
@@ -22,9 +22,9 @@ abstract class BundleManifestCompletionContributor : CompletionContributor() {
 
   fun attribute(name: String): PsiElementPattern.Capture<PsiElement> = PlatformPatterns
     .psiElement(ManifestTokenType.HEADER_VALUE_PART)
-    .withSuperParent(2, PlatformPatterns.psiElement(AssignmentExpression.Attribute::class.java).withName(name))
+    .withSuperParent(2, PlatformPatterns.psiElement(ManifestHeaderPart.Attribute::class.java).withName(name))
 
   fun directive(name: String): PsiElementPattern.Capture<PsiElement> = PlatformPatterns
     .psiElement(ManifestTokenType.HEADER_VALUE_PART)
-    .withSuperParent(2, PlatformPatterns.psiElement(AssignmentExpression.Directive::class.java).withName(name))
+    .withSuperParent(2, PlatformPatterns.psiElement(ManifestHeaderPart.Directive::class.java).withName(name))
 }

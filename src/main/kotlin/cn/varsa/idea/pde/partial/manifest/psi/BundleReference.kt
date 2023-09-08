@@ -28,7 +28,7 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
 
       if (text.isBlank() || !refElement.isValid) return@Resolver null
 
-      val clause = refElement.parent as? AssignmentExpression.Clause ?: return@Resolver null
+      val clause = refElement.parent as? ManifestHeaderPart.Clause ?: return@Resolver null
       val versionRange = clause.getAttributes()
         .firstOrNull { it.name == Constants.OSGI.Header.BUNDLE_VERSION_ATTRIBUTE }
         ?.getValue()

@@ -39,6 +39,9 @@ object Constants {
   object Eclipse {
     const val ECLIPSE_EXTENSIBLE_API = "Eclipse-ExtensibleAPI"
     const val ECLIPSE_SOURCE_BUNDLE = "Eclipse-SourceBundle"
+
+    const val X_INTERNAL_DIRECTIVE = "x-internal"
+    const val X_FRIENDS_DIRECTIVE = "x-friends"
   }
 
   object OSGI {

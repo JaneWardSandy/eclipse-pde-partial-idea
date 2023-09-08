@@ -1,11 +1,13 @@
 package cn.varsa.idea.pde.partial.manifest.lang
 
-import cn.varsa.idea.pde.partial.manifest.psi.BundleManifestElementType
+import cn.varsa.idea.pde.partial.manifest.psi.*
+import cn.varsa.idea.pde.partial.message.ManifestBundle
 import com.intellij.lang.*
+import com.intellij.lang.annotation.*
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.lang.manifest.header.impl.StandardHeaderParser
 import org.jetbrains.lang.manifest.parser.ManifestParser.HEADER_END_TOKENS
-import org.jetbrains.lang.manifest.psi.ManifestElementType
+import org.jetbrains.lang.manifest.psi.*
 import org.jetbrains.lang.manifest.psi.ManifestTokenType.*
 
 abstract class BundleManifestHeaderParser : StandardHeaderParser() {
@@ -19,6 +21,49 @@ abstract class BundleManifestHeaderParser : StandardHeaderParser() {
       if (COMMA == tokenType) builder.advanceLexer()
     }
   }
+
+  override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
+    var annotate = false
+
+    val clauses = header.headerValues.mapNotNull { it as? ManifestHeaderPart.Clause? }
+    if (!allowMultiClauses() && clauses.size > 1) {
+      holder
+        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.multipleClause"))
+        .range(header.textRange)
+        .create()
+      annotate = true
+    }
+    if (checkClauses(header, clauses, holder)) annotate = true
+
+    for (clause in clauses) {
+      val value = clause.getValue()
+
+      if (value == null || value.unwrappedText.isBlank()) {
+        holder
+          .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
+          .range(value?.highlightingRange ?: clause.textRange)
+          .create()
+        annotate = true
+      }
+
+      if (checkValuePart(clause, holder)) annotate = true
+      if (checkAttributes(clause, holder)) annotate = true
+      if (checkDirectives(clause, holder)) annotate = true
+    }
+
+    return annotate
+  }
+
+  protected open fun allowMultiClauses(): Boolean = true
+  protected open fun checkClauses(
+    header: Header,
+    clauses: List<ManifestHeaderPart.Clause>,
+    holder: AnnotationHolder,
+  ): Boolean = false
+
+  protected open fun checkValuePart(clause: ManifestHeaderPart.Clause, holder: AnnotationHolder): Boolean = false
+  protected open fun checkAttributes(clause: ManifestHeaderPart.Clause, holder: AnnotationHolder): Boolean = false
+  protected open fun checkDirectives(clause: ManifestHeaderPart.Clause, holder: AnnotationHolder): Boolean = false
 
   private fun parseClause(builder: PsiBuilder): Boolean {
     val clause = builder.mark()

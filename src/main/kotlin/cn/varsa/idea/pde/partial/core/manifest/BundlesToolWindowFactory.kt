@@ -2,6 +2,7 @@ package cn.varsa.idea.pde.partial.core.manifest
 
 import cn.varsa.idea.pde.partial.common.Constants
 import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
+import cn.varsa.idea.pde.partial.message.ToolWindowBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -26,8 +27,21 @@ class BundlesToolWindowFactory : ToolWindowFactory {
     val content = ContentFactory.getInstance().createContent(toolWindowContent.content, "", false)
 
     toolWindow.contentManager.addContent(content)
-    toolWindow.setTitleActions(listOf(object : AnAction(AllIcons.Actions.Refresh) {
+    toolWindow.setTitleActions(listOf(object : AnAction(
+      ToolWindowBundle.message("toolwindow.actions.refreshTitle"),
+      ToolWindowBundle.message("toolwindow.actions.refreshDescription"),
+      AllIcons.Actions.Refresh
+    ) {
       override fun actionPerformed(e: AnActionEvent) = toolWindowContent.buildList()
+    }, object : AnAction(
+      ToolWindowBundle.message("toolwindow.actions.reIndexTitle"),
+      ToolWindowBundle.message("toolwindow.actions.reIndexDescription"),
+      AllIcons.Actions.ForceRefresh
+    ) {
+      override fun actionPerformed(e: AnActionEvent) {
+        BundleManifestIndex.requireReIndexes()
+        toolWindowContent.buildList()
+      }
     }))
   }
 

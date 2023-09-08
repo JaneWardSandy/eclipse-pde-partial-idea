@@ -9,7 +9,7 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.lang.manifest.psi.HeaderValue
 import org.jetbrains.lang.manifest.psi.HeaderValuePart
 
-sealed class AssignmentExpression(node: ASTNode) : ASTWrapperPsiElement(node), PsiNamedElement {
+sealed class ManifestHeaderPart(node: ASTNode) : ASTWrapperPsiElement(node), PsiNamedElement {
   override fun getName(): String = getNameElement()?.unwrappedText ?: "<unnamed>"
   override fun setName(name: String): PsiElement = throw IncorrectOperationException()
 
@@ -20,11 +20,11 @@ sealed class AssignmentExpression(node: ASTNode) : ASTWrapperPsiElement(node), P
   fun getValue(): String = getValueElement()?.unwrappedText ?: ""
 
 
-  class Attribute(node: ASTNode) : AssignmentExpression(node) {
+  class Attribute(node: ASTNode) : ManifestHeaderPart(node) {
     override fun toString(): String = "Attribute: $name"
   }
 
-  class Directive(node: ASTNode) : AssignmentExpression(node) {
+  class Directive(node: ASTNode) : ManifestHeaderPart(node) {
     override fun toString(): String = "Directive: $name"
   }
 

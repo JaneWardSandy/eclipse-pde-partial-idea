@@ -1,21 +1,22 @@
 package cn.varsa.idea.pde.partial.manifest.lang.parser
 
-import cn.varsa.idea.pde.partial.common.Constants
+import cn.varsa.idea.pde.partial.common.Constants.Eclipse.ECLIPSE_EXTENSIBLE_API
+import cn.varsa.idea.pde.partial.manifest.lang.BundleManifestHeaderParser
+import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
 import cn.varsa.idea.pde.partial.message.ManifestBundle
 import com.intellij.lang.annotation.*
-import org.jetbrains.lang.manifest.header.impl.StandardHeaderParser
-import org.jetbrains.lang.manifest.psi.*
 
-object EclipseExtensibleAPIParser : StandardHeaderParser() {
+object EclipseExtensibleAPIParser : BundleManifestHeaderParser() {
 
-  override fun annotate(header: Header, holder: AnnotationHolder): Boolean {
-    val valuePart = header.headerValue as? HeaderValuePart? ?: return false
+  override fun allowMultiClauses(): Boolean = false
+  override fun checkValuePart(clause: ManifestHeaderPart.Clause, holder: AnnotationHolder): Boolean {
+    val value = clause.getValue() ?: return false
 
-    if (valuePart.unwrappedText.toBooleanStrictOrNull() == null) {
+    if (value.unwrappedText.toBooleanStrictOrNull() == null) {
       holder.newAnnotation(
         HighlightSeverity.ERROR,
-        ManifestBundle.message("manifest.lang.shouldBe", Constants.Eclipse.ECLIPSE_EXTENSIBLE_API, "${true}/${false}")
-      ).range(valuePart.highlightingRange).create()
+        ManifestBundle.message("manifest.lang.shouldBe", ECLIPSE_EXTENSIBLE_API, "${true}/${false}")
+      ).range(value.highlightingRange).create()
       return true
     }
 

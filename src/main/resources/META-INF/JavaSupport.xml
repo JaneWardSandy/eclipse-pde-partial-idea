@@ -1,0 +1,22 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection
+        enabledByDefault="true"
+        language="JAVA"
+        groupBundle="messages.Inspection"
+        groupKey="inspection.group"
+        bundle="messages.Inspection"
+        key="inspection.key.javaClassInDefaultPackage"
+        shortName="PDEJavaClassInDefaultPackage"
+        implementationClass="cn.varsa.idea.pde.partial.inspection.java.JavaClassInDefaultPackageInspection"/>
+    <localInspection
+        enabledByDefault="true"
+        language="JAVA"
+        groupBundle="messages.Inspection"
+        groupKey="inspection.group"
+        bundle="messages.Inspection"
+        key="inspection.key.javaPackageAccessibility"
+        shortName="PDEJavaPackageAccessibility"
+        implementationClass="cn.varsa.idea.pde.partial.inspection.java.JavaPackageAccessibilityInspection"/>
+  </extensions>
+</idea-plugin>

@@ -16,7 +16,7 @@ object Constants {
 
       const val MANIFEST_MF = "MANIFEST.MF"
       const val META_INF = "META-INF"
-      const val MANIFEST_PATH = "$MANIFEST_MF/$META_INF"
+      const val MANIFEST_PATH = "$META_INF/$MANIFEST_MF"
 
       const val PLUGINS_XML = "plugin.xml"
       const val FRAGMENT_XML = "fragment.xml"

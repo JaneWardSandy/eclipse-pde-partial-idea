@@ -5,10 +5,12 @@
   <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
 
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.java</depends>
+  <depends config-file="JavaSupport.xml">com.intellij.modules.java</depends>
+  <depends config-file="KotlinSupport.xml" optional="true">org.jetbrains.kotlin</depends>
 
   <resource-bundle>messages.Notification</resource-bundle>
   <resource-bundle>messages.ToolWindow</resource-bundle>
+  <resource-bundle>messages.Inspection</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndexImpl"/>

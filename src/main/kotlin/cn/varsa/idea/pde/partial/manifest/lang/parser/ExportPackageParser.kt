@@ -9,12 +9,15 @@ import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VERSION_ATTRIBUTE
 import cn.varsa.idea.pde.partial.common.extension.*
 import cn.varsa.idea.pde.partial.common.version.VersionRange
 import cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex
-import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.lang.BasePackageParser
+import cn.varsa.idea.pde.partial.manifest.lang.CommonManifestHeaderParser
 import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
 import cn.varsa.idea.pde.partial.message.ManifestBundle
-import com.intellij.lang.annotation.*
+import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
@@ -64,7 +67,7 @@ object ExportPackageParser : BasePackageParser() {
     }
 
     val hostManifest =
-      BundleManifestIndex.getAllManifestBySymbolicNames(setOf(hostBundleSymbolicName), clause.project).values
+      BundleManifestIndex.getManifestBySymbolicName(hostBundleSymbolicName, clause.project).values
         .sortedByDescending { it.bundleVersion }
         .firstOrNull { versionRange == null || it.bundleVersion in versionRange }
     val hostExtensibleAPI = hostManifest?.eclipseExtensibleAPI

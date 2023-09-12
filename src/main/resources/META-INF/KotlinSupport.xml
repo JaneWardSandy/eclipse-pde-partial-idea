@@ -1,0 +1,22 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection
+        enabledByDefault="true"
+        language="kotlin"
+        groupBundle="messages.Inspection"
+        groupKey="inspection.group"
+        bundle="messages.Inspection"
+        key="inspection.key.kotlinClassInDefaultPackage"
+        shortName="PDEKotlinClassInDefaultPackage"
+        implementationClass="cn.varsa.idea.pde.partial.inspection.kotlin.ClassInDefaultPackageInspection"/>
+    <localInspection
+        enabledByDefault="true"
+        language="kotlin"
+        groupBundle="messages.Inspection"
+        groupKey="inspection.group"
+        bundle="messages.Inspection"
+        key="inspection.key.kotlinPackageAccessibility"
+        shortName="PDEKotlinPackageAccessibility"
+        implementationClass="cn.varsa.idea.pde.partial.inspection.kotlin.KotlinPackageAccessibilityInspection"/>
+  </extensions>
+</idea-plugin>

@@ -4,13 +4,17 @@ import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_SYMBOLICNAM
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.RESOLUTION_DIRECTIVE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.RESOLUTION_OPTIONAL
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VERSION_ATTRIBUTE
-import cn.varsa.idea.pde.partial.common.extension.*
-import cn.varsa.idea.pde.partial.common.version.*
+import cn.varsa.idea.pde.partial.common.extension.parseVersion
+import cn.varsa.idea.pde.partial.common.extension.parseVersionRange
+import cn.varsa.idea.pde.partial.common.version.Version
+import cn.varsa.idea.pde.partial.common.version.VersionRange
 import cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex
-import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.lang.BasePackageParser
+import cn.varsa.idea.pde.partial.manifest.lang.CommonManifestHeaderParser
 import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
 import cn.varsa.idea.pde.partial.message.ManifestBundle
-import com.intellij.lang.annotation.*
+import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.CollectionFactory
 
@@ -102,7 +106,7 @@ object ImportPackageParser : BasePackageParser() {
             return true
           }
 
-          val manifests = BundleManifestIndex.getAllManifestBySymbolicNames(setOf(bundleSymbolicName), clause.project)
+          val manifests = BundleManifestIndex.getManifestBySymbolicName(bundleSymbolicName, clause.project)
           if (manifests.isEmpty()) {
             holder.newAnnotation(
               HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.bundleNotExists", bundleSymbolicName)

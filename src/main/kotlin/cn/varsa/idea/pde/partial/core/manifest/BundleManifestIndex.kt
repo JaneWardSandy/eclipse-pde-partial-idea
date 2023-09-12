@@ -7,22 +7,18 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.*
+import com.jetbrains.rd.util.firstOrNull
 import org.jetbrains.annotations.ApiStatus
 
 object BundleManifestIndex {
 
-  @ApiStatus.Internal val NAME: ID<String, BundleManifest> = ID.create("BundleManifestIndex")
+  @ApiStatus.Internal
+  val NAME: ID<String, BundleManifest> = ID.create("BundleManifestIndex")
 
   fun requireReIndexes() = FileBasedIndex.getInstance().requestRebuild(NAME)
 
-  fun getAllSymbolicName(project: Project): Set<String> {
-    val names = CollectionFactory.createSmallMemoryFootprintSet<String>()
-    processAllSymbolicName(GlobalSearchScope.allScope(project)) {
-      names.add(it)
-      true
-    }
-    return names
-  }
+  fun getManifestByFile(project: Project, file: VirtualFile): Map.Entry<String, BundleManifest>? =
+    FileBasedIndex.getInstance().getFileData(NAME, file, project).firstOrNull()
 
   fun getAllManifest(project: Project): Map<VirtualFile, BundleManifest> {
     val manifests = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, BundleManifest>()
@@ -32,6 +28,8 @@ object BundleManifestIndex {
     }
     return manifests
   }
+
+  fun getManifestBySymbolicName(name: String, project: Project) = getAllManifestBySymbolicNames(setOf(name), project)
 
   fun getAllManifestBySymbolicNames(names: Collection<String>, project: Project): Map<VirtualFile, BundleManifest> {
     val manifests = CollectionFactory.createSmallMemoryFootprintMap<VirtualFile, BundleManifest>()

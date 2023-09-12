@@ -18,7 +18,7 @@ object CommonManifestHeaderParser {
     weakWarning: Boolean = false,
     @Nls targetWasFragmentMessage: () -> String,
   ): Boolean {
-    val manifests = BundleManifestIndex.getAllManifestBySymbolicNames(setOf(bundleSymbolicName), clause.project).values
+    val manifests = BundleManifestIndex.getManifestBySymbolicName(bundleSymbolicName, clause.project).values
     if (manifests.isEmpty()) {
       holder.newAnnotation(
         if (weakWarning) HighlightSeverity.WEAK_WARNING else HighlightSeverity.ERROR,

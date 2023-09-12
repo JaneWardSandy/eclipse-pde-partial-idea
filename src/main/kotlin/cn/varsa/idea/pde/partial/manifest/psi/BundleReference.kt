@@ -18,7 +18,8 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
   override fun resolve(): PsiElement? =
     ResolveCache.getInstance(element.project).resolveWithCaching(this, RESOLVER, false, false)
 
-  override fun getUnresolvedMessagePattern(): String = ManifestBundle.message("manifest.psi.cannotResolveBundle", canonicalText)
+  override fun getUnresolvedMessagePattern(): String =
+    ManifestBundle.message("manifest.psi.cannotResolveBundle", canonicalText)
 
   companion object {
     private val RESOLVER = ResolveCache.Resolver { ref, _ ->
@@ -42,7 +43,7 @@ class BundleReference(element: HeaderValuePart) : PsiReferenceBase<HeaderValuePa
 
       val refBSN = text.replace("\\s".toRegex(), "")
       val fileIndex = ProjectFileIndex.getInstance(project)
-      val manifest = BundleManifestIndex.getAllManifestBySymbolicNames(setOf(refBSN), project)
+      val manifest = BundleManifestIndex.getManifestBySymbolicName(refBSN, project)
 
       var file = manifest.filterKeys { fileIndex.getModuleForFile(it) != null }
         .filterValues { it.bundleVersion in versionRange }

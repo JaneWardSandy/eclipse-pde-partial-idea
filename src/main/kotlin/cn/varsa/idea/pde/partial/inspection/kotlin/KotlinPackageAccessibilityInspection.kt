@@ -13,7 +13,7 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
     override fun visitUserType(type: KtUserType) {
       super.visitUserType(type)
 
-      type.referenceExpression?.let { visitKtElement(it) }
+      type.referenceExpression?.also { visitKtElement(it) }
       type.typeArguments.mapNotNull { it.typeReference?.typeElement }.forEach { visitKtElement(it) }
     }
 
@@ -43,17 +43,12 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
       super.visitSimpleNameExpression(expression)
 
       when (val element = expression.mainReference.resolve()) {
-        is PsiClass -> {
-          checkManifest(expression, element, holder)
-        }
+        is PsiClass -> checkManifest(expression, element, holder)
 
         is PsiMethod -> {
           val returnType = element.returnType
           if (returnType != null && returnType is PsiClassType) {
-            val clazz = returnType.resolve()
-            if (clazz != null) {
-              checkManifest(expression, clazz, holder)
-            }
+            returnType.resolve()?.also { checkManifest(expression, it, holder) }
           }
 
           element.parameterList.parameters.mapNotNull { it.type }
@@ -64,21 +59,14 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
 
         is KtProperty -> {
           val parent = element.parent
-          if (parent is KtFile) {
-            checkManifest(expression, parent, holder)
-          }
+          if (parent is KtFile) checkManifest(expression, parent, holder)
         }
 
         is KtFunction -> {
           val parent = element.parent
-          if (parent is KtFile) {
-            checkManifest(expression, parent, holder)
-          }
+          if (parent is KtFile) checkManifest(expression, parent, holder)
 
-          val returnType = element.receiverTypeReference
-          if (returnType != null) {
-            visitTypeReference(returnType)
-          }
+          element.receiverTypeReference?.let { visitTypeReference(it) }
 
           element.valueParameters.mapNotNull { it.typeReference }.forEach { visitTypeReference(it) }
         }

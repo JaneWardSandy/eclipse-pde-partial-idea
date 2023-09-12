@@ -13,20 +13,17 @@ class JavaPackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool()
         super.visitReferenceElement(reference)
 
         val element = reference.resolve()
-        if (element is PsiClass) {
-          checkManifest(reference, element, holder)
-        }
+        if (element is PsiClass) checkManifest(reference, element, holder)
       }
 
       override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
         super.visitMethodCallExpression(expression)
 
+        expression.resolveMethod()?.containingClass?.also { checkManifest(expression, it, holder) }
+
         val returnType = expression.type
         if (returnType != null && returnType is PsiClassType) {
-          val clazz = returnType.resolve()
-          if (clazz != null) {
-            checkManifest(expression, clazz, holder)
-          }
+          returnType.resolve()?.also { checkManifest(expression, it, holder) }
         }
 
         expression.argumentList.expressionTypes
@@ -45,10 +42,7 @@ class JavaPackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool()
 
         val interfaceType = expression.functionalInterfaceType
         if (interfaceType != null && interfaceType is PsiClassType) {
-          val clazz = interfaceType.resolve()
-          if (clazz != null) {
-            checkManifest(expression, clazz, holder)
-          }
+          interfaceType.resolve()?.also { checkManifest(expression, it, holder) }
         }
       }
     }

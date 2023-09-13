@@ -17,14 +17,13 @@ import cn.varsa.idea.pde.partial.common.version.VersionRange
 import cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex
 import cn.varsa.idea.pde.partial.message.InspectionBundle
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.idea.base.util.module
 
-interface PackageAccessibilityInspector {
+interface PackageAccessibilityInspector : BasicInspector {
 
   fun checkManifest(element: PsiElement, clazz: PsiClass, holder: ProblemsHolder) {
     val file = clazz.containingFile
@@ -85,23 +84,27 @@ interface PackageAccessibilityInspector {
     val exportPackage =
       exporter.exportPackage?.attributes?.entries?.firstOrNull { it.key.removeSuffix(".*") == packageName }?.value
     if (exportPackage == null) {
-      holder.problem(element, InspectionBundle.message("inspection.hint.packageNonExport", packageName, exporterName))
+      holder
+        .problem(element, InspectionBundle.message("inspection.hint.packageNonExport", packageName, exporterName))
         .register()
       return
     }
 
-    val uses = exportPackage.directive[USES_DIRECTIVE]?.replace("\\s", "")
+    val uses = exportPackage.directive[USES_DIRECTIVE]
+      ?.replace("\\s", "")
       ?.unquote()
       ?.split(',')
       ?.map { it.removeSuffix(".*").trim() }
     if (uses != null && packageName !in uses) {
-      holder.problem(element, InspectionBundle.message("inspection.hint.packageNonUses", packageName, exporterName))
+      holder
+        .problem(element, InspectionBundle.message("inspection.hint.packageNonUses", packageName, exporterName))
         .register()
       return
     }
     val internal = exportPackage.directive[X_INTERNAL_DIRECTIVE] == "true"
     if (internal) {
-      holder.problem(element, InspectionBundle.message("inspection.hint.packageInternal", packageName, exporterName))
+      holder
+        .problem(element, InspectionBundle.message("inspection.hint.packageInternal", packageName, exporterName))
         .register()
       return
     }
@@ -121,7 +124,8 @@ interface PackageAccessibilityInspector {
     if (importPackage != null) {
       val importSymbolicName = importPackage.attribute[BUNDLE_SYMBOLICNAME_ATTRIBUTE]?.replace("\\s", "")
       if (importSymbolicName != null && importSymbolicName != exporterName) {
-        holder.problem(element, InspectionBundle.message("inspection.hint.bundleNotImport", packageName, exporterName))
+        holder
+          .problem(element, InspectionBundle.message("inspection.hint.bundleNotImport", packageName, exporterName))
           .register()
         return
       }
@@ -150,9 +154,9 @@ interface PackageAccessibilityInspector {
         val (name, range) = next.removeFirst()
         if (!checked.add(name)) continue
 
-        val manifest =
-          BundleManifestIndex.getManifestBySymbolicName(name, project).values.sortedByDescending { it.bundleVersion }
-            .firstOrNull { it.bundleVersion in range } ?: continue
+        val manifest = BundleManifestIndex.getManifestBySymbolicName(name, project).values
+          .sortedByDescending { it.bundleVersion }
+          .firstOrNull { it.bundleVersion in range } ?: continue
 
         val visibilityRequires =
           manifest.requireBundle?.attributes?.filterValues { it.directive[VISIBILITY_DIRECTIVE] == VISIBILITY_REEXPORT }

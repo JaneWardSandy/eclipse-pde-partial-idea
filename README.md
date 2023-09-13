@@ -18,6 +18,5 @@ Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and i
 - Manifest
   - check file exists in `Bundle-ClassPath`
 - Inspection
-  - option to enable/disable inspection
   - class/package in `Bundle-ClassPath`
   - directory based bundles

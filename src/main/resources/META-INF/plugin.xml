@@ -26,6 +26,8 @@
         implementationClass="cn.varsa.idea.pde.partial.manifest.completion.BasicBundleManifestCompletionContributor"/>
     <manifest.parser.provider
         implementation="cn.varsa.idea.pde.partial.manifest.lang.BasicBundleManifestHeaderParserProvider"/>
+
+    <facetType implementation="cn.varsa.idea.pde.partial.core.facet.PDEFacetType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

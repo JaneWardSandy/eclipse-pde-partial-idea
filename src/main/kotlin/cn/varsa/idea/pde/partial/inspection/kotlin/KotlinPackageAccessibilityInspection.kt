@@ -12,6 +12,7 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : KtVisitorVoid() {
     override fun visitUserType(type: KtUserType) {
       super.visitUserType(type)
+      if (notContainPDEFacet(type)) return
 
       type.referenceExpression?.also { visitKtElement(it) }
       type.typeArguments.mapNotNull { it.typeReference?.typeElement }.forEach { visitKtElement(it) }
@@ -19,6 +20,7 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
 
     override fun visitFunctionType(type: KtFunctionType) {
       super.visitFunctionType(type)
+      if (notContainPDEFacet(type)) return
 
       type.contextReceiversTypeReferences.mapNotNull { it.typeElement }.forEach { visitKtElement(it) }
       type.receiverTypeReference?.typeElement?.also { visitKtElement(it) }
@@ -28,6 +30,7 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
 
     override fun visitIntersectionType(intersectionType: KtIntersectionType) {
       super.visitIntersectionType(intersectionType)
+      if (notContainPDEFacet(intersectionType)) return
 
       intersectionType.getLeftTypeRef()?.typeElement?.also { visitKtElement(it) }
       intersectionType.getRightTypeRef()?.typeElement?.also { visitKtElement(it) }
@@ -35,12 +38,14 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
 
     override fun visitNullableType(nullableType: KtNullableType) {
       super.visitNullableType(nullableType)
+      if (notContainPDEFacet(nullableType)) return
 
       nullableType.innerType?.also { visitKtElement(it) }
     }
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
       super.visitSimpleNameExpression(expression)
+      if (notContainPDEFacet(expression)) return
 
       when (val element = expression.mainReference.resolve()) {
         is PsiClass -> checkManifest(expression, element, holder)
@@ -51,7 +56,8 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
             returnType.resolve()?.also { checkManifest(expression, it, holder) }
           }
 
-          element.parameterList.parameters.mapNotNull { it.type }
+          element.parameterList.parameters
+            .mapNotNull { it.type }
             .mapNotNull { it as? PsiClassType? }
             .mapNotNull { it.resolve() }
             .forEach { checkManifest(expression, it, holder) }

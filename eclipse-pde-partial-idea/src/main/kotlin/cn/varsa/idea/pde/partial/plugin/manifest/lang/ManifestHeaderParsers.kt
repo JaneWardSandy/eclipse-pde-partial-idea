@@ -646,7 +646,7 @@ object FragmentHostParser : HeaderParser by RequireBundleParser {
             holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
             annotated = true
           } else if (manifest.fragmentHost != null) {
-            holder.createError(message("manifest.lang.hostWasFragment"), clause.textRange)
+            holder.createError(message("manifest.lang.requiredCannotBeFragment"), clause.textRange)
             annotated = true
           }
         }

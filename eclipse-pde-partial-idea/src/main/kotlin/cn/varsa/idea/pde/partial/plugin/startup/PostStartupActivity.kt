@@ -6,6 +6,7 @@ import com.intellij.openapi.startup.*
 
 class PostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    TargetDefinitionService.getInstance(project).backgroundResolve(project)
+    val service = TargetDefinitionService.getInstance(project)
+    if (service.locations.isNotEmpty()) service.backgroundResolve(project)
   }
 }

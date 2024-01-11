@@ -456,7 +456,7 @@ object ImportPackageParser : HeaderParser by BasePackageParser {
             Triple(module,
                    manifest,
                    manifest?.bundleClassPath?.keys?.filterNot { it == "." }
-                     ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath })
+                     ?.mapNotNull { module.getModuleDir()?.toFile(it)?.canonicalPath })
           }
 
           val containers = hashSetOf<BundleManifest>()
@@ -646,7 +646,7 @@ object FragmentHostParser : HeaderParser by RequireBundleParser {
             holder.createError(message("manifest.lang.invalidReference"), clause.textRange)
             annotated = true
           } else if (manifest.fragmentHost != null) {
-            holder.createError(message("manifest.lang.hostWasFragment"), clause.textRange)
+            holder.createError(message("manifest.lang.requiredCannotBeFragment"), clause.textRange)
             annotated = true
           }
         }

@@ -85,7 +85,7 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
             manifest.isFragmentHost(
               fragmentHostBSN, fragmentHostVersion
             ) && (ownerFile?.presentableUrl == module.getModuleDir() || manifest.bundleClassPath?.keys?.filterNot { it == "." }
-              ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+              ?.mapNotNull { module.getModuleDir()?.toFile(it)?.canonicalPath }
               ?.any { ownerFile?.presentableUrl == it } == true)
           } == true
         }.ifTrue { return emptyList() }
@@ -100,7 +100,7 @@ abstract class PackageAccessibilityInspection : AbstractBaseJavaLocalInspectionT
         ?.also { containers += it }
       containers += project.allPDEModules(requesterModule).filter { module ->
         ownerFile?.presentableUrl == module.getModuleDir() || cacheService.getManifest(module)?.bundleClassPath?.keys?.filterNot { it == "." }
-          ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath }
+          ?.mapNotNull { module.getModuleDir()?.toFile(it)?.canonicalPath }
           ?.any { ownerFile?.presentableUrl == it } == true
       }.mapNotNull { cacheService.getManifest(it) }
       if (containers.isEmpty()) cacheService.getManifest(item)?.also { containers += it }

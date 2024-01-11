@@ -27,7 +27,7 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
   override fun getVersion(): Int = 0
   override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
     file.fileType == XmlFileType.INSTANCE && (file.name == PluginsXml || file.name == FragmentXml) && ProjectLocator.getInstance()
-      .getProjectsForFile(file).any { it.allPDEModules().isNotEmpty() }
+      .getProjectsForFile(file).any { it?.allPDEModules()?.isNotEmpty() == true }
   }
 
   private object PluginXmlIndexer : SingleEntryIndexer<XmlInfo>(false) {

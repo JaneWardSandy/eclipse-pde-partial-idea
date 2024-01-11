@@ -7,9 +7,6 @@ import cn.varsa.idea.pde.partial.plugin.facet.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.libraries.*
-import com.intellij.psi.*
-
-val Project.psiManager: PsiManager get() = PsiManager.getInstance(this)
 
 fun Project.allPDEModules(vararg exclude: Module? = emptyArray()): Set<Module> =
   allModules().filterNot(exclude::contains).filter { it.isLoaded }.filter { PDEFacet.getInstance(it) != null }.toSet()
@@ -22,7 +19,7 @@ fun Project.allPDEModulesSymbolicName(
 fun Project.libraryTable(): LibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(this)
 
 fun Project.allModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
-fun Module.getModuleDir(): String = guessModuleDir()?.presentableUrl!!
+fun Module.getModuleDir(): String? = guessModuleDir()?.presentableUrl
 
 fun Project.fragmentHostManifest(
   fragment: BundleManifest, vararg exclude: Module? = emptyArray()

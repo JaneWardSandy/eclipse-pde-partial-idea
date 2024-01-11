@@ -24,6 +24,7 @@
     <projectConfigurable
         id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"
         parentId="language"
+        displayName="Eclipse Target"
         instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
 
     <postStartupActivity order="last" implementation="cn.varsa.idea.pde.partial.plugin.startup.PostStartupActivity"/>

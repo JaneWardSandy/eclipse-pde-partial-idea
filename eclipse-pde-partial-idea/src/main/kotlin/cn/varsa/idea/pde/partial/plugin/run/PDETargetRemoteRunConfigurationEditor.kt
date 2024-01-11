@@ -61,9 +61,7 @@ class PDETargetRemoteRunConfigurationEditor : SettingsEditor<PDETargetRemoteRunC
   private val rmiPortComponent =
     LabeledComponent.create(rmiPortSpinner, message("run.remote.config.tab.wishes.rmiPort"), BorderLayout.WEST)
   private val timeoutInSecComponent = LabeledComponent.create(
-    timeoutInSecSpinner,
-    message("run.remote.config.tab.wishes.timeoutInSec"),
-    BorderLayout.WEST
+    timeoutInSecSpinner, message("run.remote.config.tab.wishes.timeoutInSec"), BorderLayout.WEST
   )
   private val jdkVersionComponent =
     LabeledComponent.create(jdkVersion, message("run.remote.config.tab.wishes.javaVersion"), BorderLayout.WEST)

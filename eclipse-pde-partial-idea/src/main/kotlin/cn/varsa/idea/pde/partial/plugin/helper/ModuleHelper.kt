@@ -6,6 +6,7 @@ import cn.varsa.idea.pde.partial.common.support.toFile
 import cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService
 import cn.varsa.idea.pde.partial.plugin.facet.PDEFacet
 import cn.varsa.idea.pde.partial.plugin.support.*
+import cn.varsa.idea.pde.partial.plugin.support.getModuleDir
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.rootManager
@@ -19,6 +20,7 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.JarArtifactType
+import org.jetbrains.kotlin.idea.util.projectStructure.*
 import org.osgi.framework.Constants.*
 import java.io.File
 
@@ -30,11 +32,12 @@ object ModuleHelper {
     val facet = PDEFacet.getInstance(module) ?: return
     if (!facet.configuration.updateCompilerOutput) return
 
+    val moduleDir = module.getModuleDir() ?: return
     setCompileOutputPath(
       module,
       facet,
-      "${module.getModuleDir()}/${facet.configuration.compilerClassesOutput}",
-      "${module.getModuleDir()}/${facet.configuration.compilerTestClassesOutput}"
+      "$moduleDir/${facet.configuration.compilerClassesOutput}",
+      "$moduleDir/${facet.configuration.compilerTestClassesOutput}"
     )
   }
 
@@ -124,7 +127,7 @@ object ModuleHelper {
     rootElement.rename("${manifest.bundleSymbolicName?.key}_${manifest.bundleVersion}.jar")
 
     rootElement.addOrFindChild(factory.createModuleOutput(module))
-    binaryOutput.map { File(module.getModuleDir(), it) }.filter { it.exists() }.map {
+    binaryOutput.mapNotNull { module.getModuleDir()?.toFile(it) }.filter { it.exists() }.map {
       if (it.isFile) {
         factory.createFileCopy(it.canonicalPath, null)
       } else {

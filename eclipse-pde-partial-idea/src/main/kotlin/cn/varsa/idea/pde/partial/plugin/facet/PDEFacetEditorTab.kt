@@ -152,7 +152,7 @@ class PDEFacetEditorTab(
   private fun reloadCheckList() {
     binaryOutputList.apply {
       clear()
-      context.module.getModuleDir().toFile().listFiles()?.map { it.name }.also { setItems(it, null) }
+      context.module.getModuleDir()?.toFile()?.listFiles()?.map { it.name }.also { setItems(it, null) }
     }
   }
 

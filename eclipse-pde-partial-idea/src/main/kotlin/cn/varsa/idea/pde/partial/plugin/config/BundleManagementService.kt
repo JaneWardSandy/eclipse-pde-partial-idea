@@ -132,16 +132,20 @@ class BundleManagementService : BackgroundResolvable {
             thisLogger().info("Module: ${module.name}, In FacetByType: ${module in allPDEModules}, All Facets: $allFacets")
           }
 
-          val step = 0.5 / (allPDEModules.size + 1)
-          allPDEModules.forEach {
-            indicator.checkCanceled()
+          val definitionService = TargetDefinitionService.getInstance(project)
+          if (allPDEModules.isNotEmpty() && definitionService.locations.isNotEmpty() && bundles.isNotEmpty()) {
+            val step = 0.5 / (allPDEModules.size + 1)
+            allPDEModules.forEach {
+              indicator.checkCanceled()
 
-            ModuleHelper.resetCompileOutputPath(it)
-            ModuleHelper.resetCompileArtifact(it)
-            PdeLibraryResolverRegistry.instance.resolveModule(it, indicator)
+              ModuleHelper.resetCompileOutputPath(it)
+              ModuleHelper.resetCompileArtifact(it)
+              PdeLibraryResolverRegistry.instance.resolveModule(it, indicator)
 
-            indicator.fraction += step
+              indicator.fraction += step
+            }
           }
+
           indicator.fraction = 1.0
         }
       }.backgroundResolve(project)

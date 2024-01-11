@@ -50,9 +50,7 @@ class BundleManifest private constructor(private val map: HashMap<String, String
 
     other as BundleManifest
 
-    if (map != other.map) return false
-
-    return true
+    return map == other.map
   }
 
   override fun hashCode(): Int {
@@ -84,7 +82,7 @@ class Parameters(value: String, private val map: MutableMap<String, Attrs> = mut
         while (del == ';') {
           val adName = qt.nextToken()
           if (qt.separator.also { del = it } != '=') {
-            if (adName != null && adName.isNotBlank()) aliases += adName
+            if (!adName.isNullOrBlank()) aliases += adName
           } else {
             val adValue = qt.nextToken() ?: ""
             del = qt.separator

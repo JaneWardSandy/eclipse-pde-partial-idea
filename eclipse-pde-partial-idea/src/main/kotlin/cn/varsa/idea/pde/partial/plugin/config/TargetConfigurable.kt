@@ -677,6 +677,8 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
     val sourceVersions = hashMapOf<String, HashSet<BundleDefinition>>()
     val locations get() = children?.map { it as ShadowLocation } ?: emptyList()
 
+    private fun readResolve(): Any = ShadowLocationRoot
+
     fun sort() = children?.sortBy { it.toString() }
 
     fun addLocation(location: TargetLocationDefinition): ShadowLocation = ShadowLocation(location).apply {

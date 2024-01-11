@@ -9,21 +9,23 @@ class ModuleSetupOperation : FacetChangeListener {
 
   override fun compileOutputRelativePathChanged(module: Module, oldValue: String, newValue: String) {
     val facet = PDEFacet.getInstance(module) ?: return
+    val moduleDir = module.getModuleDir() ?: return
     ModuleHelper.setCompileOutputPath(
       module,
       facet,
-      "${module.getModuleDir()}/$newValue",
-      "${module.getModuleDir()}/${facet.configuration.compilerTestClassesOutput}"
+      "$moduleDir/$newValue",
+      "$moduleDir/${facet.configuration.compilerTestClassesOutput}"
     )
   }
 
   override fun compileTestOutputRelativePathChanged(module: Module, oldValue: String, newValue: String) {
     val facet = PDEFacet.getInstance(module) ?: return
+    val moduleDir = module.getModuleDir() ?: return
     ModuleHelper.setCompileOutputPath(
       module,
       facet,
-      "${module.getModuleDir()}/${facet.configuration.compilerClassesOutput}",
-      "${module.getModuleDir()}/$newValue"
+      "$moduleDir/${facet.configuration.compilerClassesOutput}",
+      "$moduleDir/$newValue"
     )
   }
 

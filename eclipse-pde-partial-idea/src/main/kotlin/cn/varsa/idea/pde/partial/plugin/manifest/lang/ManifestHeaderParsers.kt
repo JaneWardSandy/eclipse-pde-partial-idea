@@ -456,7 +456,7 @@ object ImportPackageParser : HeaderParser by BasePackageParser {
             Triple(module,
                    manifest,
                    manifest?.bundleClassPath?.keys?.filterNot { it == "." }
-                     ?.mapNotNull { module.getModuleDir().toFile(it).canonicalPath })
+                     ?.mapNotNull { module.getModuleDir()?.toFile(it)?.canonicalPath })
           }
 
           val containers = hashSetOf<BundleManifest>()

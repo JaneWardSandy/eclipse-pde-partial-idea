@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "cn.varsa"
-version = "1.6.3-fix#108"
+version = "1.6.4"
 
 repositories {
   mavenLocal()

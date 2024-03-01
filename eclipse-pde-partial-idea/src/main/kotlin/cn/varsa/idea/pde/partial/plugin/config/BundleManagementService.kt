@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
+import org.jetbrains.kotlin.idea.util.projectStructure.*
 import org.osgi.framework.*
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -19,6 +20,7 @@ import kotlin.collections.set
 
 class BundleManagementService : BackgroundResolvable {
   companion object {
+    private val logger = thisLogger()
     fun getInstance(project: Project): BundleManagementService = project.getService(BundleManagementService::class.java)
   }
 
@@ -129,10 +131,12 @@ class BundleManagementService : BackgroundResolvable {
 
           project.allModules().forEach { module ->
             val allFacets = FacetManager.getInstance(module).allFacets.joinToString { "${it.typeId}-$it" }
-            thisLogger().info("Module: ${module.name}, In FacetByType: ${module in allPDEModules}, All Facets: $allFacets")
+            logger.warn("Module: ${module.name}, In FacetByType: ${module in allPDEModules}, All Facets: $allFacets")
           }
 
           val definitionService = TargetDefinitionService.getInstance(project)
+
+          logger.warn("All PDE Modules: ${allPDEModules.size}, Locations: ${definitionService.locations.size}, Bundles: ${bundles.size}")
           if (allPDEModules.isNotEmpty() && definitionService.locations.isNotEmpty() && bundles.isNotEmpty()) {
             val step = 0.5 / (allPDEModules.size + 1)
             allPDEModules.forEach {

@@ -35,7 +35,7 @@ class PluginXmlCacheService(private val project: Project) {
       val applications = hashSetOf<String>()
       val products = hashSetOf<String>()
       val epPoint2ExsdPath = hashMapOf<String, VirtualFile>()
-      val epReferenceIdentityMap = hashMapOf<Pair<String, String>, HashMap<String, HashSet<String>>>()
+      val epReferenceIdentityMap = ConcurrentHashMap<Pair<String, String>, ConcurrentHashMap<String, HashSet<String>>>()
 
       return try {
         resolvePluginXml(
@@ -56,7 +56,7 @@ class PluginXmlCacheService(private val project: Project) {
       applications: HashSet<String>,
       products: HashSet<String>,
       epPoint2ExsdPath: HashMap<String, VirtualFile>,
-      epReferenceIdentityMap: HashMap<Pair<String, String>, HashMap<String, HashSet<String>>>
+      epReferenceIdentityMap: ConcurrentHashMap<Pair<String, String>, ConcurrentHashMap<String, HashSet<String>>>
     ) {
       val reader = XMLInputFactory.newInstance().createXMLStreamReader(stream)
       try {
@@ -75,6 +75,7 @@ class PluginXmlCacheService(private val project: Project) {
                     epPoint2ExsdPath[id] = it
                   }
                 }
+
                 "extension" -> {
                   extensionPoint = reader.getAttributeValue("", "point") ?: continue@loop
                   val id = reader.getAttributeValue("", "id") ?: continue@loop
@@ -85,8 +86,10 @@ class PluginXmlCacheService(private val project: Project) {
                     products += id
                   }
                 }
+
                 else -> if (extensionPoint.isNotBlank()) {
-                  val map = epReferenceIdentityMap.computeIfAbsent(extensionPoint to reader.localName) { hashMapOf() }
+                  val map =
+                    epReferenceIdentityMap.computeIfAbsent(extensionPoint to reader.localName) { ConcurrentHashMap() }
                   (0 until reader.attributeCount).map { index ->
                     reader.getAttributeLocalName(index) to reader.getAttributeValue(index)
                   }.filterNot { it.first.isBlank() || it.second.isBlank() }.forEach { (name, value) ->
@@ -95,6 +98,7 @@ class PluginXmlCacheService(private val project: Project) {
                 }
               }
             }
+
             XMLStreamConstants.END_ELEMENT -> {
               when (reader.localName) {
                 "extension" -> extensionPoint = ""

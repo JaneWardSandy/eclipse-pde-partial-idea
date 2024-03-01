@@ -8,6 +8,7 @@ import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
+import com.jetbrains.rd.util.*
 
 class ExtensionPointManagementService(private val project: Project) : BackgroundResolvable {
   companion object {
@@ -21,7 +22,8 @@ class ExtensionPointManagementService(private val project: Project) : Background
   private val applications = hashSetOf<String>()
   private val products = hashSetOf<String>()
   private val epPoint2ExsdPath = hashMapOf<String, VirtualFile>()
-  private val epReferenceIdentityMap = hashMapOf<Pair<String, String>, HashMap<String, HashSet<String>>>()
+  private val epReferenceIdentityMap =
+    ConcurrentHashMap<Pair<String, String>, ConcurrentHashMap<String, HashSet<String>>>()
 
   override fun resolve(project: Project, indicator: ProgressIndicator) {
     val managementService = BundleManagementService.getInstance(project)
@@ -51,7 +53,7 @@ class ExtensionPointManagementService(private val project: Project) : Background
         products += info.products
         epPoint2ExsdPath += info.epPoint2ExsdPath
         info.epReferenceIdentityMap.forEach { (key, attributes) ->
-          epReferenceIdentityMap.computeIfAbsent(key) { hashMapOf() }.also {
+          epReferenceIdentityMap.computeIfAbsent(key) { ConcurrentHashMap() }.also {
             attributes.forEach { (name, values) -> it.computeIfAbsent(name) { hashSetOf() } += values }
           }
         }

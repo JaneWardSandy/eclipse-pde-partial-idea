@@ -4,12 +4,14 @@ import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.facet.*
+import com.intellij.facet.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.libraries.*
 
 fun Project.allPDEModules(vararg exclude: Module? = emptyArray()): Set<Module> =
-  allModules().filterNot(exclude::contains).filter { it.isLoaded }.filter { PDEFacet.getInstance(it) != null }.toSet()
+  modules.filterNot(exclude::contains).filter { it.isLoaded }
+    .filter { module -> FacetManager.getInstance(module).allFacets.any { it.typeId == PDEFacetType.id } }.toSet()
 
 fun Project.allPDEModulesSymbolicName(
   vararg exclude: Module? = emptyArray(), additionalFilter: (BundleManifest) -> Boolean = { true }
@@ -18,7 +20,6 @@ fun Project.allPDEModulesSymbolicName(
 
 fun Project.libraryTable(): LibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(this)
 
-fun Project.allModules(): List<Module> = ModuleManager.getInstance(this).modules.toList()
 fun Module.getModuleDir(): String? = guessModuleDir()?.presentableUrl
 
 fun Project.fragmentHostManifest(

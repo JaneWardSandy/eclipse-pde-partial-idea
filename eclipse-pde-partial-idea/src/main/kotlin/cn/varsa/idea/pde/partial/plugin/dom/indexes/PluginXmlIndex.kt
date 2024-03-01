@@ -75,8 +75,8 @@ class PluginXmlIndex : SingleEntryFileBasedIndexExtension<XmlInfo>() {
       val epReferenceIdentityMap = (0 until input.readInt()).associate {
         input.readString() to input.readString() to (0 until input.readInt()).associate {
           input.readString() to input.readStringList().toHashSet()
-        }.toMap(hashMapOf())
-      }.toMap(hashMapOf())
+        }.toMap(ConcurrentHashMap())
+      }.toMap(ConcurrentHashMap())
 
       return XmlInfo(applications, products, epPoint2ExsdPath, epReferenceIdentityMap)
     }

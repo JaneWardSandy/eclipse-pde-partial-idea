@@ -1,51 +1,77 @@
+import org.jetbrains.intellij.platform.gradle.*
+
 plugins {
   kotlin("jvm")
-  id("org.jetbrains.intellij")
+  id("org.jetbrains.intellij.platform")
+}
+
+repositories {
+  mavenCentral()
+  intellijPlatform {
+    defaultRepositories()
+  }
 }
 
 dependencies {
   implementation(project(":common"))
+  intellijPlatform {
+    intellijIdeaCommunity("2023.3")
+    bundledPlugins(listOf("com.intellij.java", "org.jetbrains.kotlin"))
+    plugins(emptyList())
+
+    instrumentationTools()
+    pluginVerifier()
+    zipSigner()
+    testFramework(TestFrameworkType.Platform)
+  }
 }
 
-intellij {
-  version.set("2023.2")
-  plugins.set(listOf("java", "org.jetbrains.kotlin"))
-
-  downloadSources.set(true)
+kotlin {
+  jvmToolchain(17)
 }
 
-tasks {
-  patchPluginXml {
-    sinceBuild.set("232")
-    untilBuild.set("")
+intellijPlatform {
+  pluginConfiguration {
+    version = project.version.toString()
 
     val projectPath = rootProject.projectDir.path
-    pluginDescription.set(File("$projectPath/DESCRIPTION.html").readText(Charsets.UTF_8))
-    changeNotes.set(File("$projectPath/CHANGES.html").readText(Charsets.UTF_8))
+    description = File("$projectPath/DESCRIPTION.html").readText(Charsets.UTF_8)
+    changeNotes = File("$projectPath/CHANGES.html").readText(Charsets.UTF_8)
+
+    ideaVersion {
+      sinceBuild = "233"
+      untilBuild = ""
+    }
   }
 
-  publishPlugin {
-    token.set(System.getenv("PUBLISH_TOKEN"))
+  publishing {
+    token = providers.environmentVariable("PUBLISH_TOKEN")
   }
 
+  pluginVerification {
+    ides {
+      recommended()
+    }
+  }
+}
+
+intellijPlatformTesting {
   runIde {
-    jvmArgs("-Xmx4096m", "--add-exports", "java.base/jdk.internal.vm=ALL-UNNAMED")
-  }
+    register("runIdeForUiTests") {
+      task {
+        jvmArgumentProviders += CommandLineArgumentProvider {
+          listOf(
+            "-Drobot-server.port=8082",
+            "-Dide.mac.message.dialogs.as.sheets=false",
+            "-Djb.privacy.policy.text=<!--999.999-->",
+            "-Djb.consents.confirmation.enabled=false",
+          )
+        }
+      }
 
-  buildSearchableOptions {
-    jvmArgs("--add-exports", "java.base/jdk.internal.vm=ALL-UNNAMED")
-  }
-
-  compileJava {
-    sourceCompatibility = "17"
-    targetCompatibility = "17"
-  }
-
-  compileKotlin {
-    kotlinOptions {
-      jvmTarget = "17"
-      apiVersion = "1.9"
-      languageVersion = "1.9"
+      plugins {
+        robotServerPlugin()
+      }
     }
   }
 }

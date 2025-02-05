@@ -1,3 +1,10 @@
+.gradle
+.idea
+.intellijPlatform
+.qodana
+.kotlin
+build
+
 
 # Created by https://www.toptal.com/developers/gitignore/api/cmake,clion,macos,windows,linux,maven,gradle,eclipse,java,svn,git,kotlin,vuejs,intellij,jetbrains,webstorm,c++,c,visualstudio,visualstudiocode,csharp,xcode,cocoapods,appcode,vue,objective-c,swiftpackagemanager
 # Edit at https://www.toptal.com/developers/gitignore?templates=cmake,clion,macos,windows,linux,maven,gradle,eclipse,java,svn,git,kotlin,vuejs,intellij,jetbrains,webstorm,c++,c,visualstudio,visualstudiocode,csharp,xcode,cocoapods,appcode,vue,objective-c,swiftpackagemanager

@@ -1,4 +1,9 @@
 rootProject.name = "eclipse-pde-partial"
+
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
+
 include("eclipse-pde-partial-idea")
 include("common")
-include("wishes-launcher")
+//include("wishes-launcher") // deprecated

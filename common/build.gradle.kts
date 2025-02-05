@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.*
+
 plugins {
   kotlin("jvm")
 }
@@ -14,9 +16,9 @@ tasks {
   }
 
   compileKotlin {
-    kotlinOptions {
+    compilerOptions {
       freeCompilerArgs = listOf("-Xjsr305=strict")
-      jvmTarget = "11"
+      jvmTarget.set(JvmTarget.JVM_11)
     }
   }
 }

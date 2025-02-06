@@ -5,15 +5,16 @@ import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.execution.ui.*
 import com.intellij.openapi.options.*
-import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
+import com.intellij.util.execution.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
 
-class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETargetRunConfiguration>(), PanelWithAnchor {
+class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) :
+  SettingsEditor<PDETargetRunConfiguration>(), PanelWithAnchor {
   private var myAnchor: JComponent? = null
 
   private val panel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false))
@@ -37,8 +38,14 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
     dataDirectoryField, message("run.local.config.tab.configuration.dataDirectory"), BorderLayout.WEST
   )
 
-  private val jrePath = JrePathEditor(DefaultJreSelector.projectSdk(project))
+  private val jrePath = JrePathEditor(DefaultJreSelector.projectSdk(configuration.project))
   private val javaParameters = CommonJavaParametersPanel().apply { preferredSize = null }
+
+  private val additionalClasspath =
+    RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
+  private val additionalClasspathComponent = LabeledComponent.create(
+    additionalClasspath, message("run.local.config.tab.configuration.classpath"), BorderLayout.WEST
+  )
 
   private val cleanRuntimeDir = JBCheckBox(message("run.remote.config.tab.wishes.cleanRuntimeDir"))
 
@@ -50,11 +57,22 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
     panel.add(jrePath)
     panel.add(javaParameters)
     panel.add(JSeparator())
+    panel.add(additionalClasspathComponent)
     panel.add(cleanRuntimeDir)
+
+    additionalClasspath.attachLabel(additionalClasspathComponent.label)
+    CommonJavaParametersPanel.addMacroSupport(additionalClasspath.editorField)
 
     panel.updateUI()
 
-    myAnchor = UIUtil.mergeComponentsWithAnchor(productComponent, applicationComponent, dataDirectoryComponent, jrePath, javaParameters)
+    myAnchor = UIUtil.mergeComponentsWithAnchor(
+      productComponent,
+      applicationComponent,
+      dataDirectoryComponent,
+      jrePath,
+      javaParameters,
+      additionalClasspathComponent
+    )
   }
 
   override fun resetEditorFrom(configuration: PDETargetRunConfiguration) {
@@ -76,6 +94,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
     configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     cleanRuntimeDir.isSelected = configuration.cleanRuntimeDir
+    additionalClasspath.text = configuration.additionalClasspath
   }
 
   override fun applyEditorTo(configuration: PDETargetRunConfiguration) {
@@ -89,6 +108,7 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
 
     configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     configuration.cleanRuntimeDir = cleanRuntimeDir.isSelected
+    configuration.additionalClasspath = additionalClasspath.text
   }
 
   override fun createEditor(): JComponent = panel
@@ -101,5 +121,6 @@ class PDETargetRunConfigurationEditor(project: Project) : SettingsEditor<PDETarg
     dataDirectoryComponent.anchor = anchor
     jrePath.anchor = anchor
     javaParameters.anchor = anchor
+    additionalClasspathComponent.anchor = anchor
   }
 }

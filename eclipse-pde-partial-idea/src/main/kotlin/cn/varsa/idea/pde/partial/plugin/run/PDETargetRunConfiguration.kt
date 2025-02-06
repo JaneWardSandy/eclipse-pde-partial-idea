@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.search.*
+import com.intellij.util.execution.*
 import org.jdom.*
 import java.io.*
 import java.util.*
@@ -39,10 +40,11 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
   ).absolutePath
   var cleanRuntimeDir = false
+  var additionalClasspath = ""
 
   override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
     SettingsEditorGroup<PDETargetRunConfiguration>().apply {
-      addEditor(message("run.local.config.tab.configuration.title"), PDETargetRunConfigurationEditor(project))
+      addEditor(message("run.local.config.tab.configuration.title"), PDETargetRunConfigurationEditor(this@PDETargetRunConfiguration))
       JavaRunConfigurationExtensionManager.instance.appendEditors(this@PDETargetRunConfiguration, this)
       addEditor(message("run.local.config.tab.logs.title"), LogConfigurationPanel())
     }
@@ -69,6 +71,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
       setAttribute("application", application ?: "")
       setAttribute("dataDirectory", dataDirectory)
       setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
+      setAttribute("additionalClasspath", additionalClasspath)
     }
   }
 
@@ -81,6 +84,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         compiler?.compilerOutputPointer?.presentableUrl ?: project.presentableUrl, "partial-runtime"
       ).absolutePath
       cleanRuntimeDir = it.getAttributeValue("cleanRuntimeDir", cleanRuntimeDir.toString()).toBoolean()
+      additionalClasspath = it.getAttributeValue("additionalClasspath") ?: ""
     }
   }
 
@@ -111,6 +115,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
 
         parameters.classPath.clear()
         parameters.classPath.add(target.launcherJar!!)
+        parameters.classPath.addAll(ParametersListUtil.COLON_LINE_PARSER.apply(additionalClasspath))
 
         if (target.launcher != null) {
           parameters.programParametersList.addAll("-launcher", target.launcher)

@@ -19,7 +19,6 @@ dependencies {
     bundledPlugins(listOf("com.intellij.java", "org.jetbrains.kotlin"))
     plugins(emptyList())
 
-    instrumentationTools()
     pluginVerifier()
     zipSigner()
     testFramework(TestFrameworkType.Platform)
@@ -40,7 +39,6 @@ intellijPlatform {
 
     ideaVersion {
       sinceBuild = "233"
-      untilBuild = ""
     }
   }
 

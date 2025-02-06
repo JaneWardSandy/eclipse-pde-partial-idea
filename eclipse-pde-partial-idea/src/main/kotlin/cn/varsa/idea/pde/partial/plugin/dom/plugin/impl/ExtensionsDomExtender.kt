@@ -99,7 +99,7 @@ class ExtensionsDomExtender : DomExtender<Extension>() {
   interface SimpleTagValue : GenericDomValue<String>
 
   class StringListConverter(private val values: Collection<String>) : ResolvingConverter.StringConverter() {
-    override fun getVariants(context: ConvertContext?): Collection<String> = values
+    override fun getVariants(context: ConvertContext): MutableCollection<out String> = values.toMutableList()
   }
 
   object ClassConverter : PsiClassConverter() {

@@ -26,7 +26,6 @@ import org.osgi.framework.*
 import org.osgi.framework.Constants.*
 import java.awt.*
 import java.awt.event.*
-import java.util.*
 import javax.swing.*
 import javax.swing.tree.*
 
@@ -156,7 +155,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
       }
     }.apply {
       locationList.addListSelectionListener {
-        val event = AnActionEvent.createFromDataContext("", null) {}
+        val event = AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, null, "", ActionUiKind.NONE, null)
         update(event)
       }
     }
@@ -465,10 +464,10 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         text = defaultPath
       }
     private val pathComponent = TextFieldWithBrowseButton(pathField).apply {
-      addBrowseFolderListener(title, description, project, fileDescription)
+      addBrowseFolderListener(project, fileDescription.withTitle(title).withDescription(description))
     }.let { LabeledComponent.create(it, description, BorderLayout.WEST) }
 
-    private val dependencyComboBox = ComboBox(DependencyScope.values().map { it.displayName }.toTypedArray())
+    private val dependencyComboBox = ComboBox(DependencyScope.entries.map { it.displayName }.toTypedArray())
     private val dependencyComponent = LabeledComponent.create(
       dependencyComboBox, message("config.target.locationDialog.dependency"), BorderLayout.WEST
     )
@@ -574,7 +573,7 @@ class TargetConfigurable(private val project: Project) : SearchableConfigurable,
         }
       }
 
-      bundle2FixBundle = HashMap<ShadowBundle, HashSet<FixBundle>>(initialCapacity)
+      bundle2FixBundle = HashMap(initialCapacity)
       bundles.values.flatMap { it.values }.flatten().filter { it.isChecked }.sortedBy { it.bundle.canonicalName }
         .forEach { bundle ->
           var problem: ProblemBundle? = null

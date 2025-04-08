@@ -111,7 +111,7 @@ class TargetLocationDefinition(_location: String = "") : BackgroundResolvable {
   }
 
   override fun resolve(project: Project, indicator: ProgressIndicator) {
-    val scope = DependencyScope.values().firstOrNull { it.displayName == dependency } ?: DependencyScope.COMPILE
+    val scope = DependencyScope.entries.firstOrNull { it.displayName == dependency } ?: DependencyScope.COMPILE
     type = null
     val bundlesDefinitions = mutableListOf<BundleDefinition>()
     val featureDefinitions = mutableListOf<FeatureDefinition>()

@@ -6,9 +6,10 @@ import cn.varsa.idea.pde.partial.plugin.inspection.*
 import cn.varsa.idea.pde.partial.plugin.kotlin.support.*
 import com.intellij.openapi.module.*
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.idea.base.psi.*
+
 
 class KotlinPackageAccessibilityInspection : PackageAccessibilityInspection() {
 

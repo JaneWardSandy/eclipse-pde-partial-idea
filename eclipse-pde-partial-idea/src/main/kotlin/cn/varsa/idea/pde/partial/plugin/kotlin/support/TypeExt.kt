@@ -1,16 +1,31 @@
+@file:Suppress("DEPRECATION")
+
 package cn.varsa.idea.pde.partial.plugin.kotlin.support
 
-import cn.varsa.idea.pde.partial.plugin.support.*
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.*
-import org.jetbrains.kotlin.idea.codeInsight.*
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.*
-import org.jetbrains.kotlin.resolve.lazy.*
+import org.jetbrains.kotlin.analysis.api.analyze // New K2 analysis entry point
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol // K2 symbol representation
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtTypeReference
 
 fun KtTypeReference.classForRefactor(): KtClass? {
-  val bindingContext = analyze(BodyResolveMode.PARTIAL)
-  val type = bindingContext[BindingContext.TYPE, this] ?: return null
-  val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
-  return module?.project?.let { DescriptorToSourceUtilsIde.getAnyDeclaration(it, classDescriptor) } as? KtClass
+  // Use the K2 analyze block. 'this' inside refers to KtAnalysisSession.
+  // The KtTypeReference itself is the context element for analysis.
+  return analyze(this) {
+    // 1. Resolve this KtTypeReference to a KtType (K2 representation)
+    // Use this@classForRefactor to refer to the KtTypeReference extension receiver
+    val ktType = this@classForRefactor.getKtType()
+
+    // 2. Get the symbol declared by this type.
+    // Use expandedClassSymbol to resolve through type aliases to the actual class/object.
+    val classSymbol: KaClassLikeSymbol? = ktType.expandedClassSymbol
+
+    // 3. Get the PSI source element (KtDeclaration) directly from the symbol.
+    // This replaces DescriptorToSourceUtilsIde.getAnyDeclaration.
+    val psiDeclaration = classSymbol?.psi
+
+    // 4. Ensure the resulting PSI is specifically a KtClass
+    // (expandedClassSymbol could potentially point to a KtObjectDeclaration too,
+    // depending on your exact needs, you might keep it KtClassLikeDeclaration or cast)
+    psiDeclaration as? KtClass
+  }
 }

@@ -160,7 +160,7 @@ object ModuleHelper {
                 $BUNDLE_VENDOR: Varsa Studio
                 $REQUIRE_BUNDLE: org.eclipse.ui,
                  org.eclipse.core.runtime
-                $BUNDLE_REQUIREDEXECUTIONENVIRONMENT: ${JavaVersions.OpenJDK7.ee}
+                $BUNDLE_REQUIREDEXECUTIONENVIRONMENT: ${JavaVersions.OpenJDK17.ee}
                 $BUNDLE_ACTIVATIONPOLICY: $ACTIVATION_LAZY
                 $BUNDLE_CLASSPATH: .
 

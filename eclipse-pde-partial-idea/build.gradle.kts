@@ -14,8 +14,9 @@ repositories {
 
 dependencies {
   implementation(project(":common"))
+  implementation(kotlin("reflect"))
   intellijPlatform {
-    intellijIdeaCommunity("2023.3")
+    intellijIdeaCommunity("2024.3")
     bundledPlugins(listOf("com.intellij.java", "org.jetbrains.kotlin"))
     plugins(emptyList())
 
@@ -26,7 +27,7 @@ dependencies {
 }
 
 kotlin {
-  jvmToolchain(17)
+  jvmToolchain(21)
 }
 
 intellijPlatform {
@@ -38,7 +39,7 @@ intellijPlatform {
     changeNotes = File("$projectPath/CHANGES.html").readText(Charsets.UTF_8)
 
     ideaVersion {
-      sinceBuild = "233"
+      sinceBuild = "243"
     }
   }
 

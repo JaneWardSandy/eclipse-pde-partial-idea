@@ -105,7 +105,8 @@ class PdeModuleCompileOnlyResolver : BuildLibraryResolver {
           add(it)
         }
       }.toTypedArray()
-      model.rearrangeOrderEntries(arrangeOrderEntries)
+      val sortedEntries = arrangeOrderEntries.sortedWith(compareBy {it.presentableName})
+      model.rearrangeOrderEntries(sortedEntries.toTypedArray())
     }
   }
 }

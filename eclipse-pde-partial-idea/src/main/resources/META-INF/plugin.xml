@@ -9,6 +9,10 @@
   <depends config-file="kotlin.xml" optional="true">org.jetbrains.kotlin</depends>
   <depends config-file="xml.xml">com.intellij.modules.xml</depends>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
         serviceImplementation="cn.varsa.idea.pde.partial.plugin.openapi.resolver.PdeLibraryResolverRegistry"/>

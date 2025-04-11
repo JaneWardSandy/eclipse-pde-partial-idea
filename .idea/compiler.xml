@@ -4,6 +4,8 @@
     <annotationProcessing>
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
-    <bytecodeTargetLevel target="17" />
+    <bytecodeTargetLevel target="21">
+      <module name="eclipse-pde-partial.wishes-launcher.main" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

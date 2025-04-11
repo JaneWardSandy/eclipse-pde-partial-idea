@@ -1,11 +1,8 @@
-@file:Suppress("DEPRECATION")
-
 package cn.varsa.idea.pde.partial.plugin.kotlin.support
 
-import org.jetbrains.kotlin.analysis.api.analyze // New K2 analysis entry point
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol // K2 symbol representation
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.psi.*
 
 fun KtTypeReference.classForRefactor(): KtClass? {
   // Use the K2 analyze block. 'this' inside refers to KtAnalysisSession.
@@ -13,11 +10,11 @@ fun KtTypeReference.classForRefactor(): KtClass? {
   return analyze(this) {
     // 1. Resolve this KtTypeReference to a KtType (K2 representation)
     // Use this@classForRefactor to refer to the KtTypeReference extension receiver
-    val ktType = this@classForRefactor.getKtType()
+    val ktType = this@classForRefactor.type
 
     // 2. Get the symbol declared by this type.
     // Use expandedClassSymbol to resolve through type aliases to the actual class/object.
-    val classSymbol: KaClassLikeSymbol? = ktType.expandedClassSymbol
+    val classSymbol: KaClassLikeSymbol? = ktType.expandedSymbol
 
     // 3. Get the PSI source element (KtDeclaration) directly from the symbol.
     // This replaces DescriptorToSourceUtilsIde.getAnyDeclaration.

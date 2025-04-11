@@ -20,7 +20,7 @@ class EclipseP2BundleProvider : EclipseSDKBundleProvider() {
     val profileName = configIni.getProperty("eclipse.p2.profile") ?: return false
 
     val p2Directory = try {
-      URL(p2Area).toURI().toFile().takeIf { it.exists() } ?: return false
+      URI(p2Area).toFile().takeIf { it.exists() } ?: return false
     } catch (e: Exception) {
       return false
     }

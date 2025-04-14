@@ -24,7 +24,10 @@ object LaunchConfigGenerator {
 
     if (configService.product != properties["eclipse.product"] && configService.application != properties["eclipse.application"]) properties.clear()
 
-    properties["eclipse.product"] = configService.product
+    if (configService.product.isNotBlank())
+      properties["eclipse.product"] = configService.product
+    else
+      properties.remove("eclipse.product")
     properties["eclipse.application"] = configService.application
     properties["osgi.install.area"] = configService.installArea.protocolUrl
     properties["osgi.instance.area.default"] = configService.instanceArea.protocolUrl
@@ -90,20 +93,31 @@ object LaunchConfigGenerator {
           .append(',').appendLine(configService.isAutoStartUp(name).toString())
       }
 
+      data class Bundle(val name: String, val version: Version, val file: File, val level : Int?)
+      val bundles: MutableList<Bundle> = mutableListOf()
       configService.libraries.forEach { bundle ->
         configService.getManifest(bundle)?.also {
-          appendBundleLine(it.bundleSymbolicName?.key ?: bundle.nameWithoutExtension,
-                           it.bundleVersion,
-                           bundle,
-                           it.eclipseSourceBundle?.let { -1 })
+          bundles += Bundle(it.bundleSymbolicName?.key ?: bundle.nameWithoutExtension,
+                            it.bundleVersion,
+                            bundle,
+                            it.eclipseSourceBundle?.let { -1 })
         }
       }
 
       configService.devModules.forEach { module ->
         val moduleDirectory = File(configService.projectDirectory, module.relativePathToProject)
         configService.getManifest(moduleDirectory)?.also {
-          appendBundleLine(module.bundleSymbolicName, it.bundleVersion, moduleDirectory, null)
+          bundles += Bundle(module.bundleSymbolicName, it.bundleVersion, moduleDirectory, null)
         }
+      }
+
+      val sortedBundles = bundles.sortedWith(compareBy {it.name})
+      sortedBundles.forEach {
+        appendBundleLine(
+          it.name,
+          it.version,
+          it.file,
+          it.level)
       }
     }
   }

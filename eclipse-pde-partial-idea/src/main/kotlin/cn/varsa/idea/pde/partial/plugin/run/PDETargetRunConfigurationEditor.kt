@@ -1,9 +1,12 @@
 package cn.varsa.idea.pde.partial.plugin.run
 
 import cn.varsa.idea.pde.partial.plugin.dom.config.*
+import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.execution.ui.*
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
@@ -12,6 +15,8 @@ import com.intellij.util.execution.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
+
+import com.intellij.ui.dsl.builder.panel
 
 class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) :
   SettingsEditor<PDETargetRunConfiguration>(), PanelWithAnchor {
@@ -47,6 +52,8 @@ class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) 
     additionalClasspath, message("run.local.config.tab.configuration.classpath"), BorderLayout.WEST
   )
 
+  private val moduleList = CheckBoxList<String>()
+
   private val cleanRuntimeDir = JBCheckBox(message("run.remote.config.tab.wishes.cleanRuntimeDir"))
 
   init {
@@ -58,10 +65,18 @@ class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) 
     panel.add(javaParameters)
     panel.add(JSeparator())
     panel.add(additionalClasspathComponent)
+
+    panel.add(targetModulePanel())
     panel.add(cleanRuntimeDir)
 
     additionalClasspath.attachLabel(additionalClasspathComponent.label)
     CommonJavaParametersPanel.addMacroSupport(additionalClasspath.editorField)
+
+    val pdeModules = configuration.project.allPDEModules().filter { PDEFacet.getInstance(it) != null }
+    moduleList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+    moduleList.setItems(pdeModules.map { module -> module.name }, null)
+    if (moduleList.itemsCount > 0)
+      moduleList.allItems.forEach{ moduleList.setItemSelected(it, configuration.targetModules == null || it in configuration.targetModules!!) }
 
     panel.updateUI()
 
@@ -75,6 +90,66 @@ class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) 
     )
   }
 
+  private fun targetModulePanel(): DialogPanel {
+    val selectAllAction = object : AnAction(
+      message("run.local.config.tab.configuration.targetModules.selectAll"),
+      message("run.local.config.tab.configuration.targetModules.selectAllModules"), AllIcons.Actions.Selectall // Use standard icon
+    ) {
+      override fun actionPerformed(e: AnActionEvent) {
+        if (moduleList.itemsCount > 0) moduleList.allItems.forEach{ moduleList.setItemSelected(it, true) }
+      }
+
+      override fun update(e: AnActionEvent) {
+        // Enable only if there are items and not all are already selected
+        e.presentation.isEnabled = moduleList.allItems.any { !moduleList.isItemSelected(it) }
+      }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+      }
+    }
+
+    val unselectAllAction = object : AnAction(
+      message("run.local.config.tab.configuration.targetModules.unselectAll"),
+      message("run.local.config.tab.configuration.targetModules.unselectAllModules"), AllIcons.Actions.Unselectall // Use standard icon
+    ) {
+      override fun actionPerformed(e: AnActionEvent) {
+        moduleList.allItems.forEach{ moduleList.setItemSelected(it, false) }
+      }
+
+      override fun update(e: AnActionEvent) {
+        // Enable only if there is at least one item selected
+        e.presentation.isEnabled = moduleList.allItems.any { moduleList.isItemSelected(it) }
+      }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+      }
+    }
+
+    val actionGroup = DefaultActionGroup().apply {
+      add(selectAllAction)
+      add(unselectAllAction)
+    }
+    val actionToolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLBAR,
+      actionGroup,
+      true // true for horizontal toolbar
+    )
+    actionToolbar.targetComponent = moduleList
+    return panel {
+      collapsibleGroup(message("run.local.config.tab.configuration.targetModules")) {
+        row {
+          cell(actionToolbar.component)
+        }
+
+        row {
+          resizableRow().scrollCell(moduleList).align(com.intellij.ui.dsl.builder.Align.FILL)
+        }
+      }
+    }
+  }
+
   override fun resetEditorFrom(configuration: PDETargetRunConfiguration) {
     javaParameters.reset(configuration)
     jrePath.setPathOrName(configuration.alternativeJrePath, configuration.isAlternativeJrePathEnabled)
@@ -82,6 +157,7 @@ class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) 
     val managementService = ExtensionPointManagementService.getInstance(configuration.project)
     productField.apply {
       removeAllItems()
+      addItem("")
       managementService.getProducts().sorted().forEach(this::addItem)
       item = configuration.product
     }
@@ -95,6 +171,12 @@ class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) 
     configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     cleanRuntimeDir.isSelected = configuration.cleanRuntimeDir
     additionalClasspath.text = configuration.additionalClasspath
+
+    val pdeModules = configuration.project.allPDEModules().filter { PDEFacet.getInstance(it) != null }
+    moduleList.clear()
+    moduleList.setItems(pdeModules.map { module -> module.name }, null)
+    if (moduleList.itemsCount > 0)
+      moduleList.allItems.forEach{ moduleList.setItemSelected(it, configuration.targetModules == null || it in configuration.targetModules!!) }
   }
 
   override fun applyEditorTo(configuration: PDETargetRunConfiguration) {
@@ -109,6 +191,10 @@ class PDETargetRunConfigurationEditor(configuration: PDETargetRunConfiguration) 
     configuration.mainClassName = "org.eclipse.equinox.launcher.Main"
     configuration.cleanRuntimeDir = cleanRuntimeDir.isSelected
     configuration.additionalClasspath = additionalClasspath.text
+
+    configuration.targetModules =  moduleList.allItems.filter {
+      moduleList.isItemSelected(it)
+    }.toSet()
   }
 
   override fun createEditor(): JComponent = panel

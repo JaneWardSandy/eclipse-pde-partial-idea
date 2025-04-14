@@ -6,6 +6,7 @@ import cn.varsa.idea.pde.partial.common.service.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.dom.config.ExtensionPointManagementService
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
@@ -16,13 +17,17 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.filters.*
 import com.intellij.execution.runners.*
 import com.intellij.execution.util.*
+import com.intellij.lang.xml.*
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
+import com.intellij.psi.*
 import com.intellij.psi.search.*
+import com.intellij.psi.xml.*
 import com.intellij.util.execution.*
 import org.jdom.*
 import java.io.*
@@ -33,6 +38,11 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
   private val target by lazy { TargetDefinitionService.getInstance(project) }
   private val cache by lazy { BundleManifestCacheService.getInstance(project) }
   private val compiler by lazy { CompilerProjectExtension.getInstance(project) }
+  private val productFiles by lazy { findProductFiles(project) }
+
+  companion object {
+    private const val PRODUCT_EXTENSION = "product"
+  }
 
   var product: String? = "com.teamcenter.rac.aifrcp.product"
   var application: String? = "com.teamcenter.rac.aifrcp.application"
@@ -41,6 +51,37 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
   ).absolutePath
   var cleanRuntimeDir = false
   var additionalClasspath = ""
+  var targetModules: Set<String>? = null
+
+  /**
+   * Finds all files with the ".product" extension within the project content roots.
+   */
+  private fun findProductFiles(project: Project): List<XmlFile> {
+    val foundFiles = mutableListOf<XmlFile>()
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+
+    // Use ReadAction for safety when interacting with VFS/Index during iteration
+    ReadAction.run<Throwable> {
+      projectFileIndex.iterateContent { virtualFile ->
+        // Check if it's a file, part of project content, and has the correct extension
+        if (!virtualFile.isDirectory &&
+          projectFileIndex.isInContent(virtualFile) && // Check content status first potentially
+          PRODUCT_EXTENSION.equals(virtualFile.extension, ignoreCase = true))
+        {
+          val fileContent = VfsUtilCore.loadText(virtualFile)
+          if (fileContent.isNotBlank()) {
+            val psiFileFactory = PsiFileFactory.getInstance(project)
+            val xmlPsiFile = psiFileFactory.createFileFromText(
+              virtualFile.name, XMLLanguage.INSTANCE, fileContent, false, true
+            )
+            if (xmlPsiFile is XmlFile) foundFiles.add(xmlPsiFile)
+          }
+        }
+        true // Continue iterating
+      }
+    }
+    return foundFiles
+  }
 
   override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
     SettingsEditorGroup<PDETargetRunConfiguration>().apply {
@@ -56,7 +97,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
 
     if (compiler == null) throw RuntimeConfigurationWarning(message("run.local.config.noCompiler", project.name))
     if (target.launcherJar == null) throw RuntimeConfigurationWarning(message("run.local.config.noTargetLauncherJar"))
-    if (product.isNullOrBlank() || application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
+    if (application.isNullOrBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noTargetApplication"))
 
     if (dataDirectory.isBlank()) throw RuntimeConfigurationWarning(message("run.local.config.noDataDirectory"))
 
@@ -72,6 +113,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
       setAttribute("dataDirectory", dataDirectory)
       setAttribute("cleanRuntimeDir", cleanRuntimeDir.toString())
       setAttribute("additionalClasspath", additionalClasspath)
+      setAttribute("targetModules", targetModules?.joinToString(",") ?: "")
     }
   }
 
@@ -85,6 +127,10 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
       ).absolutePath
       cleanRuntimeDir = it.getAttributeValue("cleanRuntimeDir", cleanRuntimeDir.toString()).toBoolean()
       additionalClasspath = it.getAttributeValue("additionalClasspath") ?: ""
+      val targetModuleAttribute = it.getAttributeValue("targetModules")
+      targetModules =
+        if (targetModuleAttribute != null && targetModuleAttribute.isNotBlank()) it.getAttributeValue("targetModules").split(",").toSet()
+        else null
     }
   }
 
@@ -149,9 +195,46 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
     }
   }
 
+  private fun findPluginConfigurations() : Map<String, Int> {
+    if (product == null || productFiles.isEmpty()) {
+      return emptyMap() // Return empty map immediately if no product name or no files
+    }
+
+    val configurationMap = ReadAction.compute<Map<String, Int>, Throwable> {
+      productFiles.find { it.rootTag?.getAttributeValue("id") == product }?.rootTag?.findFirstSubTag("configurations")
+        ?.findSubTags("plugin") // This returns Array<XmlTag>, not null if parent exists
+        ?.mapNotNull { pluginTag -> // mapNotNull filters out null results automatically
+          val symbol = pluginTag.getAttributeValue("id")
+          val autoStart = pluginTag.getAttributeValue("autoStart")
+          val isAutoStart = ("true" == autoStart)
+
+          if (isAutoStart && symbol != null) {
+            pluginTag.getAttributeValue("startLevel")?.toIntOrNull()?.let { startLevelInt ->
+              if (startLevelInt > 0) symbol to startLevelInt
+              else symbol to 4 // Creates Pair<String, Int>
+            }
+          } else {
+            null // Explicitly return null if autoStart condition fails, mapNotNull filters this out
+          }
+        }?.toMap() ?: emptyMap()
+    }
+    return configurationMap
+  }
+
   private val configServiceDelegate = object : ConfigService {
     override val product: String get() = this@PDETargetRunConfiguration.product ?: ""
     override val application: String get() = this@PDETargetRunConfiguration.application ?: ""
+    private val configurationMap = mutableMapOf<String, Map<String, Int>>()
+
+    private fun getPluginConfiguration() : Map<String, Int>? {
+      if (configurationMap.containsKey(product)) {
+        return configurationMap[product]
+      } else {
+        val configs = this@PDETargetRunConfiguration.findPluginConfigurations()
+        configurationMap[product] = configs
+        return configs
+      }
+    }
 
     override val dataPath: File
       get() = File(dataDirectory)
@@ -163,13 +246,16 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
       get() = BundleManagementService.getInstance(project).getBundles().map { it.file }
 
     override val devModules: List<DevModule>
-      get() = project.allPDEModules().mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
+      get() = project.allPDEModules().filter{ targetModules == null || it.name in targetModules!! }.mapNotNull { PDEFacet.getInstance(it) }.map(PDEFacet::toDevModule)
 
     override fun getManifest(jarFileOrDirectory: File): BundleManifest? =
       LocalFileSystem.getInstance().findFileByIoFile(jarFileOrDirectory)?.let { cache.getManifest(it) }
 
-    override fun startUpLevel(bundleSymbolicName: String): Int = target.startupLevels[bundleSymbolicName] ?: 4
-    override fun isAutoStartUp(bundleSymbolicName: String): Boolean =
-      target.startupLevels.containsKey(bundleSymbolicName)
+    override fun startUpLevel(bundleSymbolicName: String): Int =
+      getPluginConfiguration()?.let{ it[bundleSymbolicName] }?: target.startupLevels[bundleSymbolicName] ?: 4
+    override fun isAutoStartUp(bundleSymbolicName: String): Boolean {
+      return if (getPluginConfiguration()?.containsKey(bundleSymbolicName) == true) true
+      else target.startupLevels.containsKey(bundleSymbolicName)
+    }
   }
 }

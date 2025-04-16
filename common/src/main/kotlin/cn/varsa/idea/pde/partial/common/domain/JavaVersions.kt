@@ -21,6 +21,7 @@ enum class JavaVersions(val major: Int, val ee: String, val filter: String) {
   OpenJDK18(62, "JavaSE-18", "(&(osgi.ee=JavaSE)(version=18))"),
   OpenJDK19(63, "JavaSE-19", "(&(osgi.ee=JavaSE)(version=19))"),
   OpenJDK20(64, "JavaSE-20", "(&(osgi.ee=JavaSE)(version=20))"),
+  OpenJDK21(65, "JavaSE-21", "(&(osgi.ee=JavaSE)(version=21))"),
   UNKNOWN(Integer.MAX_VALUE, "<UNKNOWN>", "(osgi.ee=UNKNOWN)");
 
   companion object {

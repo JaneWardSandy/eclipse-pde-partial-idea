@@ -11,14 +11,14 @@ dependencies {
 
 tasks {
   compileJava {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
   }
 
   compileKotlin {
     compilerOptions {
       freeCompilerArgs = listOf("-Xjsr305=strict")
-      jvmTarget.set(JvmTarget.JVM_11)
+      jvmTarget.set(JvmTarget.JVM_21)
     }
   }
 }

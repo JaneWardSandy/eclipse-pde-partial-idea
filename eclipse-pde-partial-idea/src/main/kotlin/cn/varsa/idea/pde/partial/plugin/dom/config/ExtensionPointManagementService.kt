@@ -5,11 +5,13 @@ import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.cache.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import com.jetbrains.rd.util.*
 
+@Service(Service.Level.PROJECT)
 class ExtensionPointManagementService(private val project: Project) : BackgroundResolvable {
   companion object {
     fun getInstance(project: Project): ExtensionPointManagementService =

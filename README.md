@@ -4,7 +4,24 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/16761-eclipse-pde-partial.svg)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
 [![View at JetBrains](https://img.shields.io/jetbrains/plugin/d/16761-eclipse-pde-partial.svg)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
 
-**PLEASE NOTE**: The plugin is currently planning to refactor the v2.0 version, and the v1.x version will only be updated with major bugs for the time being, and the new features will be temporarily put into the new version and planned to be implemented.
+**PLEASE NOTE**: The plugin is currently planning to refactor the v2.0 version, and the v1.x version will only be
+updated with major bugs for the time being, and the new features will be temporarily put into the new version and
+planned to be implemented.
+
+<!-- Plugin description -->
+Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and its application.
+
+- Open <b>Preferences... | Languages & Frameworks | Eclipse Target</b>.</li>
+- Add the OSGI bundles that you want to work with (Eclipse root, Teamcenter root, plugins directory, etc.).
+- Add the Eclipse PDE Partial facet (or by add framework) to any module that should be an Eclipse Plugins.
+
+To run eclipse application on local machine, create a new Eclipse Application Partial run configuration.
+To run eclipse application on remote machine, create a new Eclipse Application Remote Partial run configuration, and set
+up wishes-launcher application information. It will connect Wishes service by RMI naming, and remote debug by JDWP.
+
+Wishes-launcher application is available in
+the [GitHub](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/releases/download/v1.3.6/wishes-launcher-windows.zip)
+<!-- Plugin description end -->
 
 ## Download
 
@@ -107,7 +124,8 @@ instance of IntelliJ IDEA with the plugin installed
 
 ## Thanks
 
-Development powered by [JetBrains.](https://www.jetbrains.com/community/opensource/?utm_campaign=opensource&utm_content=approved&utm_medium=email&utm_source=newsletter&utm_term=jblogo#support&from=eclipse-pde-partial-idea)
+Development powered
+by [JetBrains.](https://www.jetbrains.com/community/opensource/?utm_campaign=opensource&utm_content=approved&utm_medium=email&utm_source=newsletter&utm_term=jblogo#support&from=eclipse-pde-partial-idea)
 
 [![JetBrains Logo (Main) logo](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg)](https://www.jetbrains.com/?from=eclipse-pde-partial-idea)
 

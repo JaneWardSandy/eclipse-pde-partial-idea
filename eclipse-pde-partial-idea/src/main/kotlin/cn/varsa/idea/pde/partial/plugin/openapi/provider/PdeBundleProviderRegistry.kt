@@ -2,8 +2,10 @@ package cn.varsa.idea.pde.partial.plugin.openapi.provider
 
 import cn.varsa.idea.pde.partial.plugin.config.*
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.*
 import java.io.*
 
+@Service
 class PdeBundleProviderRegistry {
 
   companion object {

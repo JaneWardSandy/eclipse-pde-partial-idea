@@ -5,6 +5,7 @@ import cn.varsa.idea.pde.partial.common.domain.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.indexes.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
@@ -17,6 +18,7 @@ import java.io.*
 import java.util.jar.*
 import kotlin.io.use
 
+@Service(Service.Level.PROJECT)
 class BundleManifestCacheService(private val project: Project) {
   private val cachedValuesManager by lazy { CachedValuesManager.getManager(project) }
 

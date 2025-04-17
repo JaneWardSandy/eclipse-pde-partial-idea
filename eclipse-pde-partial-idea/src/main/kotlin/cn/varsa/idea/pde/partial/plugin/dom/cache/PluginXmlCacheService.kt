@@ -7,6 +7,7 @@ import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
 import cn.varsa.idea.pde.partial.plugin.domain.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
@@ -16,6 +17,7 @@ import com.jetbrains.rd.util.*
 import java.io.*
 import javax.xml.stream.*
 
+@Service(Service.Level.PROJECT)
 class PluginXmlCacheService(private val project: Project) {
   private val cacheService by lazy { BundleManifestCacheService.getInstance(project) }
   private val cachedValuesManager by lazy { CachedValuesManager.getManager(project) }

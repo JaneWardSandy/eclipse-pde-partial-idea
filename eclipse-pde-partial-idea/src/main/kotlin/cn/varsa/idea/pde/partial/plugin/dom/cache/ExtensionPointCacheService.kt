@@ -6,6 +6,7 @@ import cn.varsa.idea.pde.partial.plugin.config.*
 import cn.varsa.idea.pde.partial.plugin.dom.domain.*
 import cn.varsa.idea.pde.partial.plugin.dom.indexes.*
 import cn.varsa.idea.pde.partial.plugin.support.*
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
@@ -13,6 +14,7 @@ import com.intellij.psi.util.*
 import com.jetbrains.rd.util.*
 import java.io.*
 
+@Service(Service.Level.PROJECT)
 class ExtensionPointCacheService(private val project: Project) {
   private val cacheService by lazy { BundleManifestCacheService.getInstance(project) }
   private val bundleManagementService by lazy { BundleManagementService.getInstance(project) }

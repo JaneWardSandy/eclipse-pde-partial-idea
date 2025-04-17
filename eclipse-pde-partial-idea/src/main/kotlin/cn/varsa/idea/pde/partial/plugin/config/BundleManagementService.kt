@@ -8,6 +8,7 @@ import cn.varsa.idea.pde.partial.plugin.helper.*
 import cn.varsa.idea.pde.partial.plugin.openapi.resolver.*
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.facet.*
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
@@ -17,6 +18,7 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
+@Service(Service.Level.PROJECT)
 class BundleManagementService : BackgroundResolvable {
   companion object {
     private val logger = thisLogger()

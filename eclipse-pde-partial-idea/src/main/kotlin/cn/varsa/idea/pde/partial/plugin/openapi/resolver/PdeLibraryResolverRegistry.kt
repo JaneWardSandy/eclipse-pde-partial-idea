@@ -3,11 +3,13 @@ package cn.varsa.idea.pde.partial.plugin.openapi.resolver
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.module.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 
+@Service
 class PdeLibraryResolverRegistry {
 
   companion object {

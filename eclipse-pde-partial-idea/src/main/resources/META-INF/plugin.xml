@@ -14,21 +14,13 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-        serviceImplementation="cn.varsa.idea.pde.partial.plugin.openapi.resolver.PdeLibraryResolverRegistry"/>
-    <applicationService
-        serviceImplementation="cn.varsa.idea.pde.partial.plugin.openapi.provider.PdeBundleProviderRegistry"/>
-
-    <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService"/>
     <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.indexes.BundleManifestIndex"/>
-
-    <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.TargetDefinitionService"/>
-    <projectService serviceImplementation="cn.varsa.idea.pde.partial.plugin.config.BundleManagementService"/>
 
     <projectConfigurable
         id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"
         parentId="language"
-        displayName="Eclipse Target"
+        bundle="messages.EclipsePDEPartialBundles_locale"
+        key="config.displayName"
         instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
 
     <postStartupActivity order="last" implementation="cn.varsa.idea.pde.partial.plugin.startup.PostStartupActivity"/>

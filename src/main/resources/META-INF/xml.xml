@@ -1,0 +1,30 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.dom.indexes.PluginXmlIndex"/>
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.dom.indexes.ExtensionPointIndex"/>
+
+    <!-- plugin.xml, fragment.xml -->
+    <dom.fileMetaData rootTagName="plugin"
+                      implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.PluginDescriptorDomFileDescription"/>
+    <dom.fileMetaData rootTagName="fragment"
+                      implementation="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.FragmentDescriptorDomFileDescription"/>
+    <dom.extender domClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.Extension"
+                  extenderClass="cn.varsa.idea.pde.partial.plugin.dom.plugin.impl.ExtensionsDomExtender"/>
+
+    <!-- exsd -->
+    <fileTypeDetector implementation="cn.varsa.idea.pde.partial.plugin.dom.exsd.ExsdFileTypeDetector"/>
+
+    <!-- plugin.xml, fragment.xml validator -->
+    <localInspection enabledByDefault="true" level="ERROR"
+                     language="XML"
+                     bundle="messages.EclipsePDEPartialBundles_locale"
+                     key="inspection.pluginUnresolvedReference"
+                     groupBundle="messages.EclipsePDEPartialBundles_locale"
+                     groupKey="inspection.group"
+                     shortName="PDEPluginDomElements"
+                     implementationClass="cn.varsa.idea.pde.partial.plugin.dom.inspection.PluginDomElementsInspection"/>
+
+    <completion.contributor language="XML"
+                            implementationClass="cn.varsa.idea.pde.partial.plugin.dom.completion.MenuContributionURICompletionContributor"/>
+  </extensions>
+</idea-plugin>

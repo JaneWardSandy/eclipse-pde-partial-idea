@@ -1,0 +1,126 @@
+<idea-plugin>
+  <id>cn.varsa.idea.eclipse.pde.partial</id>
+  <name>Eclipse PDE Partial</name>
+  <category>JVM Frameworks</category>
+  <vendor email="lyj19940214@live.com" url="https://github.com/JaneWardSandy">JaneWardSandy</vendor>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends config-file="java.xml">com.intellij.modules.java</depends>
+  <depends config-file="kotlin.xml" optional="true">org.jetbrains.kotlin</depends>
+  <depends config-file="xml.xml">com.intellij.modules.xml</depends>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="cn.varsa.idea.pde.partial.plugin.indexes.BundleManifestIndex"/>
+
+    <projectConfigurable
+        id="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"
+        parentId="language"
+        bundle="messages.EclipsePDEPartialBundles_locale"
+        key="config.displayName"
+        instance="cn.varsa.idea.pde.partial.plugin.config.TargetConfigurable"/>
+
+    <postStartupActivity order="last" implementation="cn.varsa.idea.pde.partial.plugin.startup.PostStartupActivity"/>
+
+    <facetType implementation="cn.varsa.idea.pde.partial.plugin.facet.PDEFacetType"/>
+    <frameworkSupport implementation="cn.varsa.idea.pde.partial.plugin.framework.TcRacFrameworkSupportProvider"/>
+    <framework.detector implementation="cn.varsa.idea.pde.partial.plugin.framework.TcRacFrameworkDetector"/>
+
+    <configurationType implementation="cn.varsa.idea.pde.partial.plugin.run.PDETargetRunConfigurationType"/>
+    <configurationType implementation="cn.varsa.idea.pde.partial.plugin.run.PDETargetRemoteRunConfigurationType"/>
+
+    <manifest.parser.provider
+        implementation="cn.varsa.idea.pde.partial.plugin.manifest.lang.ManifestHeaderParserProvider"/>
+    <completion.contributor
+        language="Manifest"
+        implementationClass="cn.varsa.idea.pde.partial.plugin.manifest.completion.OsgiManifestCompletionContributor"/>
+
+    <notificationGroup
+        displayType="STICKY_BALLOON"
+        id="PDE-Important"
+        isLogByDefault="true"
+        bundle="messages.EclipsePDEPartialBundles_locale"
+        key="notification.group.important"/>
+    <notificationGroup
+        displayType="BALLOON"
+        id="PDE-Information"
+        isLogByDefault="true"
+        bundle="messages.EclipsePDEPartialBundles_locale"
+        key="notification.group.standard"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+        name="targetPlatformLibraryResolver"
+        interface="cn.varsa.idea.pde.partial.plugin.openapi.resolver.TargetPlatformLibraryResolver"
+        dynamic="true"/>
+    <extensionPoint
+        name="manifestLibraryResolver"
+        interface="cn.varsa.idea.pde.partial.plugin.openapi.resolver.ManifestLibraryResolver"
+        dynamic="true"/>
+    <extensionPoint
+        name="buildLibraryResolver"
+        interface="cn.varsa.idea.pde.partial.plugin.openapi.resolver.BuildLibraryResolver"
+        dynamic="true"/>
+
+    <extensionPoint
+        name="targetBundlesProvider"
+        interface="cn.varsa.idea.pde.partial.plugin.openapi.provider.TargetBundleProvider"
+        dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="cn.varsa.idea.eclipse.pde.partial">
+    <targetPlatformLibraryResolver
+        id="PdeProjectLibraryResolver"
+        implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeProjectLibraryResolver"/>
+
+    <manifestLibraryResolver
+        id="PdeModuleRuntimeLibraryResolver"
+        implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleRuntimeLibraryResolver"/>
+    <manifestLibraryResolver
+        id="PdeModuleFragmentLibraryResolver"
+        order="after PdeModuleRuntimeLibraryResolver"
+        implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleFragmentLibraryResolver"/>
+    <buildLibraryResolver
+        id="PdeModuleCompileOnlyResolver"
+        implementation="cn.varsa.idea.pde.partial.plugin.resolver.PdeModuleCompileOnlyResolver"/>
+
+    <targetBundlesProvider
+        id="DirectoryBundleProvider"
+        order="last"
+        implementation="cn.varsa.idea.pde.partial.plugin.provider.DirectoryBundleProvider"/>
+    <targetBundlesProvider
+        id="EclipseSDKBundleProvider"
+        implementation="cn.varsa.idea.pde.partial.plugin.provider.EclipseSDKBundleProvider"/>
+    <targetBundlesProvider
+        id="EclipseP2BundleProvider"
+        order="before EclipseSDKBundleProvider"
+        implementation="cn.varsa.idea.pde.partial.plugin.provider.EclipseP2BundleProvider"/>
+  </extensions>
+
+  <projectListeners>
+    <listener
+        class="cn.varsa.idea.pde.partial.plugin.listener.ModuleSetupOperation"
+        topic="cn.varsa.idea.pde.partial.plugin.listener.FacetChangeListener"/>
+
+    <listener
+        class="cn.varsa.idea.pde.partial.plugin.listener.ProjectLibraryResetOperation"
+        topic="cn.varsa.idea.pde.partial.plugin.listener.TargetDefinitionChangeListener"/>
+
+    <listener
+        class="cn.varsa.idea.pde.partial.plugin.listener.ModuleChangedListener"
+        topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
+
+  <actions>
+    <action class="cn.varsa.idea.pde.partial.plugin.action.ResolveWorkspaceAction" icon="AllIcons.Actions.Refresh">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+    <action class="cn.varsa.idea.pde.partial.plugin.action.ResolveManifestAction" icon="AllIcons.Actions.Refresh">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>

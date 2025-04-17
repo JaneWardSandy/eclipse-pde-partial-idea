@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.*
 
 plugins {
-  kotlin("jvm")
+  alias(libs.plugins.kotlin) // Kotlin support
 }
 
 dependencies {

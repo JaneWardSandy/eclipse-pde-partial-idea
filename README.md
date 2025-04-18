@@ -4,7 +4,6 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/16761-eclipse-pde-partial.svg)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
 [![View at JetBrains](https://img.shields.io/jetbrains/plugin/d/16761-eclipse-pde-partial.svg)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
 [![Release](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/release.yml/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/release.yml)
-[![Qodana](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/qodana_code_quality.yml/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/qodana_code_quality.yml)
 [![Dependabot Updates](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/dependabot/dependabot-updates)
 [![Run UI Tests](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/run-ui-tests.yml/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/run-ui-tests.yml)
 

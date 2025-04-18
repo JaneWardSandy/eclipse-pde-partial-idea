@@ -1,28 +1,20 @@
 package cn.varsa.idea.pde.partial.plugin.helper
 
 import cn.varsa.idea.pde.partial.common.*
-import cn.varsa.idea.pde.partial.common.domain.JavaVersions
-import cn.varsa.idea.pde.partial.common.support.toFile
-import cn.varsa.idea.pde.partial.plugin.cache.BundleManifestCacheService
-import cn.varsa.idea.pde.partial.plugin.facet.PDEFacet
+import cn.varsa.idea.pde.partial.common.domain.*
+import cn.varsa.idea.pde.partial.common.support.*
+import cn.varsa.idea.pde.partial.plugin.cache.*
+import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.support.*
-import cn.varsa.idea.pde.partial.plugin.support.getModuleDir
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.CompilerModuleExtension
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.packaging.artifacts.ArtifactManager
-import com.intellij.packaging.artifacts.ModifiableArtifactModel
-import com.intellij.packaging.elements.PackagingElementFactory
-import com.intellij.packaging.impl.artifacts.JarArtifactType
-import org.jetbrains.kotlin.idea.util.projectStructure.*
+import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.module.*
+import com.intellij.openapi.project.*
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.vfs.*
+import com.intellij.packaging.artifacts.*
+import com.intellij.packaging.elements.*
+import com.intellij.packaging.impl.artifacts.*
 import org.osgi.framework.Constants.*
-import java.io.File
 
 object ModuleHelper {
   private val logger = thisLogger()

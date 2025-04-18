@@ -10,6 +10,9 @@ plugins {
   alias(libs.plugins.kover) // Gradle Kover Plugin
 }
 
+// build directory
+layout.buildDirectory.set(rootProject.layout.buildDirectory)
+
 // Set the JVM language level used to build the project.
 kotlin {
   jvmToolchain(21)

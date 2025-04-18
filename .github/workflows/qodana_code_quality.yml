@@ -4,8 +4,8 @@ on:
   pull_request:
   push:
     branches: # Specify your branches here
-      - v1.x # The main branch
-      - v2.x # The next milestone branch
+      - 'v1.x' # The main branch
+      - 'v2.x' # The next milestone branch
       - 'releases/*' # The release branches
 
 jobs:

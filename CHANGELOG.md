@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.6.8] - 2025-05-01
+
 ### Added
 
 - Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
@@ -88,24 +90,12 @@
 
 ## [1.6.0-1]
 
-### Feature
-
-In plugin.xml, the class conversion should ignore the string after ':'. They are extended parameters of executable
-classes and do not participate in the determination of class names.
-
 ## [1.6.0]
 
 ### Feature
 
 - Compatibility verification
 - Facet option for artifact
-
-**Workaround**: Maven/Gradle build system sometimes it will accidentally cause Artifacts to report an error, provide
-parameters to skip Artifacts modification
-
-- Stacktrace on startup [#102](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/102)
-- RuntimeException: Cannot find an entity at (...)
-  PackagingElement.getThisEntity [#106](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/issues/106)
 
 ## [1.5.2]
 
@@ -391,3 +381,41 @@ parameters to skip Artifacts modification
 ## [1.0.0]
 
 - Initial project, migrating
+
+[Unreleased]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.8...HEAD
+[1.6.8]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.7...v1.6.8
+[1.6.7]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.6...v1.6.7
+[1.6.6]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.5-1...v1.6.6
+[1.6.5]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.4...v1.6.5
+[1.6.5-1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.5...v1.6.5-1
+[1.6.4]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.3...v1.6.4
+[1.6.3]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.2...v1.6.3
+[1.6.2]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.1...v1.6.2
+[1.6.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.0-1...v1.6.1
+[1.6.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.5.2...v1.6.0
+[1.6.0-1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.0...v1.6.0-1
+[1.5.2]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.5.1...v1.5.2
+[1.5.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.5.0...v1.5.1
+[1.5.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.4.2...v1.5.0
+[1.4.2]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.4.1...v1.4.2
+[1.4.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.4.0...v1.4.1
+[1.4.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.3.6...v1.4.0
+[1.3.6]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.3.5...v1.3.6
+[1.3.5]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.3.4...v1.3.5
+[1.3.4]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.3.3...v1.3.4
+[1.3.3]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.3.2...v1.3.3
+[1.3.2]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.3.1...v1.3.2
+[1.3.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.2.3-1...v1.3.0
+[1.2.3]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.2.2-1...v1.2.3
+[1.2.3-1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.2.3...v1.2.3-1
+[1.2.2]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.2.1...v1.2.2
+[1.2.2-1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.2.2...v1.2.2-1
+[1.2.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.1.3...v1.2.0
+[1.1.3]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.1.2...v1.1.3
+[1.1.2]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.0.1...v1.1.0
+[1.0.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/commits/v1.0.0

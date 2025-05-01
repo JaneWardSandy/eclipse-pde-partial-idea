@@ -6,8 +6,19 @@
 
 ### Added
 
-- Initial scaffold created
-  from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+- Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+- Add support for JUnit-Plugin test
+  - Basic support for running JUnit5 plugin test
+  - A basic remote test runner client implementation that will output a test result to console
+  - For PDE plugin test application (org.eclipse.pde.junit.runtime.coretestapplication), auto add -testLoaderClass, -loaderpluginname and -port program parameters
+  - User has to use -testpluginname {test bundle name} program parameter to specify the plugin test bundle
+  - User has to use one of -test, -classname. -classnames, -packagenamefile or -testnamefile program parameter to specify the test(s) to run
+  - How to specify the test(s) to run:
+    - -test {test class name}:{test method name}
+    - -classname {test class name}
+    - -classnames {space separated test class names, ends with -}
+    - -packagenamefile {absolute or relative path to a text file with one test package name per line}
+    - -testnamefile {absolute or relative path to a text file with one test class name per line}
 
 ## [1.6.7]
 

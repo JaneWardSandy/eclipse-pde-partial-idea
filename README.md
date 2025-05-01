@@ -7,10 +7,6 @@
 [![Dependabot Updates](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/dependabot/dependabot-updates)
 [![Run UI Tests](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/run-ui-tests.yml/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/run-ui-tests.yml)
 
-**PLEASE NOTE**: The plugin is currently planning to refactor the v2.0 version, and the v1.x version will only be
-updated with major bugs for the time being, and the new features will be temporarily put into the new version and
-planned to be implemented.
-
 <!-- Plugin description -->
 Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and its application.
 

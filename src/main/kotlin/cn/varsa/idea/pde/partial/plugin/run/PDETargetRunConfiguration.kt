@@ -6,7 +6,6 @@ import cn.varsa.idea.pde.partial.common.service.*
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
-import cn.varsa.idea.pde.partial.plugin.dom.config.ExtensionPointManagementService
 import cn.varsa.idea.pde.partial.plugin.facet.*
 import cn.varsa.idea.pde.partial.plugin.i18n.EclipsePDEPartialBundles.message
 import cn.varsa.idea.pde.partial.plugin.support.*
@@ -42,6 +41,9 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
 
   companion object {
     private const val PRODUCT_EXTENSION = "product"
+    private const val PDE_JUNIT_PLUGIN_TEST_APPLICATION = "org.eclipse.pde.junit.runtime.coretestapplication"
+    private const val JUNIT5_TEST_LOADER = "org.eclipse.jdt.internal.junit5.runner.JUnit5TestLoader"
+    private const val JUNIT5_RUNTIME_BUNDLE_NAME = "org.eclipse.jdt.junit5.runtime"
   }
 
   var product: String? = "com.teamcenter.rac.aifrcp.product"
@@ -145,6 +147,7 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
   ) : JavaApplicationCommandLineState<PDETargetRunConfiguration>(
     configuration, environment
   ) {
+    private var remoteTestRunnerClient : RemoteTestRunnerClient? = null
     override fun createJavaParameters(): JavaParameters {
       val parameters: JavaParameters = super.createJavaParameters()
 
@@ -186,12 +189,30 @@ class PDETargetRunConfiguration(project: Project, factory: ConfigurationFactory,
         parameters.programParametersList.addAll("-dev", configServiceDelegate.devPropertiesFile.protocolUrl)
 
         parameters.programParametersList.add("-consoleLog")
+
+        // add program parameters for junit plugin test
+        if (application == PDE_JUNIT_PLUGIN_TEST_APPLICATION) {
+          parameters.programParametersList.addAll("-testLoaderClass", JUNIT5_TEST_LOADER)
+          parameters.programParametersList.addAll("-loaderpluginname", JUNIT5_RUNTIME_BUNDLE_NAME)
+          remoteTestRunnerClient = RemoteTestRunnerClient()
+          val port = remoteTestRunnerClient!!.createServerSocket()
+          parameters.programParametersList.addAll("-port", port.toString())
+        }
       } catch (e: Exception) {
         thisLogger().error(e.message, e)
         throw e
       }
 
       return parameters
+    }
+
+    override fun execute(
+      executor: Executor, runner: ProgramRunner<*>
+    ): ExecutionResult {
+      val executionResult = super.execute(executor, runner)
+      if (remoteTestRunnerClient != null)
+        remoteTestRunnerClient!!.start(executionResult)
+      return executionResult
     }
   }
 

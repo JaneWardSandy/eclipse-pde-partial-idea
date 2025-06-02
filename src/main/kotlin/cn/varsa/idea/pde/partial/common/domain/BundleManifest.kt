@@ -19,30 +19,20 @@ class BundleManifest private constructor(private val map: HashMap<String, String
       manifest.mainAttributes.entries.associate { it.key.toString() to it.value.toString() }.let { parse(it) }
   }
 
-  fun getParameters(key: String): Parameters? = parametersMap.computeIfAbsent(key) { get(key)?.let(::Parameters) }
+  private fun getParameters(key: String): Parameters? =
+    parametersMap.computeIfAbsent(key) { get(key)?.let(::Parameters) }
 
-  val requireBundle by lazy { getParameters(REQUIRE_BUNDLE) }
-  val importPackage by lazy { getParameters(IMPORT_PACKAGE) }
-  val exportPackage by lazy { getParameters(EXPORT_PACKAGE) }
-  val bundleClassPath by lazy { getParameters(BUNDLE_CLASSPATH) }
-  val bundleActivator by lazy { get(BUNDLE_ACTIVATOR) }
-  val bundleRequiredExecutionEnvironment by lazy { getParameters(BUNDLE_REQUIREDEXECUTIONENVIRONMENT) }
-  val bundleSymbolicName by lazy { getParameters(BUNDLE_SYMBOLICNAME)?.entries?.firstOrNull() }
-  val fragmentHost by lazy { getParameters(FRAGMENT_HOST)?.entries?.firstOrNull() }
-  val bundleVersion: Version by lazy { get(BUNDLE_VERSION).parseVersion() }
-  val requireCapability by lazy { getParameters(REQUIRE_CAPABILITY) }
-  val provideCapability by lazy { getParameters(PROVIDE_CAPABILITY) }
-  val bundleName by lazy { get(BUNDLE_NAME) }
-  val bundleDescription by lazy { get(BUNDLE_DESCRIPTION) }
-  val bundleCopyright by lazy { get(BUNDLE_COPYRIGHT) }
-  val bundleDocUrl by lazy { get(BUNDLE_DOCURL) }
-  val bundleVendor by lazy { get(BUNDLE_VENDOR) }
-  val bundleContactAddress by lazy { get(BUNDLE_CONTACTADDRESS) }
-  val bundleCategory by lazy { get(BUNDLE_CATEGORY) }
-  val bundleNativeCode by lazy { get(BUNDLE_NATIVECODE) }
+  val requireBundle = getParameters(REQUIRE_BUNDLE)
+  val importPackage = getParameters(IMPORT_PACKAGE)
+  val exportPackage = getParameters(EXPORT_PACKAGE)
+  val bundleClassPath = getParameters(BUNDLE_CLASSPATH)
+  val bundleActivator = get(BUNDLE_ACTIVATOR)
+  val bundleSymbolicName = getParameters(BUNDLE_SYMBOLICNAME)?.entries?.firstOrNull()
+  val fragmentHost = getParameters(FRAGMENT_HOST)?.entries?.firstOrNull()
+  val bundleVersion: Version = get(BUNDLE_VERSION).parseVersion()
 
-  val eclipseSourceBundle by lazy { getParameters(ECLIPSE_SOURCE_BUNDLE)?.entries?.firstOrNull() }
-  val eclipseExtensibleAPI by lazy { get(ECLIPSE_EXTENSIBLE_API).toBoolean() }
+  val eclipseSourceBundle = getParameters(ECLIPSE_SOURCE_BUNDLE)?.entries?.firstOrNull()
+  val eclipseExtensibleAPI = get(ECLIPSE_EXTENSIBLE_API).toBoolean()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

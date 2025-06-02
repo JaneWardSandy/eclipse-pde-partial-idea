@@ -30,7 +30,6 @@
     <framework.detector implementation="cn.varsa.idea.pde.partial.plugin.framework.TcRacFrameworkDetector"/>
 
     <configurationType implementation="cn.varsa.idea.pde.partial.plugin.run.PDETargetRunConfigurationType"/>
-    <configurationType implementation="cn.varsa.idea.pde.partial.plugin.run.PDETargetRemoteRunConfigurationType"/>
 
     <manifest.parser.provider
         implementation="cn.varsa.idea.pde.partial.plugin.manifest.lang.ManifestHeaderParserProvider"/>

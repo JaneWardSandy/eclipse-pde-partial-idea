@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Chore
+- Re-structure the project
+- Remove dead project
+- Remove legacy code
+
 ## [1.6.8] - 2025-05-01
 
 ### Added

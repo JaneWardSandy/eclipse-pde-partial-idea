@@ -30,8 +30,6 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-  implementation(project(":common"))
-
   testImplementation(libs.junit)
   testImplementation(libs.opentest4j)
 
@@ -152,16 +150,5 @@ intellijPlatformTesting {
         robotServerPlugin()
       }
     }
-  }
-}
-
-
-subprojects {
-  group = rootProject.group
-  version = rootProject.version
-
-  repositories {
-    mavenLocal()
-    mavenCentral()
   }
 }

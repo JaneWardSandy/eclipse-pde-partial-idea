@@ -5,21 +5,17 @@
 [![View at JetBrains](https://img.shields.io/jetbrains/plugin/d/16761-eclipse-pde-partial.svg)](https://plugins.jetbrains.com/plugin/16761-eclipse-pde-partial)
 [![Release](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/release.yml/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/release.yml)
 [![Dependabot Updates](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/dependabot/dependabot-updates)
-[![Run UI Tests](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/run-ui-tests.yml/badge.svg)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/run-ui-tests.yml)
 
 <!-- Plugin description -->
 Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and its application.
 
-- Open <b>Preferences... | Languages & Frameworks | Eclipse Target</b>.</li>
-- Add the OSGI bundles that you want to work with (Eclipse root, Teamcenter root, plugins directory, etc.).
+- Open **Preferences... | Languages & Frameworks | Eclipse Target**.
+- Add the OSGI bundles that you want to work with (Eclipse root, Teamcenter root, plugins directory, p2, etc.).
 - Add the Eclipse PDE Partial facet (or by add framework) to any module that should be an Eclipse Plugins.
 
 To run eclipse application on local machine, create a new Eclipse Application Partial run configuration.
-To run eclipse application on remote machine, create a new Eclipse Application Remote Partial run configuration, and set
-up wishes-launcher application information. It will connect Wishes service by RMI naming, and remote debug by JDWP.
 
-Wishes-launcher application is available in
-the [GitHub](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/releases/download/v1.3.6/wishes-launcher-windows.zip)
+**Breaking Changed:** Versions after v1.6.8 no longer support remote debugging and Wishes-launcher
 <!-- Plugin description end -->
 
 ## Download
@@ -47,13 +43,7 @@ Import or using class, methods will inspection with required-bundle and import-p
 
 Support launch application and debug, hot swap class and break code
 
-#### On Local Machine
-
 Launch application by local eclipse launcher, auto generate runtime file and bundle lists
-
-#### On Remote machine
-
-By using Wishes-Launcher, allow using RMI to connect remote machine and debug by JDWP
 
 ### plugin.xml resolve
 
@@ -85,41 +75,37 @@ instance of IntelliJ IDEA with the plugin installed
 | Artifact               | auto create for package                                                         | x                                                        |
 | OSGI launche           | x                                                                               | support                                                  |
 | OSGI console           | x                                                                               | support                                                  |
-| Launche RCP            | local run/debug, remote debug                                                   | x                                                        |
+| Launch RCP             | local run/debug                                                                 | x                                                        |
 
 ## Screenshots
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_c27a5613-963b-458d-ac19-47dd0823aa98)
+![LocalRunConfiguration](https://plugins.jetbrains.com/files/16761/screenshot_c27a5613-963b-458d-ac19-47dd0823aa98)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_2e8a5389-cfbf-4ad9-bd8b-f34099455c7c)
+![LocalRunWithKotlin](https://plugins.jetbrains.com/files/16761/screenshot_2e8a5389-cfbf-4ad9-bd8b-f34099455c7c)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_fa12809c-6e92-432e-8bb6-64f77ca75a05)
+![Target](https://plugins.jetbrains.com/files/16761/screenshot_66e04a1a-13a0-4368-a566-934e54535d80)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_8e905ded-1a8f-41dd-8a0d-a2c9f403e0bf)
+![StartLevel](https://plugins.jetbrains.com/files/16761/screenshot_7b53b865-e7ae-4cea-947d-b26ed68a58bb)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_66e04a1a-13a0-4368-a566-934e54535d80)
+![CheckBundles](https://plugins.jetbrains.com/files/16761/screenshot_53e358f5-c53f-474c-bd4d-ea0c6b278a07)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_7b53b865-e7ae-4cea-947d-b26ed68a58bb)
+![FilterBundles](https://plugins.jetbrains.com/files/16761/screenshot_f5b9737e-f335-4729-94e7-22d6ad3f25a4)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_53e358f5-c53f-474c-bd4d-ea0c6b278a07)
+![CodeInspection](https://plugins.jetbrains.com/files/16761/screenshot_5ced688f-a4ae-4cce-a2d3-9d06928f5c3f)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_f5b9737e-f335-4729-94e7-22d6ad3f25a4)
+![QuickFixCode](https://plugins.jetbrains.com/files/16761/screenshot_0f27f96f-5756-4a91-9dcf-f51a8a7b2d22)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_5ced688f-a4ae-4cce-a2d3-9d06928f5c3f)
+![ManifestMFInspection](https://plugins.jetbrains.com/files/16761/screenshot_04ea23b1-7a2b-4d9a-81eb-1ffdc176d8cd)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_0f27f96f-5756-4a91-9dcf-f51a8a7b2d22)
+![AutoDependencies](https://plugins.jetbrains.com/files/16761/screenshot_0eec9cb4-b085-4dc0-985f-03fe3f60561b)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_04ea23b1-7a2b-4d9a-81eb-1ffdc176d8cd)
+![AutoLibraries](https://plugins.jetbrains.com/files/16761/screenshot_affb493a-eee9-4c73-8f71-dbfa6017eb6c)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_0eec9cb4-b085-4dc0-985f-03fe3f60561b)
+![PluginXMLEPCompletion](https://plugins.jetbrains.com/files/16761/screenshot_532f0c69-d65d-425d-a9a9-e990b284e89c)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_affb493a-eee9-4c73-8f71-dbfa6017eb6c)
+![PluginXMLCompletion](https://plugins.jetbrains.com/files/16761/screenshot_6f8c358a-c0a6-424a-8a7f-acf5dcf08154)
 
-![](https://plugins.jetbrains.com/files/16761/screenshot_532f0c69-d65d-425d-a9a9-e990b284e89c)
-
-![](https://plugins.jetbrains.com/files/16761/screenshot_6f8c358a-c0a6-424a-8a7f-acf5dcf08154)
-
-![](https://plugins.jetbrains.com/files/16761/screenshot_70882df8-07e4-410e-92ac-2c492883f54e)
+![PluginXMLIdCompletion](https://plugins.jetbrains.com/files/16761/screenshot_70882df8-07e4-410e-92ac-2c492883f54e)
 
 ## Thanks
 

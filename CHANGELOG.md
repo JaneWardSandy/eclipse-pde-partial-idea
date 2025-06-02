@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Breaking Changed
+- Remove remote run configuration
+- Remote run with Wishes-launcher not allowed anymore
+
 ### Chore
 - Re-structure the project
 - Remove dead project

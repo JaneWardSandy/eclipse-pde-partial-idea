@@ -6,7 +6,7 @@
 [![Build](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/build.yml/badge.svg?branch=v2.x)](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/actions/workflows/build.yml)
 
 <!-- Plugin description -->
-Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and its application.
+Eclipse PDE partial foundation, and support for an eclipse RCP(OSGI) platform and its application.
 <!-- Plugin description end -->
 
 **PLEASE NOTE**: The plugin is currently planning to refactor the v2.0 version, and the v1.x version will only be updated with major bugs for the time being, and the new features will be temporarily put into the new version and planned to be implemented.
@@ -19,4 +19,4 @@ Eclipse PDE partial foundation, and support for eclipse RCP(OSGI) platform and i
   - check file exists in `Bundle-ClassPath`
 - Inspection
   - class/package in `Bundle-ClassPath`
-  - directory based bundles
+  - directory-based bundles

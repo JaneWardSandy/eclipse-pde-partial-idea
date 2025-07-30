@@ -1,7 +1,10 @@
 .gradle
 .idea
+.intellijPlatform
+.kotlin
 .qodana
 build
+
 
 .DS_Store
 .AppleDouble

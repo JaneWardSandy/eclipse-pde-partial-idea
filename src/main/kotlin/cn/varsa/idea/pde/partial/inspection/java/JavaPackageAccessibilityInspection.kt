@@ -1,8 +1,7 @@
 package cn.varsa.idea.pde.partial.inspection.java
 
-import cn.varsa.idea.pde.partial.inspection.PackageAccessibilityInspector
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
-import com.intellij.codeInspection.ProblemsHolder
+import cn.varsa.idea.pde.partial.inspection.*
+import com.intellij.codeInspection.*
 import com.intellij.psi.*
 
 class JavaPackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool(), PackageAccessibilityInspector {
@@ -28,9 +27,7 @@ class JavaPackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool()
           returnType.resolve()?.also { checkManifest(expression, it, holder) }
         }
 
-        expression.argumentList.expressionTypes
-          .mapNotNull { it as? PsiClassType? }
-          .mapNotNull { it.resolve() }
+        expression.argumentList.expressionTypes.mapNotNull { it as? PsiClassType? }.mapNotNull { it.resolve() }
           .forEach { checkManifest(expression, it, holder) }
       }
 
@@ -38,9 +35,7 @@ class JavaPackageAccessibilityInspection : AbstractBaseJavaLocalInspectionTool()
         super.visitLambdaExpression(expression)
         if (notContainPDEFacet(expression)) return
 
-        expression.parameterList.parameters
-          .mapNotNull { it.type as? PsiClassType? }
-          .mapNotNull { it.resolve() }
+        expression.parameterList.parameters.mapNotNull { it.type as? PsiClassType? }.mapNotNull { it.resolve() }
           .forEach { checkManifest(expression, it, holder) }
 
         val interfaceType = expression.functionalInterfaceType

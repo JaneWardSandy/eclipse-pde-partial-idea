@@ -1,10 +1,10 @@
 package cn.varsa.idea.pde.partial.inspection.kotlin
 
-import cn.varsa.idea.pde.partial.inspection.PackageAccessibilityInspector
-import com.intellij.codeInspection.ProblemsHolder
+import cn.varsa.idea.pde.partial.inspection.*
+import com.intellij.codeInspection.*
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.*
+import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.psi.*
 
 class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), PackageAccessibilityInspector {
@@ -56,11 +56,8 @@ class KotlinPackageAccessibilityInspection : AbstractKotlinInspection(), Package
             returnType.resolve()?.also { checkManifest(expression, it, holder) }
           }
 
-          element.parameterList.parameters
-            .mapNotNull { it.type }
-            .mapNotNull { it as? PsiClassType? }
-            .mapNotNull { it.resolve() }
-            .forEach { checkManifest(expression, it, holder) }
+          element.parameterList.parameters.mapNotNull { it.type }.mapNotNull { it as? PsiClassType? }
+            .mapNotNull { it.resolve() }.forEach { checkManifest(expression, it, holder) }
         }
 
         is KtProperty -> {

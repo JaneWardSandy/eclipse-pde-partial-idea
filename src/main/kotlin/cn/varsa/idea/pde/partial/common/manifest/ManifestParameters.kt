@@ -1,6 +1,6 @@
 package cn.varsa.idea.pde.partial.common.manifest
 
-import cn.varsa.idea.pde.partial.common.util.QuotedTokenizer
+import cn.varsa.idea.pde.partial.common.util.*
 
 data class ManifestParameters(val attributes: Map<String, ParameterAttributes>) {
 

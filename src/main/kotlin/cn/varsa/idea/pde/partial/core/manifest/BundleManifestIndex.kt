@@ -1,19 +1,18 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.Processor
-import com.intellij.util.containers.CollectionFactory
+import cn.varsa.idea.pde.partial.common.manifest.*
+import com.intellij.openapi.project.*
+import com.intellij.openapi.vfs.*
+import com.intellij.psi.search.*
+import com.intellij.util.*
+import com.intellij.util.containers.*
 import com.intellij.util.indexing.*
-import com.jetbrains.rd.util.firstOrNull
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.rd.util.*
+import org.jetbrains.annotations.*
 
 object BundleManifestIndex {
 
-  @ApiStatus.Internal
-  val NAME: ID<String, BundleManifest> = ID.create("BundleManifestIndex")
+  @ApiStatus.Internal val NAME: ID<String, BundleManifest> = ID.create("BundleManifestIndex")
 
   fun requireReIndexes() = FileBasedIndex.getInstance().requestRebuild(NAME)
 

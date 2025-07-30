@@ -1,19 +1,16 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.Constants
-import cn.varsa.idea.pde.partial.common.extension.readString
-import cn.varsa.idea.pde.partial.common.extension.writeString
-import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
-import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProcessCanceledException
+import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.extension.*
+import cn.varsa.idea.pde.partial.common.manifest.*
+import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.progress.*
 import com.intellij.util.indexing.*
 import com.intellij.util.io.*
-import com.jetbrains.rd.util.CancellationException
-import org.jetbrains.lang.manifest.ManifestFileType
-import java.io.DataInput
-import java.io.DataOutput
-import java.util.jar.Manifest
+import com.jetbrains.rd.util.*
+import org.jetbrains.lang.manifest.*
+import java.io.*
+import java.util.jar.*
 
 class BundleManifestIndexImpl : FileBasedIndexExtension<String, BundleManifest>() {
 

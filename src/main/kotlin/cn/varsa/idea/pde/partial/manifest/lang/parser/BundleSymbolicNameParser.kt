@@ -1,9 +1,9 @@
 package cn.varsa.idea.pde.partial.manifest.lang.parser
 
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.SINGLETON_DIRECTIVE
-import cn.varsa.idea.pde.partial.manifest.lang.BundleManifestHeaderParser
-import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.psi.*
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.annotation.*
 
 object BundleSymbolicNameParser : BundleManifestHeaderParser() {

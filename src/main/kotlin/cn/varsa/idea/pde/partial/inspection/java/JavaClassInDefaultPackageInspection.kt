@@ -1,9 +1,8 @@
 package cn.varsa.idea.pde.partial.inspection.java
 
-import cn.varsa.idea.pde.partial.inspection.BasicInspector
-import cn.varsa.idea.pde.partial.message.InspectionBundle
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
-import com.intellij.codeInspection.ProblemsHolder
+import cn.varsa.idea.pde.partial.inspection.*
+import cn.varsa.idea.pde.partial.message.*
+import com.intellij.codeInspection.*
 import com.intellij.psi.*
 
 class JavaClassInDefaultPackageInspection : AbstractBaseJavaLocalInspectionTool(), BasicInspector {

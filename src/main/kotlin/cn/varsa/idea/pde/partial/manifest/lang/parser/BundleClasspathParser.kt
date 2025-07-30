@@ -1,10 +1,10 @@
 package cn.varsa.idea.pde.partial.manifest.lang.parser
 
-import cn.varsa.idea.pde.partial.manifest.lang.BundleManifestHeaderParser
-import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.psi.*
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.annotation.*
-import org.jetbrains.lang.manifest.psi.Header
+import org.jetbrains.lang.manifest.psi.*
 
 object BundleClasspathParser : BundleManifestHeaderParser() {
 
@@ -13,10 +13,8 @@ object BundleClasspathParser : BundleManifestHeaderParser() {
     clauses: List<ManifestHeaderPart.Clause>,
     holder: AnnotationHolder,
   ): Boolean = if (clauses.none { it.getValue()?.unwrappedText == "." }) {
-    holder
-      .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.classpathMustConDot"))
-      .range(header.textRange)
-      .create()
+    holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.classpathMustConDot"))
+      .range(header.textRange).create()
     true
   } else false
 
@@ -24,10 +22,8 @@ object BundleClasspathParser : BundleManifestHeaderParser() {
     val value = clause.getValue() ?: return false
 
     if (value.unwrappedText.isBlank()) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
-        .range(value.highlightingRange)
-        .create()
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
+        .range(value.highlightingRange).create()
       return true
     }
 

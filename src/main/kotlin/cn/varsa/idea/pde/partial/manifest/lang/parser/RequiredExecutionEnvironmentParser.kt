@@ -1,10 +1,10 @@
 package cn.varsa.idea.pde.partial.manifest.lang.parser
 
-import cn.varsa.idea.pde.partial.manifest.lang.BundleManifestHeaderParser
-import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.psi.*
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.annotation.*
-import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.*
 
 object RequiredExecutionEnvironmentParser : BundleManifestHeaderParser() {
   val javaExecutionEnvironments = JavaSdkVersion.values().map {
@@ -21,10 +21,8 @@ object RequiredExecutionEnvironmentParser : BundleManifestHeaderParser() {
     val value = clause.getValue() ?: return false
 
     if (value.unwrappedText !in javaExecutionEnvironments) {
-      holder
-        .newAnnotation(HighlightSeverity.WARNING, ManifestBundle.message("manifest.lang.invalidJavaVersion"))
-        .range(value.highlightingRange)
-        .create()
+      holder.newAnnotation(HighlightSeverity.WARNING, ManifestBundle.message("manifest.lang.invalidJavaVersion"))
+        .range(value.highlightingRange).create()
       return true
     }
 

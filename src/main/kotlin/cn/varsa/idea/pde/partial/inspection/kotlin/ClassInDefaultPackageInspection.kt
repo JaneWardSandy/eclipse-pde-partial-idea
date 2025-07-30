@@ -1,10 +1,10 @@
 package cn.varsa.idea.pde.partial.inspection.kotlin
 
-import cn.varsa.idea.pde.partial.inspection.BasicInspector
-import cn.varsa.idea.pde.partial.message.InspectionBundle
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import cn.varsa.idea.pde.partial.inspection.*
+import cn.varsa.idea.pde.partial.message.*
+import com.intellij.codeInspection.*
+import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.*
 import org.jetbrains.kotlin.psi.*
 
 class ClassInDefaultPackageInspection : AbstractKotlinInspection(), BasicInspector {

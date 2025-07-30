@@ -1,9 +1,9 @@
 package cn.varsa.idea.pde.partial.inspection
 
-import cn.varsa.idea.pde.partial.core.facet.PDEFacet
-import com.intellij.facet.FacetManager
-import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.util.module
+import cn.varsa.idea.pde.partial.core.facet.*
+import com.intellij.facet.*
+import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.base.util.*
 
 interface BasicInspector {
 

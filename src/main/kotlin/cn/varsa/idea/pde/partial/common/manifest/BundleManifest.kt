@@ -1,11 +1,11 @@
 package cn.varsa.idea.pde.partial.common.manifest
 
-import cn.varsa.idea.pde.partial.common.Constants
-import cn.varsa.idea.pde.partial.common.extension.parseVersion
-import cn.varsa.idea.pde.partial.common.version.Version
-import com.jetbrains.rd.util.firstOrNull
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import java.util.jar.Manifest
+import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.extension.*
+import cn.varsa.idea.pde.partial.common.version.*
+import com.jetbrains.rd.util.*
+import java.util.concurrent.locks.*
+import java.util.jar.*
 import kotlin.concurrent.*
 
 data class BundleManifest(val attribute: Map<String, String>) {

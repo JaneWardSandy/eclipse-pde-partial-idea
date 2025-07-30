@@ -26,8 +26,8 @@ import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VERSION_ATTRIBUTE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_DIRECTIVE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_PRIVATE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_REEXPORT
-import cn.varsa.idea.pde.partial.manifest.lang.parser.RequiredExecutionEnvironmentParser
-import com.intellij.codeInsight.completion.CompletionType
+import cn.varsa.idea.pde.partial.manifest.lang.parser.*
+import com.intellij.codeInsight.completion.*
 
 class BasicBundleManifestCompletionContributor : BundleManifestCompletionContributor() {
   init {
@@ -52,9 +52,7 @@ class BasicBundleManifestCompletionContributor : BundleManifestCompletionContrib
       HeaderParameterCompletionProvider("$SINGLETON_DIRECTIVE:", "$FRAGMENT_ATTACHMENT_DIRECTIVE:")
     )
     extend(
-      CompletionType.BASIC,
-      header(EXPORT_PACKAGE),
-      HeaderParameterCompletionProvider(
+      CompletionType.BASIC, header(EXPORT_PACKAGE), HeaderParameterCompletionProvider(
         VERSION_ATTRIBUTE,
         "$USES_DIRECTIVE:",
         "$X_INTERNAL_DIRECTIVE:",

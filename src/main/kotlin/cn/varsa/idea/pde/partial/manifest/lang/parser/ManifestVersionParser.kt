@@ -1,10 +1,10 @@
 package cn.varsa.idea.pde.partial.manifest.lang.parser
 
-import cn.varsa.idea.pde.partial.manifest.lang.BundleManifestHeaderParser
-import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.psi.*
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.annotation.*
-import org.jetbrains.lang.manifest.psi.Header
+import org.jetbrains.lang.manifest.psi.*
 
 object ManifestVersionParser : BundleManifestHeaderParser() {
 
@@ -14,10 +14,8 @@ object ManifestVersionParser : BundleManifestHeaderParser() {
     val value = clause.getValue() ?: return false
 
     if (value.unwrappedText.toIntOrNull() != 2) {
-      holder
-        .newAnnotation(HighlightSeverity.WARNING, ManifestBundle.message("manifest.lang.manifestVersion2"))
-        .range(value.highlightingRange)
-        .create()
+      holder.newAnnotation(HighlightSeverity.WARNING, ManifestBundle.message("manifest.lang.manifestVersion2"))
+        .range(value.highlightingRange).create()
       return true
     }
 

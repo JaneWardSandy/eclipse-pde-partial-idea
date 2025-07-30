@@ -4,9 +4,9 @@ import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.ACTIVATION_LAZY
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_ACTIVATIONPOLICY
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.EXCLUDE_DIRECTIVE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.INCLUDE_DIRECTIVE
-import cn.varsa.idea.pde.partial.manifest.lang.BundleManifestHeaderParser
-import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.psi.*
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.annotation.*
 
 object BundleActivationPolicyParser : BundleManifestHeaderParser() {
@@ -41,10 +41,8 @@ object BundleActivationPolicyParser : BundleManifestHeaderParser() {
 
     val value = directive.getValueElement()
     if (value == null || value.unwrappedText.isBlank()) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
-        .range(value?.highlightingRange ?: directive.textRange)
-        .create()
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
+        .range(value?.highlightingRange ?: directive.textRange).create()
       return true
     }
 

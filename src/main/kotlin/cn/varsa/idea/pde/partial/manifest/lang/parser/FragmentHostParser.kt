@@ -1,14 +1,14 @@
 package cn.varsa.idea.pde.partial.manifest.lang.parser
 
-import cn.varsa.idea.pde.partial.common.Constants
+import cn.varsa.idea.pde.partial.common.*
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_VERSION_ATTRIBUTE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.FRAGMENT_HOST
 import cn.varsa.idea.pde.partial.manifest.lang.*
 import cn.varsa.idea.pde.partial.manifest.psi.*
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.annotation.*
-import com.intellij.psi.PsiReference
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.*
+import com.intellij.psi.util.*
 import org.jetbrains.lang.manifest.psi.*
 
 object FragmentHostParser : BundleManifestHeaderParser() {
@@ -22,14 +22,12 @@ object FragmentHostParser : BundleManifestHeaderParser() {
 
     val fragmentHost = value.unwrappedText
 
-    val bundleSymbolicName = PsiTreeUtil
-      .getChildrenOfTypeAsList(PsiTreeUtil.getParentOfType(clause, Section::class.java), Header::class.java)
-      .firstOrNull { it.name == Constants.OSGI.Header.BUNDLE_SYMBOLICNAME }?.headerValue?.let { it as? ManifestHeaderPart.Clause? }
+    val bundleSymbolicName =
+      PsiTreeUtil.getChildrenOfTypeAsList(PsiTreeUtil.getParentOfType(clause, Section::class.java), Header::class.java)
+        .firstOrNull { it.name == Constants.OSGI.Header.BUNDLE_SYMBOLICNAME }?.headerValue?.let { it as? ManifestHeaderPart.Clause? }
     if (fragmentHost == bundleSymbolicName?.getValue()?.unwrappedText) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.hostCannotBeSelf"))
-        .range(value.highlightingRange)
-        .create()
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.hostCannotBeSelf"))
+        .range(value.highlightingRange).create()
       return true
     }
 

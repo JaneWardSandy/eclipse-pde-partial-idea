@@ -1,23 +1,22 @@
 package cn.varsa.idea.pde.partial.core.manifest
 
-import cn.varsa.idea.pde.partial.common.Constants
-import cn.varsa.idea.pde.partial.common.manifest.BundleManifest
-import cn.varsa.idea.pde.partial.message.ToolWindowBundle
-import com.intellij.icons.AllIcons
+import cn.varsa.idea.pde.partial.common.*
+import cn.varsa.idea.pde.partial.common.manifest.*
+import cn.varsa.idea.pde.partial.message.*
+import com.intellij.icons.*
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.*
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.wm.*
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.speedSearch.SpeedSearchUtil
-import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.annotations.Nls
-import java.awt.event.MouseEvent
+import com.intellij.ui.content.*
+import com.intellij.ui.speedSearch.*
+import com.intellij.util.indexing.*
+import java.awt.event.*
 import javax.swing.*
 
 class BundlesToolWindowFactory : ToolWindowFactory {
@@ -69,7 +68,7 @@ class BundlesToolWindowFactory : ToolWindowFactory {
 
           icon = if (fileIndex.getModuleForFile(file) != null) AllIcons.Nodes.Module else AllIcons.Nodes.Plugin
 
-          manifest.bundleSymbolicName?.key?.also<@Nls String>(::append)
+          manifest.bundleSymbolicName?.key?.also(::append)
           manifest.attribute[Constants.OSGI.Header.BUNDLE_VERSION]?.also {
             append(":")
             append(it)

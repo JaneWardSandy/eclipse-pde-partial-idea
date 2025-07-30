@@ -1,8 +1,8 @@
 package cn.varsa.idea.pde.partial.manifest.psi
 
-import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiElement
-import org.jetbrains.lang.manifest.psi.ManifestElementType
+import com.intellij.lang.*
+import com.intellij.psi.*
+import org.jetbrains.lang.manifest.psi.*
 
 sealed class BundleManifestElementType(name: String) : ManifestElementType(name) {
   object ATTRIBUTE : BundleManifestElementType("ATTRIBUTE") {

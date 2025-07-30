@@ -4,9 +4,9 @@ import cn.varsa.idea.pde.partial.core.facet.PDEFacet.Companion.FACET_ID
 import cn.varsa.idea.pde.partial.core.facet.PDEFacet.Companion.FACET_NAME
 import cn.varsa.idea.pde.partial.core.facet.PDEFacet.Companion.FACET_TYPE_ID
 import com.intellij.facet.*
-import com.intellij.icons.AllIcons
+import com.intellij.icons.*
 import com.intellij.openapi.module.*
-import javax.swing.Icon
+import javax.swing.*
 
 class PDEFacetType : FacetType<PDEFacet, PDEFacetConfiguration>(FACET_TYPE_ID, FACET_ID, FACET_NAME) {
 

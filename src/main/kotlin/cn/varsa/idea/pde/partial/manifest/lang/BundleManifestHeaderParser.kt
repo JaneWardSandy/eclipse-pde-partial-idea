@@ -1,12 +1,12 @@
 package cn.varsa.idea.pde.partial.manifest.lang
 
 import cn.varsa.idea.pde.partial.manifest.psi.*
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.*
 import com.intellij.lang.annotation.*
-import com.intellij.psi.tree.TokenSet
-import org.jetbrains.lang.manifest.header.impl.StandardHeaderParser
-import org.jetbrains.lang.manifest.parser.ManifestParser.HEADER_END_TOKENS
+import com.intellij.psi.tree.*
+import org.jetbrains.lang.manifest.header.impl.*
+import org.jetbrains.lang.manifest.parser.ManifestParser.*
 import org.jetbrains.lang.manifest.psi.*
 import org.jetbrains.lang.manifest.psi.ManifestTokenType.*
 
@@ -27,10 +27,8 @@ abstract class BundleManifestHeaderParser : StandardHeaderParser() {
 
     val clauses = header.headerValues.mapNotNull { it as? ManifestHeaderPart.Clause? }
     if (!allowMultiClauses() && clauses.size > 1) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.multipleClause"))
-        .range(header.textRange)
-        .create()
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.multipleClause"))
+        .range(header.textRange).create()
       annotate = true
     }
     if (checkClauses(header, clauses, holder)) annotate = true
@@ -39,10 +37,8 @@ abstract class BundleManifestHeaderParser : StandardHeaderParser() {
       val value = clause.getValue()
 
       if (value == null || value.unwrappedText.isBlank()) {
-        holder
-          .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
-          .range(value?.highlightingRange ?: clause.textRange)
-          .create()
+        holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
+          .range(value?.highlightingRange ?: clause.textRange).create()
         annotate = true
       }
 

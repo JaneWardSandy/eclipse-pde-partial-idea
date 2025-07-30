@@ -4,19 +4,15 @@ import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_SYMBOLICNAM
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.RESOLUTION_DIRECTIVE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.RESOLUTION_OPTIONAL
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VERSION_ATTRIBUTE
-import cn.varsa.idea.pde.partial.common.extension.parseVersion
-import cn.varsa.idea.pde.partial.common.extension.parseVersionRange
-import cn.varsa.idea.pde.partial.common.version.Version
-import cn.varsa.idea.pde.partial.common.version.VersionRange
-import cn.varsa.idea.pde.partial.core.manifest.BundleManifestIndex
-import cn.varsa.idea.pde.partial.manifest.lang.BasePackageParser
-import cn.varsa.idea.pde.partial.manifest.lang.CommonManifestHeaderParser
-import cn.varsa.idea.pde.partial.manifest.psi.ManifestHeaderPart
-import cn.varsa.idea.pde.partial.message.ManifestBundle
-import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.containers.CollectionFactory
+import cn.varsa.idea.pde.partial.common.extension.*
+import cn.varsa.idea.pde.partial.common.version.*
+import cn.varsa.idea.pde.partial.core.manifest.*
+import cn.varsa.idea.pde.partial.manifest.lang.*
+import cn.varsa.idea.pde.partial.manifest.psi.*
+import cn.varsa.idea.pde.partial.message.*
+import com.intellij.lang.annotation.*
+import com.intellij.psi.search.*
+import com.intellij.util.containers.*
 
 object ImportPackageParser : BasePackageParser() {
 
@@ -33,9 +29,7 @@ object ImportPackageParser : BasePackageParser() {
       VersionRange.ANY_VERSION_RANGE
     }
 
-    val optional = clause
-      .getDirectives()
-      .firstOrNull { it.name == RESOLUTION_DIRECTIVE }
+    val optional = clause.getDirectives().firstOrNull { it.name == RESOLUTION_DIRECTIVE }
       ?.getValueElement()?.unwrappedText == RESOLUTION_OPTIONAL
 
     val packageName = text.removePrefix(".*")
@@ -77,10 +71,10 @@ object ImportPackageParser : BasePackageParser() {
 
     val names = attributes.map { it.name }
     if (names.count { it == VERSION_ATTRIBUTE } > 1) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.duplicate", VERSION_ATTRIBUTE))
-        .range(clause.textRange)
-        .create()
+      holder.newAnnotation(
+          HighlightSeverity.ERROR,
+          ManifestBundle.message("manifest.lang.duplicate", VERSION_ATTRIBUTE)
+        ).range(clause.textRange).create()
       return true
     }
     if (names.count { it == BUNDLE_SYMBOLICNAME_ATTRIBUTE } > 1) {
@@ -99,10 +93,8 @@ object ImportPackageParser : BasePackageParser() {
           val bundleSymbolicName = value?.unwrappedText
 
           if (bundleSymbolicName.isNullOrBlank()) {
-            holder
-              .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
-              .range(value?.highlightingRange ?: attribute.textRange)
-              .create()
+            holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.invalidBlank"))
+              .range(value?.highlightingRange ?: attribute.textRange).create()
             return true
           }
 

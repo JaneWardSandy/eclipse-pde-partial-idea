@@ -1,8 +1,8 @@
 package cn.varsa.idea.pde.partial.manifest.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.util.ProcessingContext
+import com.intellij.codeInsight.lookup.*
+import com.intellij.util.*
 
 class StringValueCompletionProvider(private val values: Collection<String>) :
   CompletionProvider<CompletionParameters>() {

@@ -1,6 +1,6 @@
 package cn.varsa.idea.pde.partial.common.version
 
-import cn.varsa.idea.pde.partial.common.extension.parseVersion
+import cn.varsa.idea.pde.partial.common.extension.*
 import java.util.*
 
 class VersionRange(

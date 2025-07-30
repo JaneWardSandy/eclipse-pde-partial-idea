@@ -1,7 +1,7 @@
 package cn.varsa.idea.pde.partial.core.facet
 
 import com.intellij.facet.*
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.*
 
 class PDEFacet(
   facetType: FacetType<out Facet<*>, *>,

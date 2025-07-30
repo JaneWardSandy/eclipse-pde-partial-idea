@@ -1,5 +1,27 @@
 package cn.varsa.idea.pde.partial.common
 
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.ACTIVATION_LAZY
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_ACTIVATIONPOLICY
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_LOCALIZATION
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_LOCALIZATION_DEFAULT_BASENAME
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.BUNDLE_SYMBOLICNAME
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.EXCLUDE_DIRECTIVE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.EXPORT_PACKAGE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.FRAGMENT_ATTACHMENT_ALWAYS
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.FRAGMENT_ATTACHMENT_DIRECTIVE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.FRAGMENT_ATTACHMENT_NEVER
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.FRAGMENT_ATTACHMENT_RESOLVETIME
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.IMPORT_PACKAGE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.INCLUDE_DIRECTIVE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.REQUIRE_BUNDLE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.RESOLUTION_DIRECTIVE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.RESOLUTION_MANDATORY
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.RESOLUTION_OPTIONAL
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_DIRECTIVE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_PRIVATE
+import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_REEXPORT
+
+
 object Constants {
   object Partial {
     const val KILOBYTE = 1024

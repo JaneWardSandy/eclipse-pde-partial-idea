@@ -12,10 +12,10 @@ import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_PRIVATE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VISIBILITY_REEXPORT
 import cn.varsa.idea.pde.partial.manifest.lang.*
 import cn.varsa.idea.pde.partial.manifest.psi.*
-import cn.varsa.idea.pde.partial.message.ManifestBundle
+import cn.varsa.idea.pde.partial.message.*
 import com.intellij.lang.annotation.*
-import com.intellij.psi.PsiReference
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.*
+import com.intellij.psi.util.*
 import org.jetbrains.lang.manifest.psi.*
 
 object RequireBundleParser : BundleManifestHeaderParser() {
@@ -27,9 +27,9 @@ object RequireBundleParser : BundleManifestHeaderParser() {
     val value = clause.getValue() ?: return false
 
     val requireBundle = value.unwrappedText
-    val headers = PsiTreeUtil
-      .getChildrenOfTypeAsList(PsiTreeUtil.getParentOfType(clause, Section::class.java), Header::class.java)
-      .associateBy { it.name }
+    val headers =
+      PsiTreeUtil.getChildrenOfTypeAsList(PsiTreeUtil.getParentOfType(clause, Section::class.java), Header::class.java)
+        .associateBy { it.name }
 
     val fragmentHost = headers[FRAGMENT_HOST]?.headerValue?.let { it as? ManifestHeaderPart.Clause? }
     if (requireBundle == fragmentHost?.getValue()?.unwrappedText) {
@@ -41,16 +41,12 @@ object RequireBundleParser : BundleManifestHeaderParser() {
 
     val bundleSymbolicName = headers[BUNDLE_SYMBOLICNAME]?.headerValue?.let { it as? ManifestHeaderPart.Clause? }
     if (requireBundle == bundleSymbolicName?.getValue()?.unwrappedText) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.requiredCannotBeSelf"))
-        .range(value.highlightingRange)
-        .create()
+      holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.requiredCannotBeSelf"))
+        .range(value.highlightingRange).create()
       return true
     }
 
-    val optional = clause
-      .getDirectives()
-      .firstOrNull { it.name == RESOLUTION_DIRECTIVE }
+    val optional = clause.getDirectives().firstOrNull { it.name == RESOLUTION_DIRECTIVE }
       ?.getValueElement()?.unwrappedText == RESOLUTION_OPTIONAL
 
     return CommonManifestHeaderParser.checkManifestWithBundleVersionRange(requireBundle, clause, holder, optional) {
@@ -79,17 +75,17 @@ object RequireBundleParser : BundleManifestHeaderParser() {
 
     val names = directives.map { it.name }
     if (names.count { it == VISIBILITY_DIRECTIVE } > 1) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.duplicate", VISIBILITY_DIRECTIVE))
-        .range(clause.textRange)
-        .create()
+      holder.newAnnotation(
+          HighlightSeverity.ERROR,
+          ManifestBundle.message("manifest.lang.duplicate", VISIBILITY_DIRECTIVE)
+        ).range(clause.textRange).create()
       return true
     }
     if (names.count { it == RESOLUTION_DIRECTIVE } > 1) {
-      holder
-        .newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("manifest.lang.duplicate", RESOLUTION_DIRECTIVE))
-        .range(clause.textRange)
-        .create()
+      holder.newAnnotation(
+          HighlightSeverity.ERROR,
+          ManifestBundle.message("manifest.lang.duplicate", RESOLUTION_DIRECTIVE)
+        ).range(clause.textRange).create()
       return true
     }
 

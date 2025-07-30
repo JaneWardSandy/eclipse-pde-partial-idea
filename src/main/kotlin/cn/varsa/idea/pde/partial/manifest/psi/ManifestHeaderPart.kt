@@ -1,13 +1,11 @@
 package cn.varsa.idea.pde.partial.manifest.psi
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement
-import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.IncorrectOperationException
-import org.jetbrains.lang.manifest.psi.HeaderValue
-import org.jetbrains.lang.manifest.psi.HeaderValuePart
+import com.intellij.extapi.psi.*
+import com.intellij.lang.*
+import com.intellij.psi.*
+import com.intellij.psi.util.*
+import com.intellij.util.*
+import org.jetbrains.lang.manifest.psi.*
 
 sealed class ManifestHeaderPart(node: ASTNode) : ASTWrapperPsiElement(node), PsiNamedElement {
   override fun getName(): String = getNameElement()?.unwrappedText ?: "<unnamed>"

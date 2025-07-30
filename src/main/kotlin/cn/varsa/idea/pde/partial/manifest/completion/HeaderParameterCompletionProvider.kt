@@ -6,8 +6,8 @@ import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.USES_DIRECTIVE
 import cn.varsa.idea.pde.partial.common.Constants.OSGI.Header.VERSION_ATTRIBUTE
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.*
-import com.intellij.openapi.editor.EditorModificationUtil
-import com.intellij.util.ProcessingContext
+import com.intellij.openapi.editor.*
+import com.intellij.util.*
 
 class HeaderParameterCompletionProvider(private val names: Collection<String>) :
   CompletionProvider<CompletionParameters>() {

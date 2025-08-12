@@ -35,6 +35,11 @@ class PDEFacetEditorTab(
   private val updateCompilerOutputComponent =
     LabeledComponent.create(updateCompilerOutputCheckbox, message("facet.tab.updateCompilerOutput"), BorderLayout.WEST)
 
+  private val manifestRelativePathTextField = JBTextField()
+  private val manifestRelativePathComponent = LabeledComponent.create(
+    manifestRelativePathTextField, message("facet.tab.manifestFileRelativePath"), BorderLayout.WEST
+  )
+
   private val compilerClassesTextField = JBTextField()
   private val compilerClassesComponent = LabeledComponent.create(
     compilerClassesTextField, message("facet.tab.compilerClassesOutputDirectory"), BorderLayout.WEST
@@ -57,6 +62,7 @@ class PDEFacetEditorTab(
 
       add(updateArtifactsComponent)
       add(updateCompilerOutputComponent)
+      add(manifestRelativePathComponent)
       add(compilerClassesComponent)
       add(compilerTestClassesComponent)
     })
@@ -65,6 +71,7 @@ class PDEFacetEditorTab(
     myAnchor = UIUtil.mergeComponentsWithAnchor(
       updateArtifactsComponent,
       updateCompilerOutputComponent,
+      manifestRelativePathComponent,
       compilerClassesComponent,
       compilerTestClassesComponent,
     )
@@ -78,6 +85,10 @@ class PDEFacetEditorTab(
       }
       if (configuration.updateCompilerOutput != updateCompilerOutputCheckbox.isSelected) {
         configuration.updateCompilerOutput = updateCompilerOutputCheckbox.isSelected
+      }
+
+      if (configuration.manifestRelativePath != manifestRelativePathTextField.text) {
+        configuration.manifestRelativePath = manifestRelativePathTextField.text
       }
 
       if (configuration.compilerClassesOutput != compilerClassesTextField.text) {
@@ -113,6 +124,7 @@ class PDEFacetEditorTab(
     validateOnce {
       updateArtifactsCheckbox.isSelected = configuration.updateArtifacts
       updateCompilerOutputCheckbox.isSelected = configuration.updateCompilerOutput
+      manifestRelativePathTextField.text = configuration.manifestRelativePath
 
       compilerClassesTextField.text = configuration.compilerClassesOutput
       compilerTestClassesTextField.text = configuration.compilerTestClassesOutput
@@ -131,7 +143,7 @@ class PDEFacetEditorTab(
   override fun createComponent(): JComponent = panel
 
   override fun isModified(): Boolean =
-    isInitialized && (configuration.updateArtifacts != updateArtifactsCheckbox.isSelected || configuration.updateCompilerOutput != updateCompilerOutputCheckbox.isSelected || configuration.compilerClassesOutput != compilerClassesTextField.text || configuration.compilerTestClassesOutput != compilerTestClassesTextField.text || !binaryOutputList.checkedItems()
+    isInitialized && (configuration.updateArtifacts != updateArtifactsCheckbox.isSelected || configuration.updateCompilerOutput != updateCompilerOutputCheckbox.isSelected || configuration.manifestRelativePath != manifestRelativePathTextField.text || configuration.compilerClassesOutput != compilerClassesTextField.text || configuration.compilerTestClassesOutput != compilerTestClassesTextField.text || !binaryOutputList.checkedItems()
       .let { it.containsAll(oldCheckList) && oldCheckList.containsAll(it) })
 
   override fun getAnchor(): JComponent? = myAnchor
@@ -140,6 +152,7 @@ class PDEFacetEditorTab(
 
     updateArtifactsComponent.anchor = anchor
     updateCompilerOutputComponent.anchor = anchor
+    manifestRelativePathComponent.anchor = anchor
 
     compilerClassesComponent.anchor = anchor
     compilerTestClassesComponent.anchor = anchor

@@ -1,8 +1,10 @@
 package cn.varsa.idea.pde.partial.plugin.support
 
+import cn.varsa.idea.pde.partial.common.ManifestPath
 import cn.varsa.idea.pde.partial.common.support.*
 import cn.varsa.idea.pde.partial.plugin.cache.*
 import cn.varsa.idea.pde.partial.plugin.config.*
+import cn.varsa.idea.pde.partial.plugin.facet.PDEFacet
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
@@ -14,6 +16,11 @@ import org.osgi.framework.*
 val Module.moduleRootManager: ModuleRootManager get() = ModuleRootManager.getInstance(this)
 fun Module.updateModel(task: Consumer<in ModifiableRootModel>) = ModuleRootModificationUtil.updateModel(this, task)
 fun VirtualFile.findModule(project: Project) = ModuleUtilCore.findModuleForFile(this, project)
+
+fun Module.getManifestFile(): VirtualFile? {
+  val relativePath = PDEFacet.getInstance(this)?.configuration?.manifestRelativePath ?: ManifestPath
+  return moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
+}
 
 fun Module.findLibrary(predicate: (Library) -> Boolean): Library? =
   ModuleRootManager.getInstance(this).orderEntries.mapNotNull { it as? LibraryOrderEntry }.mapNotNull { it.library }

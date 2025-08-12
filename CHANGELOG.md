@@ -4,11 +4,15 @@
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-08-12
+
 ### Breaking Changed
+
 - Remove remote run configuration
 - Remote run with Wishes-launcher not allowed anymore
 
 ### Chore
+
 - Re-structure the project
 - Remove dead project
 - Remove legacy code
@@ -395,7 +399,8 @@
 
 - Initial project, migrating
 
-[Unreleased]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.8...HEAD
+[Unreleased]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.8...v1.7.0
 [1.6.8]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.7...v1.6.8
 [1.6.7]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.6...v1.6.7
 [1.6.6]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.5-1...v1.6.6

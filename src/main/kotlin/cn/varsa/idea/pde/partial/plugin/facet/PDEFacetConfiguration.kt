@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.*
 class PDEFacetConfiguration : FacetConfiguration, ModificationTracker, PersistentStateComponent<PDEFacetConfiguration> {
   private val modificationCount = AtomicLong()
 
+  @Attribute var manifestRelativePath = ManifestPath
   @Attribute var updateArtifacts = true
   @Attribute var updateCompilerOutput = true
   @Attribute var compilerClassesOutput = "out/${CompilerModuleExtension.PRODUCTION}"

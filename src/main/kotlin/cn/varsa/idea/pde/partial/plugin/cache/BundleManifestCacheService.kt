@@ -62,11 +62,8 @@ class BundleManifestCacheService(private val project: Project) {
     return null
   }
 
-  fun getManifest(module: Module): BundleManifest? = readCompute { getManifestPsi(module)?.let(this::getManifest0) }
+  fun getManifest(module: Module): BundleManifest? = readCompute { module.getManifestFile()?.let(this::getManifest0) }
   fun getManifest(root: VirtualFile): BundleManifest? = readCompute { getManifestFile(root)?.let(this::getManifest0) }
-
-  private fun getManifestPsi(module: Module): VirtualFile? =
-    module.moduleRootManager.contentRoots.firstNotNullOfOrNull { it.findFileByRelativePath(ManifestPath) }
 
   private fun getManifestFile(root: VirtualFile): VirtualFile? = root.validFileOrRequestResolve(project)?.let {
     if (it.extension?.lowercase() == "jar" && it.fileSystem != JarFileSystem.getInstance()) {

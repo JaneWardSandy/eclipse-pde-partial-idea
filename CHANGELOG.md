@@ -13,6 +13,10 @@
 - Remove dead project
 - Remove legacy code
 
+### Added
+
+- Allowed to specify the MANIFEST.MF file path relative to module [#148](https://github.com/JaneWardSandy/eclipse-pde-partial-idea/discussions/148)
+
 ## [1.6.8] - 2025-05-01
 
 ### Added

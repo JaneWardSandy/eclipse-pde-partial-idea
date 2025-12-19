@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Chore
+
+- Update supported IntellIj version to 253
+
 ## [1.7.0] - 2025-08-12
 
 ### Breaking Changed

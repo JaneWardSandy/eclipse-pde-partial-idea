@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.7.1] - 2025-12-19
+
 ### Chore
 
 - Update supported IntellIj version to 253
@@ -403,7 +405,8 @@
 
 - Initial project, migrating
 
-[Unreleased]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.7.1...HEAD
+[1.7.1]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.8...v1.7.0
 [1.6.8]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.7...v1.6.8
 [1.6.7]: https://github.com/JaneWardSandy/eclipse-pde-partial-idea/compare/v1.6.6...v1.6.7
